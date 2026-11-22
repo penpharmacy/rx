@@ -348,7 +348,13 @@
                 <input type="checkbox" id="fmLessonStrictVideo" class="w-5 h-5 rounded text-blue-600">
             </div>
             <div class="space-y-2 pt-1">
-                <div class="text-xs font-bold text-slate-600 dark:text-slate-300">สื่อการสอน (รองรับการวางลิงก์หรืออัปโหลดไฟล์ทุกประเภท):</div>
+                <div class="text-xs font-bold text-slate-600 dark:text-slate-300">สื่อการสอน (รองรับ Canva, YouTube, วิดีโอ, เอกสาร และรูปภาพ):</div>
+                <div class="flex gap-2">
+                    <input type="text" id="fmLessonCanva" placeholder="วางลิงก์จาก Canva (เช่น https://www.canva.com/design/.../view)" class="flex-1 px-3 py-2 rounded-xl border border-cyan-200 dark:border-slate-700 dark:bg-slate-900 text-xs">
+                    <span class="px-3 py-2 rounded-xl bg-cyan-50 text-cyan-700 text-xs font-semibold shrink-0 flex items-center gap-1">
+                        <i class="fa-solid fa-object-group"></i> ลิงก์ Canva
+                    </span>
+                </div>
                 <div class="flex gap-2">
                     <input type="text" id="fmLessonVideo" placeholder="ลิงก์วิดีโอ YouTube Embed หรือ .mp4" class="flex-1 px-3 py-2 rounded-xl border dark:border-slate-700 dark:bg-slate-900 text-xs">
                     <label class="px-3 py-2 rounded-xl bg-red-50 text-red-700 text-xs font-semibold cursor-pointer hover:bg-red-100 shrink-0">
@@ -805,6 +811,18 @@ function normalizeEmbedVideoUrl(url) {
     if (!u) return '';
     const ytMatch = u.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/shorts\/)([A-Za-z0-9_-]{6,})/);
     if (ytMatch) return `https://www.youtube.com/embed/${ytMatch[1]}`;
+    return u;
+}
+
+function normalizeCanvaEmbedUrl(url) {
+    let u = String(url || '').trim();
+    if (!u) return '';
+    const iframeMatch = u.match(/src=["']([^"']+)["']/i);
+    if (iframeMatch) u = iframeMatch[1];
+    if (u.includes('canva.com/design/')) {
+        const base = u.split('?')[0].replace(/\/(edit|watch|view)\/?$/i, '/view');
+        return base + '?embed';
+    }
     return u;
 }
 
@@ -2198,16 +2216,16 @@ function openCoursePlayer(courseId, lessonId) {
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div class="lg:col-span-2 custom-card bg-white dark:bg-slate-800 p-6 shadow-sm border border-slate-100 dark:border-slate-700 space-y-5">
-                <div class="flex justify-between items-start gap-2">
-                    <div>
-                        <span class="text-xs font-bold text-blue-600 uppercase">${sanitizeHTML(course.CourseName)} (บทที่ ${currentIdx + 1}/${courseLessons.length})</span>
-                        <h2 class="text-xl font-bold mt-0.5">${sanitizeHTML(currentLesson.Title)}</h2>
+                ${currentLesson.CanvaURL ? `
+                <div class="space-y-1.5">
+                    <div class="flex justify-between items-center text-xs">
+                        <span class="font-bold text-cyan-700 dark:text-cyan-300"><i class="fa-solid fa-object-group mr-1"></i> สื่อนำเสนอจาก Canva</span>
+                        <a href="${sanitizeHTML(currentLesson.CanvaURL)}" target="_blank" class="text-cyan-600 hover:underline font-semibold"><i class="fa-solid fa-up-right-from-square mr-1"></i> เปิดหน้าต่างเต็มจอ</a>
                     </div>
-                    <span class="px-3 py-1 rounded-full text-xs font-bold ${isCompleted ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">
-                        ${isCompleted ? 'เรียนจบแล้ว' : 'กำลังเรียน'}
-                    </span>
-                </div>
+                    <div class="aspect-video rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-900 shadow border border-slate-200 dark:border-slate-700 relative">
+                        <iframe src="${sanitizeHTML(normalizeCanvaEmbedUrl(currentLesson.CanvaURL))}" class="w-full h-full border-0" allowfullscreen="allowfullscreen" allow="fullscreen"></iframe>
+                    </div>
+                </div>` : ''}
 
                 ${currentLesson.VideoURL ? `
                 <div class="space-y-2">
@@ -3487,6 +3505,7 @@ function openLessonModal(lessonId = null) {
         document.getElementById('fmLessonTitle').value = l.Title;
         document.getElementById('fmLessonDesc').value = l.Description;
         document.getElementById('fmLessonStrictVideo').checked = !!l.StrictVideo;
+        document.getElementById('fmLessonCanva').value = l.CanvaURL || '';
         document.getElementById('fmLessonVideo').value = l.VideoURL;
         document.getElementById('fmLessonPdf').value = l.PDFURL;
         document.getElementById('fmLessonImg').value = l.ImageURL;
@@ -3495,6 +3514,7 @@ function openLessonModal(lessonId = null) {
     } else {
         document.getElementById('lessonForm').reset();
         document.getElementById('fmLessonId').value = '';
+        document.getElementById('fmLessonCanva').value = '';
         document.getElementById('fmLessonExtraText').value = '';
     }
     renderProfessionCheckboxes('fmLessonProfessionsBox', selectedProfs, 'lessonProfChk');
@@ -3829,6 +3849,7 @@ document.getElementById('lessonForm').addEventListener('submit', (e) => {
         Professions: finalProfs,
         Title: document.getElementById('fmLessonTitle').value.trim(),
         Description: document.getElementById('fmLessonDesc').value.trim(),
+        CanvaURL: document.getElementById('fmLessonCanva').value.trim(),
         VideoURL: document.getElementById('fmLessonVideo').value.trim(),
         StrictVideo: document.getElementById('fmLessonStrictVideo').checked,
         PDFURL: document.getElementById('fmLessonPdf').value.trim(),
