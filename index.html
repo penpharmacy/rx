@@ -290,6 +290,9 @@
                         <i class="fa-solid fa-upload"></i> อัปโหลด
                         <input type="file" accept="image/*" class="hidden" onchange="importFileToInput(this, 'fmCourseCover')">
                     </label>
+                    <button type="button" onclick="clearInputField('fmCourseCover')" class="px-2.5 py-2 rounded-xl bg-rose-50 text-rose-600 text-xs font-semibold hover:bg-rose-100" title="ลบรูปปก">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
                 </div>
             </div>
             <div class="flex justify-end gap-2 pt-3">
@@ -348,36 +351,53 @@
                 <input type="checkbox" id="fmLessonStrictVideo" class="w-5 h-5 rounded text-blue-600">
             </div>
             <div class="space-y-2 pt-1">
-                <div class="text-xs font-bold text-slate-600 dark:text-slate-300">สื่อการสอน (รองรับ Canva, YouTube, วิดีโอ, เอกสาร และรูปภาพ):</div>
-                <div class="flex gap-2">
-                    <input type="text" id="fmLessonCanva" placeholder="วางลิงก์จาก Canva (เช่น https://www.canva.com/design/.../view)" class="flex-1 px-3 py-2 rounded-xl border border-cyan-200 dark:border-slate-700 dark:bg-slate-900 text-xs">
-                    <span class="px-3 py-2 rounded-xl bg-cyan-50 text-cyan-700 text-xs font-semibold shrink-0 flex items-center gap-1">
-                        <i class="fa-solid fa-object-group"></i> ลิงก์ Canva
-                    </span>
+                <div class="text-xs font-bold text-slate-600 dark:text-slate-300">สื่อการสอน (รองรับ Canva, YouTube, วิดีโอ, เอกสาร และรูปภาพ — กดปุ่มถังขยะเพื่อลบข้อมูลที่เคยลงไว้):</div>
+                <div class="p-2.5 rounded-xl bg-cyan-50/70 dark:bg-cyan-950/20 border border-cyan-200 dark:border-cyan-800 space-y-1.5">
+                    <div class="flex gap-1.5">
+                        <input type="text" id="fmLessonCanva" placeholder="วางลิงก์แชร์ หรือ โค้ด Embed จาก Canva" class="flex-1 px-3 py-2 rounded-xl border border-cyan-200 dark:border-slate-700 dark:bg-slate-900 text-xs">
+                        <button type="button" onclick="clearInputField('fmLessonCanva')" class="px-2.5 py-2 rounded-xl bg-rose-50 text-rose-600 text-xs font-semibold hover:bg-rose-100 shrink-0" title="ลบลิงก์ Canva">
+                            <i class="fa-solid fa-trash-can"></i> ลบ
+                        </button>
+                    </div>
+                    <div class="text-[11px] text-cyan-800 dark:text-cyan-300">
+                        💡 <b>วิธีนำลิงก์ Canva มาวางไม่ให้ขึ้นปฏิเสธการเชื่อมต่อ:</b> ใน Canva กดปุ่ม <b>แชร์ (Share) ➔ เพิ่มเติม (More) ➔ ฝัง (Embed)</b> แล้วคัดลอกลิงก์หรือโค้ดมาวางได้เลย
+                    </div>
                 </div>
-                <div class="flex gap-2">
-                    <input type="text" id="fmLessonVideo" placeholder="ลิงก์วิดีโอ YouTube Embed หรือ .mp4" class="flex-1 px-3 py-2 rounded-xl border dark:border-slate-700 dark:bg-slate-900 text-xs">
-                    <label class="px-3 py-2 rounded-xl bg-red-50 text-red-700 text-xs font-semibold cursor-pointer hover:bg-red-100 shrink-0">
+                <div class="flex gap-1.5">
+                    <input type="text" id="fmLessonVideo" placeholder="ลิงก์วิดีโอ YouTube หรือ .mp4" class="flex-1 px-3 py-2 rounded-xl border dark:border-slate-700 dark:bg-slate-900 text-xs">
+                    <label class="px-2.5 py-2 rounded-xl bg-red-50 text-red-700 text-xs font-semibold cursor-pointer hover:bg-red-100 shrink-0">
                         <i class="fa-solid fa-video"></i> นำเข้าวิดีโอ
                         <input type="file" accept="video/*" class="hidden" onchange="importFileToInput(this, 'fmLessonVideo')">
                     </label>
+                    <button type="button" onclick="clearInputField('fmLessonVideo')" class="px-2.5 py-2 rounded-xl bg-rose-50 text-rose-600 text-xs font-semibold hover:bg-rose-100 shrink-0" title="ลบวิดีโอ">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
                 </div>
-                <div class="flex gap-2">
+                <div class="flex gap-1.5">
                     <input type="text" id="fmLessonPdf" placeholder="ลิงก์เอกสาร PDF / Slide / Google Drive" class="flex-1 px-3 py-2 rounded-xl border dark:border-slate-700 dark:bg-slate-900 text-xs">
-                    <label class="px-3 py-2 rounded-xl bg-rose-50 text-rose-700 text-xs font-semibold cursor-pointer hover:bg-rose-100 shrink-0">
+                    <label class="px-2.5 py-2 rounded-xl bg-rose-50 text-rose-700 text-xs font-semibold cursor-pointer hover:bg-rose-100 shrink-0">
                         <i class="fa-solid fa-file-arrow-up"></i> นำเข้าเอกสาร
                         <input type="file" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt" class="hidden" onchange="importFileToInput(this, 'fmLessonPdf')">
                     </label>
+                    <button type="button" onclick="clearInputField('fmLessonPdf')" class="px-2.5 py-2 rounded-xl bg-rose-50 text-rose-600 text-xs font-semibold hover:bg-rose-100 shrink-0" title="ลบเอกสาร">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
                 </div>
-                <div class="flex gap-2">
+                <div class="flex gap-1.5">
                     <input type="text" id="fmLessonImg" placeholder="ลิงก์รูปภาพประกอบบทเรียน (หรือกด Ctrl+V วางรูป)" class="flex-1 px-3 py-2 rounded-xl border dark:border-slate-700 dark:bg-slate-900 text-xs">
-                    <label class="px-3 py-2 rounded-xl bg-emerald-50 text-emerald-700 text-xs font-semibold cursor-pointer hover:bg-emerald-100 shrink-0">
+                    <label class="px-2.5 py-2 rounded-xl bg-emerald-50 text-emerald-700 text-xs font-semibold cursor-pointer hover:bg-emerald-100 shrink-0">
                         <i class="fa-solid fa-image"></i> นำเข้ารูปภาพ
                         <input type="file" accept="image/*" class="hidden" onchange="importFileToInput(this, 'fmLessonImg')">
                     </label>
+                    <button type="button" onclick="clearInputField('fmLessonImg')" class="px-2.5 py-2 rounded-xl bg-rose-50 text-rose-600 text-xs font-semibold hover:bg-rose-100 shrink-0" title="ลบรูปภาพ">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
                 </div>
                 <div>
-                    <label class="font-semibold block mb-1 text-xs">ข้อความสรุป / เนื้อหาเพิ่มเติมใต้สื่อ (Extra Text)</label>
+                    <div class="flex justify-between items-center mb-1">
+                        <label class="font-semibold text-xs">ข้อความสรุป / เนื้อหาเพิ่มเติมใต้สื่อ (Extra Text)</label>
+                        <button type="button" onclick="clearInputField('fmLessonExtraText')" class="text-[11px] text-rose-600 hover:underline"><i class="fa-solid fa-eraser mr-0.5"></i> ล้างข้อความ</button>
+                    </div>
                     <textarea id="fmLessonExtraText" rows="2" placeholder="พิมพ์ข้อความคำอธิบายเพิ่มเติม หมายเหตุ หรือข้อควรระวังสำหรับผู้เรียน..." class="w-full px-3 py-2 rounded-xl border dark:border-slate-700 dark:bg-slate-900 text-xs"></textarea>
                 </div>
             </div>
@@ -391,7 +411,7 @@
 
 <!-- Quiz Modal -->
 <div id="quizModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-white dark:bg-slate-800 rounded-3xl max-w-xl w-full p-6 shadow-2xl max-h-[92vh] overflow-y-auto">
+    <div class="bg-white dark:bg-slate-800 rounded-3xl max-w-2xl w-full p-6 shadow-2xl max-h-[92vh] overflow-y-auto">
         <div class="flex justify-between items-center pb-3 border-b border-slate-100 dark:border-slate-700 mb-4">
             <h3 id="quizModalHeading" class="font-bold text-lg text-blue-900 dark:text-white"><i class="fa-solid fa-circle-question mr-2"></i>สร้าง / แก้ไขข้อสอบ (ก่อนเรียน / หลังเรียน)</h3>
             <button onclick="closeModal('quizModal')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-xl"></i></button>
@@ -421,32 +441,82 @@
                 </div>
             </div>
             <div>
-                <label class="font-semibold block mb-1">คำถาม *</label>
-                <textarea id="fmQuizQuestion" rows="2" required class="w-full px-3 py-2 rounded-xl border dark:border-slate-700 dark:bg-slate-900"></textarea>
+                <div class="flex justify-between items-center mb-1">
+                    <label class="font-semibold">คำถาม * <span class="text-[11px] font-normal text-blue-600">(ก๊อปปี้รูปแล้วกด Ctrl+V วางลงในโจทย์ได้ทันที)</span></label>
+                    <button type="button" onclick="clearInputField('fmQuizQuestion')" class="text-[11px] text-rose-600 hover:underline">ล้างคำถาม</button>
+                </div>
+                <textarea id="fmQuizQuestion" rows="2" required onpaste="handlePasteToTarget(event, 'fmQuizImage', 'fmQuizImagePreview')" class="w-full px-3 py-2 rounded-xl border dark:border-slate-700 dark:bg-slate-900"></textarea>
             </div>
             <div class="space-y-2 p-3 rounded-2xl bg-slate-50 dark:bg-slate-700/40 border border-slate-200 dark:border-slate-600">
                 <div class="text-xs font-bold text-slate-600 dark:text-slate-300"><i class="fa-solid fa-photo-film mr-1 text-blue-600"></i> แนบสื่อประกอบโจทย์ (รูปภาพ / คลิปวิดีโอ / ข้อความเพิ่มเติม):</div>
-                <div class="flex gap-2">
-                    <input type="text" id="fmQuizImage" placeholder="URL รูปภาพประกอบโจทย์ (หรือกด Ctrl+V วางรูป)" class="flex-1 px-3 py-2 rounded-xl border text-xs dark:border-slate-700 dark:bg-slate-900">
-                    <label class="px-3 py-2 rounded-xl bg-emerald-50 text-emerald-700 text-xs font-semibold cursor-pointer hover:bg-emerald-100 shrink-0">
+                <div class="flex gap-1.5">
+                    <input type="text" id="fmQuizImage" oninput="updateImgPreview('fmQuizImage', 'fmQuizImagePreview')" placeholder="URL รูปภาพประกอบโจทย์ (หรือกด Ctrl+V วางรูป)" class="flex-1 px-3 py-2 rounded-xl border text-xs dark:border-slate-700 dark:bg-slate-900">
+                    <label class="px-2.5 py-2 rounded-xl bg-emerald-50 text-emerald-700 text-xs font-semibold cursor-pointer hover:bg-emerald-100 shrink-0">
                         <i class="fa-solid fa-image"></i> นำเข้ารูป
                         <input type="file" accept="image/*" class="hidden" onchange="importFileToInput(this, 'fmQuizImage')">
                     </label>
+                    <button type="button" onclick="clearInputField('fmQuizImage', 'fmQuizImagePreview')" class="px-2.5 py-2 rounded-xl bg-rose-50 text-rose-600 text-xs font-semibold hover:bg-rose-100 shrink-0" title="ลบรูปประกอบโจทย์">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
                 </div>
-                <div class="flex gap-2">
-                    <input type="text" id="fmQuizVideo" placeholder="ลิงก์ YouTube Embed หรือไฟล์วิดีโอ .mp4" class="flex-1 px-3 py-2 rounded-xl border text-xs dark:border-slate-700 dark:bg-slate-900">
-                    <label class="px-3 py-2 rounded-xl bg-red-50 text-red-700 text-xs font-semibold cursor-pointer hover:bg-red-100 shrink-0">
+                <img id="fmQuizImagePreview" class="hidden max-h-32 rounded-xl border object-contain" alt="">
+                <div class="flex gap-1.5">
+                    <input type="text" id="fmQuizVideo" placeholder="ลิงก์ YouTube หรือไฟล์วิดีโอ .mp4" class="flex-1 px-3 py-2 rounded-xl border text-xs dark:border-slate-700 dark:bg-slate-900">
+                    <label class="px-2.5 py-2 rounded-xl bg-red-50 text-red-700 text-xs font-semibold cursor-pointer hover:bg-red-100 shrink-0">
                         <i class="fa-solid fa-video"></i> นำเข้าคลิป
                         <input type="file" accept="video/*" class="hidden" onchange="importFileToInput(this, 'fmQuizVideo')">
                     </label>
+                    <button type="button" onclick="clearInputField('fmQuizVideo')" class="px-2.5 py-2 rounded-xl bg-rose-50 text-rose-600 text-xs font-semibold hover:bg-rose-100 shrink-0" title="ลบคลิป">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
                 </div>
-                <input type="text" id="fmQuizExtraText" placeholder="ข้อความคำอธิบาย / กรณีศึกษาประกอบโจทย์เพิ่มเติม (ถ้ามี)" class="w-full px-3 py-2 rounded-xl border text-xs dark:border-slate-700 dark:bg-slate-900">
+                <div class="flex gap-1.5">
+                    <input type="text" id="fmQuizExtraText" placeholder="ข้อความคำอธิบาย / กรณีศึกษาประกอบโจทย์เพิ่มเติม (ถ้ามี)" class="flex-1 px-3 py-2 rounded-xl border text-xs dark:border-slate-700 dark:bg-slate-900">
+                    <button type="button" onclick="clearInputField('fmQuizExtraText')" class="px-2.5 py-2 rounded-xl bg-rose-50 text-rose-600 text-xs font-semibold hover:bg-rose-100 shrink-0" title="ล้างข้อความเสริม">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                </div>
             </div>
-            <div id="boxChoices" class="grid grid-cols-2 gap-2">
-                <input type="text" id="fmChoiceA" placeholder="ตัวเลือก A" class="px-3 py-2 rounded-xl border dark:border-slate-700 dark:bg-slate-900">
-                <input type="text" id="fmChoiceB" placeholder="ตัวเลือก B" class="px-3 py-2 rounded-xl border dark:border-slate-700 dark:bg-slate-900">
-                <input type="text" id="fmChoiceC" placeholder="ตัวเลือก C" class="px-3 py-2 rounded-xl border dark:border-slate-700 dark:bg-slate-900">
-                <input type="text" id="fmChoiceD" placeholder="ตัวเลือก D" class="px-3 py-2 rounded-xl border dark:border-slate-700 dark:bg-slate-900">
+            <div id="boxChoices" class="space-y-2">
+                <div class="text-xs font-bold text-slate-600 dark:text-slate-300">ตัวเลือกคำตอบ <span class="font-normal text-blue-600">(รองรับทั้งข้อความและก๊อปปี้รูปกด Ctrl+V วางในแต่ละตัวเลือก)</span>:</div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    <div class="p-2 rounded-xl border dark:border-slate-700 space-y-1">
+                        <div class="flex gap-1">
+                            <input type="text" id="fmChoiceA" onpaste="handlePasteToTarget(event, 'fmChoiceAImg', 'fmChoiceAImgPrev')" placeholder="ตัวเลือก A (หรือ Ctrl+V วางรูป)" class="flex-1 px-2.5 py-1.5 rounded-lg border dark:border-slate-700 dark:bg-slate-900 text-xs">
+                            <label class="px-2 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 text-xs cursor-pointer" title="แนบรูปตัวเลือก A"><i class="fa-solid fa-image"></i><input type="file" accept="image/*" class="hidden" onchange="importFileToInput(this, 'fmChoiceAImg')"></label>
+                            <button type="button" onclick="clearChoiceFields('A')" class="px-2 py-1.5 rounded-lg bg-rose-50 text-rose-600 text-xs" title="ล้างตัวเลือก A"><i class="fa-solid fa-trash-can"></i></button>
+                        </div>
+                        <input type="hidden" id="fmChoiceAImg" oninput="updateImgPreview('fmChoiceAImg', 'fmChoiceAImgPrev')">
+                        <img id="fmChoiceAImgPrev" class="hidden max-h-20 rounded-lg border object-contain" alt="">
+                    </div>
+                    <div class="p-2 rounded-xl border dark:border-slate-700 space-y-1">
+                        <div class="flex gap-1">
+                            <input type="text" id="fmChoiceB" onpaste="handlePasteToTarget(event, 'fmChoiceBImg', 'fmChoiceBImgPrev')" placeholder="ตัวเลือก B (หรือ Ctrl+V วางรูป)" class="flex-1 px-2.5 py-1.5 rounded-lg border dark:border-slate-700 dark:bg-slate-900 text-xs">
+                            <label class="px-2 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 text-xs cursor-pointer" title="แนบรูปตัวเลือก B"><i class="fa-solid fa-image"></i><input type="file" accept="image/*" class="hidden" onchange="importFileToInput(this, 'fmChoiceBImg')"></label>
+                            <button type="button" onclick="clearChoiceFields('B')" class="px-2 py-1.5 rounded-lg bg-rose-50 text-rose-600 text-xs" title="ล้างตัวเลือก B"><i class="fa-solid fa-trash-can"></i></button>
+                        </div>
+                        <input type="hidden" id="fmChoiceBImg" oninput="updateImgPreview('fmChoiceBImg', 'fmChoiceBImgPrev')">
+                        <img id="fmChoiceBImgPrev" class="hidden max-h-20 rounded-lg border object-contain" alt="">
+                    </div>
+                    <div class="p-2 rounded-xl border dark:border-slate-700 space-y-1">
+                        <div class="flex gap-1">
+                            <input type="text" id="fmChoiceC" onpaste="handlePasteToTarget(event, 'fmChoiceCImg', 'fmChoiceCImgPrev')" placeholder="ตัวเลือก C (หรือ Ctrl+V วางรูป)" class="flex-1 px-2.5 py-1.5 rounded-lg border dark:border-slate-700 dark:bg-slate-900 text-xs">
+                            <label class="px-2 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 text-xs cursor-pointer" title="แนบรูปตัวเลือก C"><i class="fa-solid fa-image"></i><input type="file" accept="image/*" class="hidden" onchange="importFileToInput(this, 'fmChoiceCImg')"></label>
+                            <button type="button" onclick="clearChoiceFields('C')" class="px-2 py-1.5 rounded-lg bg-rose-50 text-rose-600 text-xs" title="ล้างตัวเลือก C"><i class="fa-solid fa-trash-can"></i></button>
+                        </div>
+                        <input type="hidden" id="fmChoiceCImg" oninput="updateImgPreview('fmChoiceCImg', 'fmChoiceCImgPrev')">
+                        <img id="fmChoiceCImgPrev" class="hidden max-h-20 rounded-lg border object-contain" alt="">
+                    </div>
+                    <div class="p-2 rounded-xl border dark:border-slate-700 space-y-1">
+                        <div class="flex gap-1">
+                            <input type="text" id="fmChoiceD" onpaste="handlePasteToTarget(event, 'fmChoiceDImg', 'fmChoiceDImgPrev')" placeholder="ตัวเลือก D (หรือ Ctrl+V วางรูป)" class="flex-1 px-2.5 py-1.5 rounded-lg border dark:border-slate-700 dark:bg-slate-900 text-xs">
+                            <label class="px-2 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 text-xs cursor-pointer" title="แนบรูปตัวเลือก D"><i class="fa-solid fa-image"></i><input type="file" accept="image/*" class="hidden" onchange="importFileToInput(this, 'fmChoiceDImg')"></label>
+                            <button type="button" onclick="clearChoiceFields('D')" class="px-2 py-1.5 rounded-lg bg-rose-50 text-rose-600 text-xs" title="ล้างตัวเลือก D"><i class="fa-solid fa-trash-can"></i></button>
+                        </div>
+                        <input type="hidden" id="fmChoiceDImg" oninput="updateImgPreview('fmChoiceDImg', 'fmChoiceDImgPrev')">
+                        <img id="fmChoiceDImgPrev" class="hidden max-h-20 rounded-lg border object-contain" alt="">
+                    </div>
+                </div>
             </div>
             <div id="boxMCQ">
                 <label class="font-semibold block mb-1">เฉลย</label>
@@ -787,6 +857,58 @@ function getNowThai() {
     const d = new Date();
     return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear() + 543} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 }
+function clearInputField(targetInputId, previewImgId = null) {
+    const el = document.getElementById(targetInputId);
+    if (el) {
+        el.value = '';
+        el.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+    if (previewImgId) {
+        const prev = document.getElementById(previewImgId);
+        if (prev) { prev.src = ''; prev.classList.add('hidden'); }
+    }
+}
+
+function clearChoiceFields(letter) {
+    clearInputField(`fmChoice${letter}`);
+    clearInputField(`fmChoice${letter}Img`, `fmChoice${letter}ImgPrev`);
+}
+
+function updateImgPreview(inputId, previewId) {
+    const val = (document.getElementById(inputId)?.value || '').trim();
+    const img = document.getElementById(previewId);
+    if (!img) return;
+    if (val) {
+        img.src = val;
+        img.classList.remove('hidden');
+    } else {
+        img.src = '';
+        img.classList.add('hidden');
+    }
+}
+
+function handlePasteToTarget(e, targetInputId, previewImgId = null) {
+    const items = e.clipboardData?.items || [];
+    for (const item of items) {
+        if (item.type.startsWith('image/')) {
+            e.preventDefault();
+            const file = item.getAsFile();
+            const reader = new FileReader();
+            reader.onload = () => {
+                const target = document.getElementById(targetInputId);
+                if (target) {
+                    target.value = reader.result;
+                    target.dispatchEvent(new Event('input', { bubbles: true }));
+                }
+                if (previewImgId) updateImgPreview(targetInputId, previewImgId);
+                Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'วางรูปภาพจากคลิปบอร์ดสำเร็จ', showConfirmButton: false, timer: 1200 });
+            };
+            reader.readAsDataURL(file);
+            return;
+        }
+    }
+}
+
 function importFileToInput(fileInput, targetInputId) {
     const file = fileInput.files[0];
     if (!file) return;
@@ -801,6 +923,7 @@ function importFileToInput(fileInput, targetInputId) {
             target.value = reader.result;
             target.dispatchEvent(new Event('input', { bubbles: true }));
         }
+        fileInput.value = '';
         Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: `นำเข้าไฟล์ "${file.name}" สำเร็จ`, showConfirmButton: false, timer: 1400 });
     };
     reader.readAsDataURL(file);
@@ -819,10 +942,21 @@ function normalizeCanvaEmbedUrl(url) {
     if (!u) return '';
     const iframeMatch = u.match(/src=["']([^"']+)["']/i);
     if (iframeMatch) u = iframeMatch[1];
-    if (u.includes('canva.com/design/')) {
-        const base = u.split('?')[0].replace(/\/(edit|watch|view)\/?$/i, '/view');
-        return base + '?embed';
+
+    // รองรับลิงก์ Canva ทั้งแบบมี Token (/design/DAG.../xyz/view) และไม่มี Token
+    const canvaDesignMatch = u.match(/(https?:\/\/(?:www\.)?canva\.com\/design\/[^/?#]+(?:\/[^/?#]+)?)/i);
+    if (canvaDesignMatch) {
+        let base = canvaDesignMatch[1].replace(/\/(edit|watch|view)$/i, '');
+        return `${base}/view?embed`;
     }
+
+    // รองรับลิงก์ Google Drive / Google Slides / Google Docs
+    const gDriveMatch = u.match(/drive\.google\.com\/file\/d\/([^/?#]+)/i);
+    if (gDriveMatch) return `https://drive.google.com/file/d/${gDriveMatch[1]}/preview`;
+
+    const gSlidesMatch = u.match(/docs\.google\.com\/(presentation|document|spreadsheets)\/d\/([^/?#]+)/i);
+    if (gSlidesMatch) return `https://docs.google.com/${gSlidesMatch[1]}/d/${gSlidesMatch[2]}/preview`;
+
     return u;
 }
 
@@ -2216,15 +2350,29 @@ function openCoursePlayer(courseId, lessonId) {
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="lg:col-span-2 custom-card bg-white dark:bg-slate-800 p-6 shadow-sm border border-slate-100 dark:border-slate-700 space-y-5">
+                <div class="flex justify-between items-start gap-2">
+                    <div>
+                        <span class="text-xs font-bold text-blue-600 uppercase">${sanitizeHTML(course.CourseName)} (บทที่ ${currentIdx + 1}/${courseLessons.length})</span>
+                        <h2 class="text-xl font-bold mt-0.5">${sanitizeHTML(currentLesson.Title)}</h2>
+                    </div>
+                    <span class="px-3 py-1 rounded-full text-xs font-bold ${isCompleted ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">
+                        ${isCompleted ? 'เรียนจบแล้ว' : 'กำลังเรียน'}
+                    </span>
+                </div>
+
                 ${currentLesson.CanvaURL ? `
-                <div class="space-y-1.5">
-                    <div class="flex justify-between items-center text-xs">
-                        <span class="font-bold text-cyan-700 dark:text-cyan-300"><i class="fa-solid fa-object-group mr-1"></i> สื่อนำเสนอจาก Canva</span>
-                        <a href="${sanitizeHTML(currentLesson.CanvaURL)}" target="_blank" class="text-cyan-600 hover:underline font-semibold"><i class="fa-solid fa-up-right-from-square mr-1"></i> เปิดหน้าต่างเต็มจอ</a>
+                <div class="space-y-2 p-3 rounded-2xl bg-cyan-50/50 dark:bg-slate-900/60 border border-cyan-200 dark:border-slate-700">
+                    <div class="flex flex-wrap justify-between items-center gap-2 text-xs">
+                        <span class="font-bold text-cyan-800 dark:text-cyan-300"><i class="fa-solid fa-object-group mr-1"></i> สื่อนำเสนอออนไลน์ (Canva / Slide)</span>
+                        <a href="${sanitizeHTML(currentLesson.CanvaURL)}" target="_blank" rel="noopener noreferrer" class="px-3 py-1.5 rounded-xl bg-cyan-600 hover:bg-cyan-700 text-white font-bold shadow-sm transition">
+                            <i class="fa-solid fa-up-right-from-square mr-1"></i> เปิดดูสไลด์ในหน้าต่างใหม่
+                        </a>
                     </div>
-                    <div class="aspect-video rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-900 shadow border border-slate-200 dark:border-slate-700 relative">
-                        <iframe src="${sanitizeHTML(normalizeCanvaEmbedUrl(currentLesson.CanvaURL))}" class="w-full h-full border-0" allowfullscreen="allowfullscreen" allow="fullscreen"></iframe>
+                    <div class="aspect-video rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 relative">
+                        <iframe src="${sanitizeHTML(normalizeCanvaEmbedUrl(currentLesson.CanvaURL))}" class="w-full h-full border-0" referrerpolicy="no-referrer-when-downgrade" allowfullscreen="allowfullscreen" allow="fullscreen"></iframe>
                     </div>
+                    <div class="text-[11px] text-slate-500">หากหน้าต่างสไลด์ไม่แสดงผล (เนื่องจากเจ้าของลิงก์ตั้งค่าจำกัดการฝังหน้าเว็บ) กรุณากดปุ่ม <b>"เปิดดูสไลด์ในหน้าต่างใหม่"</b> ด้านบนขวา</div>
                 </div>` : ''}
 
                 ${currentLesson.VideoURL ? `
@@ -2435,11 +2583,11 @@ function startCourseQuiz(courseId, stage = 'POST', isResuming = false) {
     const randomizedQuestions = seededShuffle(rawQuestions, userSeed).map((q, i) => ({
         ...q,
         shuffledChoices: seededShuffle([
-            { key: 'A', text: q.ChoiceA },
-            { key: 'B', text: q.ChoiceB },
-            { key: 'C', text: q.ChoiceC },
-            { key: 'D', text: q.ChoiceD }
-        ].filter(x => x.text), userSeed + '_' + i)
+            { key: 'A', text: q.ChoiceA, img: q.ChoiceAImg },
+            { key: 'B', text: q.ChoiceB, img: q.ChoiceBImg },
+            { key: 'C', text: q.ChoiceC, img: q.ChoiceCImg },
+            { key: 'D', text: q.ChoiceD, img: q.ChoiceDImg }
+        ].filter(x => x.text || x.img), userSeed + '_' + i)
     }));
 
     let remainingSeconds = randomizedQuestions.length * 60;
@@ -2589,7 +2737,15 @@ function renderQuizInputChoices(q) {
     if (t === 'TF') return [['TRUE', 'ถูก'], ['FALSE', 'ผิด']].map(([v, l]) => `<label class="flex items-center gap-2 p-2.5 rounded-xl border dark:border-slate-700 cursor-pointer text-xs"><input type="radio" name="${n}" value="${v}"><span>${l}</span></label>`).join('');
     if (t === 'FILL') return `<input type="text" name="${n}" placeholder="พิมพ์คำตอบ..." class="w-full px-3 py-2 rounded-xl border dark:border-slate-700 dark:bg-slate-900 text-xs">`;
     const inputType = t === 'MULTI' ? 'checkbox' : 'radio';
-    return q.shuffledChoices.map(ch => `<label class="flex items-center gap-2 p-2.5 rounded-xl border dark:border-slate-700 hover:bg-blue-50 dark:hover:bg-slate-700 cursor-pointer text-xs"><input type="${inputType}" name="${n}" value="${ch.key}"><span>${sanitizeHTML(ch.text)}</span></label>`).join('');
+    return q.shuffledChoices.map(ch => `
+        <label class="flex items-start gap-2.5 p-3 rounded-xl border dark:border-slate-700 hover:bg-blue-50 dark:hover:bg-slate-700 cursor-pointer text-xs">
+            <input type="${inputType}" name="${n}" value="${ch.key}" class="mt-0.5">
+            <div class="space-y-1.5 flex-1">
+                ${ch.text ? `<div>${sanitizeHTML(ch.text)}</div>` : ''}
+                ${ch.img ? `<img src="${sanitizeHTML(ch.img)}" class="max-h-36 rounded-lg border object-contain" alt="">` : ''}
+            </div>
+        </label>
+    `).join('');
 }
 function readQuizUserAnswer(q) {
     const t = q.Type || 'MCQ', n = `q_${q.QuizID}`;
@@ -3531,6 +3687,14 @@ function openQuizModal(quizId = null) {
     document.getElementById('fmQuizId').value = '';
     document.getElementById('fmQuizCourseId').innerHTML = db.Courses.map(c => `<option value="${c.CourseID}">${sanitizeHTML(c.CourseName)}</option>`).join('');
     document.querySelectorAll('.multiCorrect').forEach(cb => cb.checked = false);
+    ['fmQuizImagePreview', 'fmChoiceAImgPrev', 'fmChoiceBImgPrev', 'fmChoiceCImgPrev', 'fmChoiceDImgPrev'].forEach(pid => {
+        const el = document.getElementById(pid);
+        if (el) { el.src = ''; el.classList.add('hidden'); }
+    });
+    ['fmChoiceAImg', 'fmChoiceBImg', 'fmChoiceCImg', 'fmChoiceDImg'].forEach(hid => {
+        const el = document.getElementById(hid);
+        if (el) el.value = '';
+    });
 
     if (quizId) {
         const q = db.Quiz.find(x => x.QuizID === quizId);
@@ -3541,12 +3705,18 @@ function openQuizModal(quizId = null) {
             document.getElementById('fmQuizType').value = q.Type || 'MCQ';
             document.getElementById('fmQuizQuestion').value = q.Question || '';
             document.getElementById('fmQuizImage').value = q.ImageURL || '';
+            updateImgPreview('fmQuizImage', 'fmQuizImagePreview');
             document.getElementById('fmQuizVideo').value = q.VideoURL || '';
             document.getElementById('fmQuizExtraText').value = q.ExtraText || '';
             document.getElementById('fmChoiceA').value = q.ChoiceA || '';
             document.getElementById('fmChoiceB').value = q.ChoiceB || '';
             document.getElementById('fmChoiceC').value = q.ChoiceC || '';
             document.getElementById('fmChoiceD').value = q.ChoiceD || '';
+            document.getElementById('fmChoiceAImg').value = q.ChoiceAImg || '';
+            document.getElementById('fmChoiceBImg').value = q.ChoiceBImg || '';
+            document.getElementById('fmChoiceCImg').value = q.ChoiceCImg || '';
+            document.getElementById('fmChoiceDImg').value = q.ChoiceDImg || '';
+            ['A', 'B', 'C', 'D'].forEach(k => updateImgPreview(`fmChoice${k}Img`, `fmChoice${k}ImgPrev`));
             document.getElementById('fmQuizScore').value = q.Score || 10;
 
             onQuizTypeChange();
@@ -3576,7 +3746,10 @@ function onQuizTypeChange() {
     show('boxMulti', t === 'MULTI');
     show('boxTF', t === 'TF');
     show('boxFill', t === 'FILL');
-    ['A', 'B', 'C', 'D'].forEach(k => document.getElementById('fmChoice' + k).required = (t === 'MCQ' || t === 'MULTI'));
+    ['A', 'B', 'C', 'D'].forEach(k => {
+        const hasImg = !!(document.getElementById('fmChoice' + k + 'Img')?.value || '').trim();
+        document.getElementById('fmChoice' + k).required = ((t === 'MCQ' || t === 'MULTI') && !hasImg);
+    });
 }
 document.getElementById('quizFormModal').addEventListener('submit', (e) => {
     e.preventDefault();
@@ -3590,7 +3763,7 @@ document.getElementById('quizFormModal').addEventListener('submit', (e) => {
     else correct = [...document.querySelectorAll('.multiCorrect:checked')].map(x => x.value).sort().join(',');
 
     if (!correct) { Swal.fire('กรุณาระบุเฉลย', 'ยังไม่ได้กำหนดเฉลยของข้อสอบ', 'warning'); return; }
-    const v = id => document.getElementById(id).value.trim();
+    const v = id => (document.getElementById(id)?.value || '').trim();
     const quizPayload = {
         QuizID: editId || ('QZ' + Date.now()),
         CourseID: v('fmQuizCourseId'),
@@ -3604,6 +3777,10 @@ document.getElementById('quizFormModal').addEventListener('submit', (e) => {
         ChoiceB: v('fmChoiceB'),
         ChoiceC: v('fmChoiceC'),
         ChoiceD: v('fmChoiceD'),
+        ChoiceAImg: v('fmChoiceAImg'),
+        ChoiceBImg: v('fmChoiceBImg'),
+        ChoiceCImg: v('fmChoiceCImg'),
+        ChoiceDImg: v('fmChoiceDImg'),
         CorrectAnswer: correct,
         Score: Number(v('fmQuizScore')) || 10
     };
@@ -3697,35 +3874,53 @@ function renderBulkQuizEditorView(stageFilter = 'ALL') {
                                 </div>
 
                                 <div>
-                                    <textarea rows="2" placeholder="พิมพ์คำถาม..." class="bq-question w-full px-3 py-2 rounded-xl border bg-white font-semibold">${sanitizeHTML(q.Question || '')}</textarea>
+                                    <textarea rows="2" onpaste="handlePasteToTarget(event, 'bqImg_${realIdx}', 'bqImgPrev_${realIdx}')" placeholder="พิมพ์คำถาม... (ก๊อปปี้รูปแล้วกด Ctrl+V วางในช่องนี้ได้ทันที)" class="bq-question w-full px-3 py-2 rounded-xl border bg-white font-semibold">${sanitizeHTML(q.Question || '')}</textarea>
                                 </div>
 
                                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 p-2.5 rounded-xl bg-white border border-slate-200">
-                                    <div class="flex gap-1">
-                                        <input id="bqImg_${realIdx}" type="text" value="${sanitizeHTML(q.ImageURL || '')}" placeholder="URL รูปภาพประกอบ..." class="bq-image flex-1 px-2 py-1 rounded-lg border text-[11px]">
-                                        <label class="px-2 py-1 rounded-lg bg-emerald-50 text-emerald-700 font-semibold cursor-pointer shrink-0" title="นำเข้ารูปภาพ">
-                                            <i class="fa-solid fa-image"></i>
-                                            <input type="file" accept="image/*" class="hidden" onchange="importFileToInput(this, 'bqImg_${realIdx}')">
-                                        </label>
+                                    <div class="space-y-1">
+                                        <div class="flex gap-1">
+                                            <input id="bqImg_${realIdx}" type="text" oninput="updateImgPreview('bqImg_${realIdx}', 'bqImgPrev_${realIdx}')" value="${sanitizeHTML(q.ImageURL || '')}" placeholder="URL รูปภาพประกอบ..." class="bq-image flex-1 px-2 py-1 rounded-lg border text-[11px]">
+                                            <label class="px-2 py-1 rounded-lg bg-emerald-50 text-emerald-700 font-semibold cursor-pointer shrink-0" title="นำเข้ารูปภาพ">
+                                                <i class="fa-solid fa-image"></i>
+                                                <input type="file" accept="image/*" class="hidden" onchange="importFileToInput(this, 'bqImg_${realIdx}')">
+                                            </label>
+                                            <button type="button" onclick="clearInputField('bqImg_${realIdx}', 'bqImgPrev_${realIdx}')" class="px-2 py-1 rounded-lg bg-rose-50 text-rose-600 shrink-0" title="ลบรูปประกอบโจทย์"><i class="fa-solid fa-trash-can"></i></button>
+                                        </div>
+                                        <img id="bqImgPrev_${realIdx}" src="${sanitizeHTML(q.ImageURL || '')}" class="${q.ImageURL ? '' : 'hidden'} max-h-20 rounded border object-contain" alt="">
                                     </div>
-                                    <div class="flex gap-1">
+                                    <div class="flex gap-1 items-start">
                                         <input id="bqVid_${realIdx}" type="text" value="${sanitizeHTML(q.VideoURL || '')}" placeholder="ลิงก์คลิป YouTube / .mp4" class="bq-video flex-1 px-2 py-1 rounded-lg border text-[11px]">
                                         <label class="px-2 py-1 rounded-lg bg-red-50 text-red-700 font-semibold cursor-pointer shrink-0" title="นำเข้าคลิปวิดีโอ">
                                             <i class="fa-solid fa-video"></i>
                                             <input type="file" accept="video/*" class="hidden" onchange="importFileToInput(this, 'bqVid_${realIdx}')">
                                         </label>
+                                        <button type="button" onclick="clearInputField('bqVid_${realIdx}')" class="px-2 py-1 rounded-lg bg-rose-50 text-rose-600 shrink-0" title="ลบคลิป"><i class="fa-solid fa-trash-can"></i></button>
                                     </div>
-                                    <div>
-                                        <input type="text" value="${sanitizeHTML(q.ExtraText || '')}" placeholder="ข้อความคำอธิบายเพิ่มเติม..." class="bq-extra w-full px-2 py-1 rounded-lg border text-[11px]">
+                                    <div class="flex gap-1 items-start">
+                                        <input id="bqExt_${realIdx}" type="text" value="${sanitizeHTML(q.ExtraText || '')}" placeholder="ข้อความคำอธิบายเพิ่มเติม..." class="bq-extra flex-1 px-2 py-1 rounded-lg border text-[11px]">
+                                        <button type="button" onclick="clearInputField('bqExt_${realIdx}')" class="px-2 py-1 rounded-lg bg-rose-50 text-rose-600 shrink-0" title="ล้างข้อความเสริม"><i class="fa-solid fa-trash-can"></i></button>
                                     </div>
                                 </div>
 
                                 ${(t === 'MCQ' || t === 'MULTI') ? `
                                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                        <div class="flex items-center gap-1.5"><span class="font-bold text-blue-700 w-4">A:</span><input type="text" value="${sanitizeHTML(q.ChoiceA || '')}" placeholder="ตัวเลือก A" class="bq-choiceA flex-1 px-2.5 py-1.5 rounded-lg border bg-white"></div>
-                                        <div class="flex items-center gap-1.5"><span class="font-bold text-blue-700 w-4">B:</span><input type="text" value="${sanitizeHTML(q.ChoiceB || '')}" placeholder="ตัวเลือก B" class="bq-choiceB flex-1 px-2.5 py-1.5 rounded-lg border bg-white"></div>
-                                        <div class="flex items-center gap-1.5"><span class="font-bold text-blue-700 w-4">C:</span><input type="text" value="${sanitizeHTML(q.ChoiceC || '')}" placeholder="ตัวเลือก C" class="bq-choiceC flex-1 px-2.5 py-1.5 rounded-lg border bg-white"></div>
-                                        <div class="flex items-center gap-1.5"><span class="font-bold text-blue-700 w-4">D:</span><input type="text" value="${sanitizeHTML(q.ChoiceD || '')}" placeholder="ตัวเลือก D" class="bq-choiceD flex-1 px-2.5 py-1.5 rounded-lg border bg-white"></div>
+                                        ${['A', 'B', 'C', 'D'].map(letter => {
+                                            const cTxt = q['Choice' + letter] || '';
+                                            const cImg = q['Choice' + letter + 'Img'] || '';
+                                            return `
+                                                <div class="p-2 rounded-xl bg-white border border-slate-200 space-y-1">
+                                                    <div class="flex items-center gap-1">
+                                                        <span class="font-bold text-blue-700 w-4">${letter}:</span>
+                                                        <input type="text" value="${sanitizeHTML(cTxt)}" onpaste="handlePasteToTarget(event, 'bqChoice${letter}Img_${realIdx}', 'bqChoice${letter}Prev_${realIdx}')" placeholder="ตัวเลือก ${letter} (หรือ Ctrl+V วางรูป)" class="bq-choice${letter} flex-1 px-2 py-1 rounded-lg border text-[11px]">
+                                                        <label class="px-2 py-1 rounded-lg bg-emerald-50 text-emerald-700 cursor-pointer shrink-0" title="แนบรูปตัวเลือก ${letter}"><i class="fa-solid fa-image"></i><input type="file" accept="image/*" class="hidden" onchange="importFileToInput(this, 'bqChoice${letter}Img_${realIdx}')"></label>
+                                                        <button type="button" onclick="clearInputField('bqChoice${letter}Img_${realIdx}', 'bqChoice${letter}Prev_${realIdx}')" class="px-2 py-1 rounded-lg bg-rose-50 text-rose-600 shrink-0" title="ลบรูปตัวเลือก ${letter}"><i class="fa-solid fa-trash-can"></i></button>
+                                                    </div>
+                                                    <input type="hidden" id="bqChoice${letter}Img_${realIdx}" oninput="updateImgPreview('bqChoice${letter}Img_${realIdx}', 'bqChoice${letter}Prev_${realIdx}')" value="${sanitizeHTML(cImg)}" class="bq-choice${letter}Img">
+                                                    <img id="bqChoice${letter}Prev_${realIdx}" src="${sanitizeHTML(cImg)}" class="${cImg ? '' : 'hidden'} max-h-16 rounded border object-contain ml-5" alt="">
+                                                </div>
+                                            `;
+                                        }).join('')}
                                     </div>
                                 ` : ''}
 
@@ -3773,6 +3968,14 @@ function renderBulkQuizEditorView(stageFilter = 'ALL') {
         }
     }).then(res => {
         if (res.isConfirmed) {
+            const oldIds = new Set(db.Quiz.filter(q => q.CourseID === bulkQuizCourseId).map(q => q.QuizID));
+            const newIds = new Set(bulkQuizDraftList.map(q => q.QuizID));
+            oldIds.forEach(oid => {
+                if (!newIds.has(oid)) {
+                    pushRecordToGoogleSheet('deleteRecord', { sheetName: 'Quiz', primaryKey: 'QuizID', id: oid });
+                }
+            });
+
             db.Quiz = db.Quiz.filter(q => q.CourseID !== bulkQuizCourseId).concat(bulkQuizDraftList);
             saveDB();
             bulkQuizDraftList.forEach(q => pushRecordToGoogleSheet('saveQuiz', q));
@@ -3794,10 +3997,10 @@ function syncBulkQuizInputsFromDOM() {
         if (card.querySelector('.bq-image')) item.ImageURL = card.querySelector('.bq-image').value.trim();
         if (card.querySelector('.bq-video')) item.VideoURL = card.querySelector('.bq-video').value.trim();
         if (card.querySelector('.bq-extra')) item.ExtraText = card.querySelector('.bq-extra').value.trim();
-        if (card.querySelector('.bq-choiceA')) item.ChoiceA = card.querySelector('.bq-choiceA').value;
-        if (card.querySelector('.bq-choiceB')) item.ChoiceB = card.querySelector('.bq-choiceB').value;
-        if (card.querySelector('.bq-choiceC')) item.ChoiceC = card.querySelector('.bq-choiceC').value;
-        if (card.querySelector('.bq-choiceD')) item.ChoiceD = card.querySelector('.bq-choiceD').value;
+        ['A', 'B', 'C', 'D'].forEach(letter => {
+            if (card.querySelector(`.bq-choice${letter}`)) item[`Choice${letter}`] = card.querySelector(`.bq-choice${letter}`).value;
+            if (card.querySelector(`.bq-choice${letter}Img`)) item[`Choice${letter}Img`] = card.querySelector(`.bq-choice${letter}Img`).value.trim();
+        });
         if (card.querySelector('.bq-correct')) item.CorrectAnswer = card.querySelector('.bq-correct').value.trim();
     });
 }
@@ -3821,10 +4024,15 @@ function addBulkQuizRow(defaultStage, stageFilter) {
         Question: '',
         ImageURL: '',
         VideoURL: '',
+        ExtraText: '',
         ChoiceA: '',
         ChoiceB: '',
         ChoiceC: '',
         ChoiceD: '',
+        ChoiceAImg: '',
+        ChoiceBImg: '',
+        ChoiceCImg: '',
+        ChoiceDImg: '',
         CorrectAnswer: 'A',
         Score: 10
     });
@@ -4098,6 +4306,7 @@ window.addEventListener('mousemove', (e) => {
 window.addEventListener('mouseup', () => { dragState = null; });
 
 window.addEventListener('paste', (e) => {
+    if (e.defaultPrevented) return;
     const items = e.clipboardData?.items || [];
     for (const item of items) {
         if (item.type.startsWith('image/')) {
@@ -4113,7 +4322,8 @@ window.addEventListener('paste', (e) => {
                 }
                 if (quizOpen) {
                     document.getElementById('fmQuizImage').value = reader.result;
-                    Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'วางรูปภาพลงในข้อสอบสำเร็จ', showConfirmButton: false, timer: 1200 });
+                    updateImgPreview('fmQuizImage', 'fmQuizImagePreview');
+                    Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'วางรูปภาพลงในโจทย์ข้อสอบสำเร็จ', showConfirmButton: false, timer: 1200 });
                     return;
                 }
                 if (currentView === 'certDesigner' && certDraft) {
