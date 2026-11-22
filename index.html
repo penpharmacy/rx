@@ -581,7 +581,7 @@
  * E-LEARNING PHARMACY - FULL ENTERPRISE SPA CONTROLLER + GOOGLE SHEETS SYNC
  * ============================================================================
  */
-const DEFAULT_GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwAxU-L9iQdQNSSZyQhD9fpKSYDg1R5OwEoYi0Y6QydpY95z00fId8tQtobHGENrnGCQg/exec";
+const DEFAULT_GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwzYoFqaiRAhi0oDVhSWkFPZBr74yaqL4bzRkmcgDpfnwUEJ00C8nyirxu36cOe7NX1fw/exec";
 
 function getGasUrl() {
     return (db && db.SiteThemeSettings && db.SiteThemeSettings.gasWebAppUrl) || DEFAULT_GAS_WEB_APP_URL;
@@ -943,14 +943,12 @@ function normalizeCanvaEmbedUrl(url) {
     const iframeMatch = u.match(/src=["']([^"']+)["']/i);
     if (iframeMatch) u = iframeMatch[1];
 
-    // รองรับลิงก์ Canva ทั้งแบบมี Token (/design/DAG.../xyz/view) และไม่มี Token
     const canvaDesignMatch = u.match(/(https?:\/\/(?:www\.)?canva\.com\/design\/[^/?#]+(?:\/[^/?#]+)?)/i);
     if (canvaDesignMatch) {
         let base = canvaDesignMatch[1].replace(/\/(edit|watch|view)$/i, '');
         return `${base}/view?embed`;
     }
 
-    // รองรับลิงก์ Google Drive / Google Slides / Google Docs
     const gDriveMatch = u.match(/drive\.google\.com\/file\/d\/([^/?#]+)/i);
     if (gDriveMatch) return `https://drive.google.com/file/d/${gDriveMatch[1]}/preview`;
 
@@ -3824,13 +3822,30 @@ function openBulkQuizEditor(courseId, stageFilter = 'ALL') {
     renderBulkQuizEditorView(stageFilter);
 }
 
+function updateBulkVideoPreview(idx) {
+    const vidUrl = (document.getElementById(`bqVid_${idx}`)?.value || '').trim();
+    const holder = document.getElementById(`bqVidPrev_${idx}`);
+    if (!holder) return;
+    if (!vidUrl) {
+        holder.innerHTML = '';
+        holder.classList.add('hidden');
+        return;
+    }
+    const cleanVid = normalizeEmbedVideoUrl(vidUrl);
+    const isDirectVid = /\.(mp4|webm|ogg)(\?.*)?$/i.test(cleanVid) || cleanVid.startsWith('data:video');
+    holder.classList.remove('hidden');
+    holder.innerHTML = isDirectVid
+        ? `<video src="${sanitizeHTML(cleanVid)}" controls class="w-full max-h-40 rounded-lg bg-black"></video>`
+        : `<iframe src="${sanitizeHTML(cleanVid)}" class="w-full h-36 rounded-lg border" allowfullscreen></iframe>`;
+}
+
 function renderBulkQuizEditorView(stageFilter = 'ALL') {
     const course = db.Courses.find(c => c.CourseID === bulkQuizCourseId);
     const filtered = bulkQuizDraftList.filter(q => stageFilter === 'ALL' || (q.Stage || 'POST') === stageFilter);
 
     Swal.fire({
         title: `แก้ไขข้อสอบทั้งหมด: ${course ? course.CourseName : bulkQuizCourseId}`,
-        width: 960,
+        width: 1000,
         html: `
             <div class="text-left text-xs space-y-3">
                 <div class="flex flex-wrap justify-between items-center gap-2 pb-2 border-b">
@@ -3844,14 +3859,16 @@ function renderBulkQuizEditorView(stageFilter = 'ALL') {
                     </button>
                 </div>
 
-                <div id="bulkQuizCardsContainer" class="space-y-3 max-h-[62vh] overflow-y-auto pr-1">
+                <div id="bulkQuizCardsContainer" class="space-y-4 max-h-[64vh] overflow-y-auto pr-1">
                     ${filtered.map((q) => {
                         const realIdx = bulkQuizDraftList.findIndex(x => x.QuizID === q.QuizID);
                         const t = q.Type || 'MCQ';
+                        const cleanVid = normalizeEmbedVideoUrl(q.VideoURL || '');
+                        const isDirectVid = /\.(mp4|webm|ogg)(\?.*)?$/i.test(cleanVid) || cleanVid.startsWith('data:video');
                         return `
                             <div class="p-4 rounded-2xl border-2 border-slate-200 bg-slate-50 space-y-2.5 bulk-quiz-item" data-idx="${realIdx}">
                                 <div class="flex flex-wrap justify-between items-center gap-2">
-                                    <div class="flex items-center gap-2">
+                                    <div class="flex flex-wrap items-center gap-2">
                                         <span class="px-2.5 py-0.5 rounded-full bg-blue-900 text-white font-bold">ข้อที่ ${realIdx + 1}</span>
                                         <select class="bq-stage px-2 py-1 rounded-lg border bg-white font-bold text-blue-800">
                                             <option value="PRE" ${q.Stage === 'PRE' ? 'selected' : ''}>ก่อนเรียน (Pre-test)</option>
@@ -3874,53 +3891,67 @@ function renderBulkQuizEditorView(stageFilter = 'ALL') {
                                 </div>
 
                                 <div>
+                                    <div class="flex justify-between items-center mb-1">
+                                        <span class="font-bold text-slate-700">คำถาม <span class="font-normal text-blue-600">(ก๊อปปี้รูปแล้วกด Ctrl+V วางลงในโจทย์ได้ทันที)</span></span>
+                                    </div>
                                     <textarea rows="2" onpaste="handlePasteToTarget(event, 'bqImg_${realIdx}', 'bqImgPrev_${realIdx}')" placeholder="พิมพ์คำถาม... (ก๊อปปี้รูปแล้วกด Ctrl+V วางในช่องนี้ได้ทันที)" class="bq-question w-full px-3 py-2 rounded-xl border bg-white font-semibold">${sanitizeHTML(q.Question || '')}</textarea>
                                 </div>
 
-                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 p-2.5 rounded-xl bg-white border border-slate-200">
-                                    <div class="space-y-1">
-                                        <div class="flex gap-1">
-                                            <input id="bqImg_${realIdx}" type="text" oninput="updateImgPreview('bqImg_${realIdx}', 'bqImgPrev_${realIdx}')" value="${sanitizeHTML(q.ImageURL || '')}" placeholder="URL รูปภาพประกอบ..." class="bq-image flex-1 px-2 py-1 rounded-lg border text-[11px]">
-                                            <label class="px-2 py-1 rounded-lg bg-emerald-50 text-emerald-700 font-semibold cursor-pointer shrink-0" title="นำเข้ารูปภาพ">
-                                                <i class="fa-solid fa-image"></i>
-                                                <input type="file" accept="image/*" class="hidden" onchange="importFileToInput(this, 'bqImg_${realIdx}')">
-                                            </label>
-                                            <button type="button" onclick="clearInputField('bqImg_${realIdx}', 'bqImgPrev_${realIdx}')" class="px-2 py-1 rounded-lg bg-rose-50 text-rose-600 shrink-0" title="ลบรูปประกอบโจทย์"><i class="fa-solid fa-trash-can"></i></button>
+                                <div class="p-2.5 rounded-xl bg-white border border-slate-200 space-y-2">
+                                    <div class="font-bold text-[11px] text-slate-600"><i class="fa-solid fa-photo-film mr-1 text-blue-600"></i> แนบสื่อประกอบโจทย์ (รูปภาพ / คลิปวิดีโอ / ข้อความเพิ่มเติม):</div>
+                                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                                        <div class="space-y-1">
+                                            <div class="flex gap-1">
+                                                <input id="bqImg_${realIdx}" type="text" oninput="updateImgPreview('bqImg_${realIdx}', 'bqImgPrev_${realIdx}')" value="${sanitizeHTML(q.ImageURL || '')}" placeholder="URL รูปภาพ (หรือ Ctrl+V)" class="bq-image flex-1 px-2 py-1.5 rounded-lg border text-[11px]">
+                                                <label class="px-2 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 font-semibold cursor-pointer shrink-0" title="นำเข้ารูปภาพ">
+                                                    <i class="fa-solid fa-image"></i>
+                                                    <input type="file" accept="image/*" class="hidden" onchange="importFileToInput(this, 'bqImg_${realIdx}')">
+                                                </label>
+                                                <button type="button" onclick="clearInputField('bqImg_${realIdx}', 'bqImgPrev_${realIdx}')" class="px-2 py-1.5 rounded-lg bg-rose-50 text-rose-600 shrink-0" title="ลบรูปประกอบโจทย์"><i class="fa-solid fa-trash-can"></i></button>
+                                            </div>
+                                            <img id="bqImgPrev_${realIdx}" src="${sanitizeHTML(q.ImageURL || '')}" class="${q.ImageURL ? '' : 'hidden'} max-h-28 rounded-lg border object-contain" alt="">
                                         </div>
-                                        <img id="bqImgPrev_${realIdx}" src="${sanitizeHTML(q.ImageURL || '')}" class="${q.ImageURL ? '' : 'hidden'} max-h-20 rounded border object-contain" alt="">
-                                    </div>
-                                    <div class="flex gap-1 items-start">
-                                        <input id="bqVid_${realIdx}" type="text" value="${sanitizeHTML(q.VideoURL || '')}" placeholder="ลิงก์คลิป YouTube / .mp4" class="bq-video flex-1 px-2 py-1 rounded-lg border text-[11px]">
-                                        <label class="px-2 py-1 rounded-lg bg-red-50 text-red-700 font-semibold cursor-pointer shrink-0" title="นำเข้าคลิปวิดีโอ">
-                                            <i class="fa-solid fa-video"></i>
-                                            <input type="file" accept="video/*" class="hidden" onchange="importFileToInput(this, 'bqVid_${realIdx}')">
-                                        </label>
-                                        <button type="button" onclick="clearInputField('bqVid_${realIdx}')" class="px-2 py-1 rounded-lg bg-rose-50 text-rose-600 shrink-0" title="ลบคลิป"><i class="fa-solid fa-trash-can"></i></button>
-                                    </div>
-                                    <div class="flex gap-1 items-start">
-                                        <input id="bqExt_${realIdx}" type="text" value="${sanitizeHTML(q.ExtraText || '')}" placeholder="ข้อความคำอธิบายเพิ่มเติม..." class="bq-extra flex-1 px-2 py-1 rounded-lg border text-[11px]">
-                                        <button type="button" onclick="clearInputField('bqExt_${realIdx}')" class="px-2 py-1 rounded-lg bg-rose-50 text-rose-600 shrink-0" title="ล้างข้อความเสริม"><i class="fa-solid fa-trash-can"></i></button>
+                                        <div class="space-y-1">
+                                            <div class="flex gap-1 items-start">
+                                                <input id="bqVid_${realIdx}" type="text" oninput="updateBulkVideoPreview(${realIdx})" value="${sanitizeHTML(q.VideoURL || '')}" placeholder="ลิงก์คลิป YouTube / .mp4" class="bq-video flex-1 px-2 py-1.5 rounded-lg border text-[11px]">
+                                                <label class="px-2 py-1.5 rounded-lg bg-red-50 text-red-700 font-semibold cursor-pointer shrink-0" title="นำเข้าคลิปวิดีโอ">
+                                                    <i class="fa-solid fa-video"></i>
+                                                    <input type="file" accept="video/*" class="hidden" onchange="importFileToInput(this, 'bqVid_${realIdx}')">
+                                                </label>
+                                                <button type="button" onclick="clearInputField('bqVid_${realIdx}'); updateBulkVideoPreview(${realIdx})" class="px-2 py-1.5 rounded-lg bg-rose-50 text-rose-600 shrink-0" title="ลบคลิป"><i class="fa-solid fa-trash-can"></i></button>
+                                            </div>
+                                            <div id="bqVidPrev_${realIdx}" class="${cleanVid ? '' : 'hidden'}">
+                                                ${cleanVid ? (isDirectVid ? `<video src="${sanitizeHTML(cleanVid)}" controls class="w-full max-h-28 rounded-lg bg-black"></video>` : `<iframe src="${sanitizeHTML(cleanVid)}" class="w-full h-28 rounded-lg border" allowfullscreen></iframe>`) : ''}
+                                            </div>
+                                        </div>
+                                        <div class="flex gap-1 items-start">
+                                            <textarea id="bqExt_${realIdx}" rows="2" placeholder="ข้อความคำอธิบาย / กรณีศึกษาเพิ่มเติม..." class="bq-extra flex-1 px-2 py-1.5 rounded-lg border text-[11px]">${sanitizeHTML(q.ExtraText || '')}</textarea>
+                                            <button type="button" onclick="clearInputField('bqExt_${realIdx}')" class="px-2 py-1.5 rounded-lg bg-rose-50 text-rose-600 shrink-0" title="ล้างข้อความเสริม"><i class="fa-solid fa-trash-can"></i></button>
+                                        </div>
                                     </div>
                                 </div>
 
                                 ${(t === 'MCQ' || t === 'MULTI') ? `
-                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                        ${['A', 'B', 'C', 'D'].map(letter => {
-                                            const cTxt = q['Choice' + letter] || '';
-                                            const cImg = q['Choice' + letter + 'Img'] || '';
-                                            return `
-                                                <div class="p-2 rounded-xl bg-white border border-slate-200 space-y-1">
-                                                    <div class="flex items-center gap-1">
-                                                        <span class="font-bold text-blue-700 w-4">${letter}:</span>
-                                                        <input type="text" value="${sanitizeHTML(cTxt)}" onpaste="handlePasteToTarget(event, 'bqChoice${letter}Img_${realIdx}', 'bqChoice${letter}Prev_${realIdx}')" placeholder="ตัวเลือก ${letter} (หรือ Ctrl+V วางรูป)" class="bq-choice${letter} flex-1 px-2 py-1 rounded-lg border text-[11px]">
-                                                        <label class="px-2 py-1 rounded-lg bg-emerald-50 text-emerald-700 cursor-pointer shrink-0" title="แนบรูปตัวเลือก ${letter}"><i class="fa-solid fa-image"></i><input type="file" accept="image/*" class="hidden" onchange="importFileToInput(this, 'bqChoice${letter}Img_${realIdx}')"></label>
-                                                        <button type="button" onclick="clearInputField('bqChoice${letter}Img_${realIdx}', 'bqChoice${letter}Prev_${realIdx}')" class="px-2 py-1 rounded-lg bg-rose-50 text-rose-600 shrink-0" title="ลบรูปตัวเลือก ${letter}"><i class="fa-solid fa-trash-can"></i></button>
+                                    <div class="space-y-1.5">
+                                        <div class="text-[11px] font-bold text-slate-600">ตัวเลือกคำตอบ <span class="font-normal text-blue-600">(รองรับทั้งข้อความและก๊อปปี้รูปกด Ctrl+V วางในแต่ละตัวเลือก)</span>:</div>
+                                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                            ${['A', 'B', 'C', 'D'].map(letter => {
+                                                const cTxt = q['Choice' + letter] || '';
+                                                const cImg = q['Choice' + letter + 'Img'] || '';
+                                                return `
+                                                    <div class="p-2 rounded-xl bg-white border border-slate-200 space-y-1">
+                                                        <div class="flex items-center gap-1">
+                                                            <span class="font-bold text-blue-700 w-4">${letter}:</span>
+                                                            <input id="bqChoice${letter}Txt_${realIdx}" type="text" value="${sanitizeHTML(cTxt)}" onpaste="handlePasteToTarget(event, 'bqChoice${letter}Img_${realIdx}', 'bqChoice${letter}Prev_${realIdx}')" placeholder="ตัวเลือก ${letter} (หรือ Ctrl+V วางรูป)" class="bq-choice${letter} flex-1 px-2 py-1.5 rounded-lg border text-[11px]">
+                                                            <label class="px-2 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 cursor-pointer shrink-0" title="แนบรูปตัวเลือก ${letter}"><i class="fa-solid fa-image"></i><input type="file" accept="image/*" class="hidden" onchange="importFileToInput(this, 'bqChoice${letter}Img_${realIdx}')"></label>
+                                                            <button type="button" onclick="clearInputField('bqChoice${letter}Txt_${realIdx}'); clearInputField('bqChoice${letter}Img_${realIdx}', 'bqChoice${letter}Prev_${realIdx}')" class="px-2 py-1.5 rounded-lg bg-rose-50 text-rose-600 shrink-0" title="ล้างตัวเลือก ${letter}"><i class="fa-solid fa-trash-can"></i></button>
+                                                        </div>
+                                                        <input type="hidden" id="bqChoice${letter}Img_${realIdx}" oninput="updateImgPreview('bqChoice${letter}Img_${realIdx}', 'bqChoice${letter}Prev_${realIdx}')" value="${sanitizeHTML(cImg)}" class="bq-choice${letter}Img">
+                                                        <img id="bqChoice${letter}Prev_${realIdx}" src="${sanitizeHTML(cImg)}" class="${cImg ? '' : 'hidden'} max-h-24 rounded-lg border object-contain ml-5" alt="">
                                                     </div>
-                                                    <input type="hidden" id="bqChoice${letter}Img_${realIdx}" oninput="updateImgPreview('bqChoice${letter}Img_${realIdx}', 'bqChoice${letter}Prev_${realIdx}')" value="${sanitizeHTML(cImg)}" class="bq-choice${letter}Img">
-                                                    <img id="bqChoice${letter}Prev_${realIdx}" src="${sanitizeHTML(cImg)}" class="${cImg ? '' : 'hidden'} max-h-16 rounded border object-contain ml-5" alt="">
-                                                </div>
-                                            `;
-                                        }).join('')}
+                                                `;
+                                            }).join('')}
+                                        </div>
                                     </div>
                                 ` : ''}
 
@@ -3955,11 +3986,13 @@ function renderBulkQuizEditorView(stageFilter = 'ALL') {
         preConfirm: () => {
             syncBulkQuizInputsFromDOM();
             for (let i = 0; i < bulkQuizDraftList.length; i++) {
-                if (!String(bulkQuizDraftList[i].Question || '').trim()) {
-                    Swal.showValidationMessage(`กรุณากรอกโจทย์คำถามในข้อที่ ${i + 1}`);
+                const qItem = bulkQuizDraftList[i];
+                const hasQuestionMedia = !!(String(qItem.Question || '').trim() || String(qItem.ImageURL || '').trim() || String(qItem.VideoURL || '').trim());
+                if (!hasQuestionMedia) {
+                    Swal.showValidationMessage(`กรุณากรอกโจทย์คำถาม หรือแนบรูป/คลิปในข้อที่ ${i + 1}`);
                     return false;
                 }
-                if (!String(bulkQuizDraftList[i].CorrectAnswer || '').trim()) {
+                if (!String(qItem.CorrectAnswer || '').trim()) {
                     Swal.showValidationMessage(`กรุณาระบุเฉลยในข้อที่ ${i + 1}`);
                     return false;
                 }
