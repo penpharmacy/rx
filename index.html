@@ -704,6 +704,8 @@ const initialDatabase = {
         ]
     },
     CourseCertDesigns: {},
+    SavedCertTemplates: [],
+    SavedCertLogos: [],
     RolePermissions: {
         Admin: ['manageCourses', 'manageQuiz', 'designCert', 'manageDeptProf', 'viewLeaderboard', 'broadcastNotif', 'editDashboard', 'manageUsers', 'manageTheme', 'viewDB'],
         Examiner: ['manageCourses', 'manageQuiz', 'designCert', 'manageDeptProf', 'viewLeaderboard'],
@@ -727,28 +729,75 @@ if (!db.DashboardConfig) db.DashboardConfig = { ...initialDatabase.DashboardConf
 if (!db.DashboardConfig.customKpiCards) db.DashboardConfig.customKpiCards = [...initialDatabase.DashboardConfig.customKpiCards];
 if (!db.DashboardConfig.customCharts) db.DashboardConfig.customCharts = [...initialDatabase.DashboardConfig.customCharts];
 if (!db.CourseCertDesigns) db.CourseCertDesigns = {};
+if (!db.SavedCertTemplates) db.SavedCertTemplates = [];
+if (!db.SavedCertLogos) db.SavedCertLogos = [];
 if (!db.RolePermissions) db.RolePermissions = JSON.parse(JSON.stringify(initialDatabase.RolePermissions));
 if (!db.UserPermissions) db.UserPermissions = {};
+
+function getDefaultPhunphinLogoDataUri(primaryColor = '#14532d') {
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 140 140" width="140" height="140">
+        <defs>
+            <path id="logoTopArc" d="M 18,70 A 52,52 0 1,1 122,70" />
+            <path id="logoBotArc" d="M 14,70 A 56,56 0 0,0 126,70" />
+        </defs>
+        <circle cx="70" cy="70" r="66" fill="#ffffff" stroke="${primaryColor}" stroke-width="2.5"/>
+        <circle cx="70" cy="70" r="45" fill="${primaryColor}"/>
+        <text font-family="Sarabun, sans-serif" font-size="13.5" font-weight="700" fill="${primaryColor}" letter-spacing="0.4">
+            <textPath href="#logoTopArc" startOffset="50%" text-anchor="middle">โรงพยาบาลพุนพิน</textPath>
+        </text>
+        <text font-family="Sarabun, sans-serif" font-size="9.5" font-weight="700" fill="${primaryColor}" letter-spacing="0.6">
+            <textPath href="#logoBotArc" startOffset="50%" text-anchor="middle">PHUNPHIN HOSPITAL</textPath>
+        </text>
+        <path d="M 17,64 C 14,68 14,72 17,76 C 20,72 20,68 17,64 Z" fill="${primaryColor}"/>
+        <path d="M 123,64 C 120,68 120,72 123,76 C 126,72 126,68 123,64 Z" fill="${primaryColor}"/>
+        <g transform="translate(70, 70)" fill="#ffffff" stroke="${primaryColor}" stroke-width="0.7" stroke-linejoin="round">
+            <path d="M 0,-40 C -4,-32 -8,-25 -1,-19 C 1,-24 0,-29 2,-34 C 5,-28 7,-22 1,-19 C 8,-24 5,-32 0,-40 Z"/>
+            <path d="M -6,-33 C -10,-26 -9,-21 -2,-19 C -4,-23 -3,-28 -6,-33 Z"/>
+            <path d="M 6,-33 C 10,-26 9,-21 2,-19 C 4,-23 3,-28 6,-33 Z"/>
+            <rect x="-6" y="-19" width="12" height="3.2" rx="1"/>
+            <polygon points="-5,-15.8 5,-15.8 2.2,32 -2.2,32"/>
+            <path d="M -5,-14.5 C -16,-20 -30,-19 -36,-12 C -27,-11 -19,-9 -5,-9 Z"/>
+            <path d="M -5,-9.5 C -15,-12 -25,-10.5 -31,-5.5 C -22,-5.5 -13,-4.5 -5,-5 Z"/>
+            <path d="M -4.5,-5 C -13,-6.5 -21,-5 -24,-1 C -16,-1 -10,-1 -4.5,-1.5 Z"/>
+            <path d="M 5,-14.5 C 16,-20 30,-19 36,-12 C 27,-11 19,-9 5,-9 Z"/>
+            <path d="M 5,-9.5 C 15,-12 25,-10.5 31,-5.5 C 22,-5.5 13,-4.5 5,-5 Z"/>
+            <path d="M 4.5,-5 C 13,-6.5 21,-5 24,-1 C 16,-1 10,-1 4.5,-1.5 Z"/>
+            <path d="M -2.8,-4.5 C -15,-2 -15,5.5 0,7.8 C 14,10 14,16.5 0,18.8 C -11,20 -11,25.5 -1.6,26.5" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round"/>
+            <path d="M 2.8,-4.5 C 15,-2 15,5.5 0,7.8 C -14,10 -14,16.5 0,18.8 C 11,20 11,25.5 1.6,26.5" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round"/>
+        </g>
+    </svg>`;
+    return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+}
 
 const DEFAULT_CERT = {
     width: 800,
     height: 560,
     bgColor: "#ffffff",
     bgImage: "",
+    bgOpacity: 100,
+    bgTintColor: "#ffffff",
+    bgTintOpacity: 0,
+    bgHue: 0,
+    bgBrightness: 100,
+    bgContrast: 100,
+    bgSaturate: 100,
+    bgLayerOrder: "back",
     frameStyle: "phunphin_gold",
     primaryColor: "#14532d",
     secondaryColor: "#d4a017",
+    patternDarkColor: "#171717",
+    patternGoldColor: "#d4a017",
+    patternAccentColor: "#b91c1c",
     fontFamily: "'Sarabun', sans-serif",
     elements: [
+        { id: "el_logo", type: "image", isHospitalLogo: true, src: getDefaultPhunphinLogoDataUri("#14532d"), x: 76, y: 169, width: 118, height: 118, opacity: 100, hue: 0, brightness: 100, contrast: 100, saturate: 100, layerOrder: "front" },
         { id: "el_org", type: "text", text: "โรงพยาบาลพุนพิน", x: 250, y: 68, width: 510, fontSize: 30, color: "#14532d", bold: true, align: "center" },
         { id: "el_title", type: "text", text: "ขอมอบประกาศเกียรติคุณฉบับนี้ไว้เพื่อแสดงว่า", x: 250, y: 125, width: 510, fontSize: 16, color: "#1e293b", bold: true, align: "center" },
         { id: "el_name", type: "text", text: "{FullName}", x: 240, y: 175, width: 530, fontSize: 32, color: "#b45309", bold: true, align: "center" },
         { id: "el_sub", type: "text", text: "ได้ผ่านการอบรมและวัดผลสัมฤทธิ์ทางการเรียนออนไลน์ในหลักสูตร", x: 250, y: 238, width: 510, fontSize: 15, color: "#334155", bold: false, align: "center" },
         { id: "el_course", type: "text", text: "“{CourseName}”", x: 240, y: 274, width: 530, fontSize: 22, color: "#92400e", bold: true, align: "center" },
         { id: "el_score", type: "text", text: "ผลการประเมิน: {Score}% | ให้ไว้ ณ วันที่ {Date}", x: 250, y: 332, width: 510, fontSize: 14, color: "#1e293b", bold: true, align: "center" },
-        { id: "el_sign_dir", type: "text", text: "ลงชื่อ ....................................................\n(นพ.สำเนียง แสงสว่าง)\nผู้อำนวยการโรงพยาบาลพุนพิน", x: 355, y: 418, width: 310, fontSize: 14, color: "#1e293b", bold: true, align: "center" },
-        { id: "el_qr", type: "qr", x: 695, y: 455, width: 66, height: 66 },
-        { id: "el_certid", type: "text", text: "เลขที่: {CertID}", x: 265, y: 510, width: 220, fontSize: 11, color: "#64748b", bold: true, align: "left" }
+        { id: "el_sign_dir", type: "text", text: "ลงชื่อ ....................................................\n(นพ.สำเนียง แสงสว่าง)\nผู้อำนวยการโรงพยาบาลพุนพิน", x: 355, y: 418, width: 310, fontSize: 14, color: "#1e293b", bold: true, align: "center" }
     ]
 };
 
@@ -900,7 +949,8 @@ function compressImageDataUrl(rawDataUrl, maxWidth = 850, quality = 0.8) {
             const ctx = canvas.getContext('2d');
             ctx.drawImage(img, 0, 0, w, h);
             try {
-                resolve(canvas.toDataURL('image/jpeg', quality));
+                const isPng = rawDataUrl.startsWith('data:image/png');
+                resolve(canvas.toDataURL(isPng ? 'image/png' : 'image/jpeg', quality));
             } catch (e) {
                 resolve(rawDataUrl);
             }
@@ -1051,6 +1101,26 @@ function renderMediaEmbedHTML(videoUrl, imageUrl, extraText) {
         html += `<div class="p-3.5 rounded-2xl bg-blue-50/70 dark:bg-slate-700/50 border border-blue-100 dark:border-slate-600 text-xs sm:text-sm text-slate-700 dark:text-slate-200 whitespace-pre-line my-2">${sanitizeHTML(extraText)}</div>`;
     }
     return html;
+}
+
+// ==================== HELPER: BEST SCORE PER USER PER COURSE ====================
+function getBestPostScoresPerUserCourse() {
+    const postList = db.Scores.filter(s => s.Stage === 'POST' || !s.Stage);
+    const grouped = new Map();
+    postList.forEach(s => {
+        const key = `${s.StudentID}__${s.CourseID}`;
+        const existing = grouped.get(key);
+        if (!existing) {
+            grouped.set(key, { ...s, attempts: 1 });
+        } else {
+            existing.attempts += 1;
+            if (Number(s.Percent) > Number(existing.Percent) || (Number(s.Percent) === Number(existing.Percent) && Number(s.Score) > Number(existing.Score))) {
+                const keptAttempts = existing.attempts;
+                grouped.set(key, { ...s, attempts: keptAttempts });
+            }
+        }
+    });
+    return Array.from(grouped.values()).sort((a, b) => Number(b.Percent) - Number(a.Percent) || Number(b.Score) - Number(a.Score));
 }
 
 // ==================== INITIALIZATION & GLOBAL THEME ====================
@@ -1552,7 +1622,7 @@ function renderDashboardView(container) {
     `;
 
     if (canSeeLeaderboard && document.getElementById('miniLeaderboard')) {
-        const topScores = [...db.Scores].filter(s => s.Stage === 'POST' || !s.Stage).sort((a, b) => b.Percent - a.Percent).slice(0, 4);
+        const topScores = getBestPostScoresPerUserCourse().slice(0, 4);
         document.getElementById('miniLeaderboard').innerHTML = topScores.map((s, idx) => {
             const stu = db.Users.find(u => u.UserID === s.StudentID) || { FullName: s.StudentID };
             const crs = db.Courses.find(c => c.CourseID === s.CourseID) || { CourseName: s.CourseID };
@@ -1563,7 +1633,7 @@ function renderDashboardView(container) {
                         <span class="font-bold">${medal}</span>
                         <div>
                             <div class="font-bold text-xs">${sanitizeHTML(stu.FullName)}</div>
-                            <div class="text-[10px] text-slate-400 truncate max-w-[140px]">${sanitizeHTML(crs.CourseName)}</div>
+                            <div class="text-[10px] text-slate-400 truncate max-w-[140px]">${sanitizeHTML(crs.CourseName)} • สอบ ${s.attempts} ครั้ง</div>
                         </div>
                     </div>
                     <span class="px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 font-bold text-[11px]">${s.Percent}%</span>
@@ -3295,13 +3365,29 @@ function openProfessionStatsCustomizer() {
 let currentCertId = '';
 const qrUrl = t => `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(t)}`;
 
+function shadeHexColor(hex, percent) {
+    let h = String(hex || '#000000').replace('#', '');
+    if (h.length === 3) h = h.split('').map(c => c + c).join('');
+    const num = parseInt(h, 16);
+    if (isNaN(num)) return hex;
+    let r = (num >> 16) + Math.round(2.55 * percent);
+    let g = ((num >> 8) & 0x00FF) + Math.round(2.55 * percent);
+    let b = (num & 0x0000FF) + Math.round(2.55 * percent);
+    r = Math.max(0, Math.min(255, r));
+    g = Math.max(0, Math.min(255, g));
+    b = Math.max(0, Math.min(255, b));
+    return '#' + (0x1000000 + r * 0x10000 + g * 0x100 + b).toString(16).slice(1);
+}
+
 function getCertFrameCSS(design) {
     const p = design.primaryColor || '#1e3a8a';
     const s = design.secondaryColor || '#d4a017';
+    const patGold = design.patternGoldColor || s;
     const f = design.frameStyle || 'thai_kanok';
     if (f === 'none') return 'border: none;';
-    if (f === 'phunphin_gold') return `border: 14px ridge #d4a017; outline: 3px solid #78350f; outline-offset: -4px; box-shadow: inset 0 0 18px rgba(0,0,0,0.18);`;
-    if (f === 'thai_kanok') return `border: 14px double ${s}; outline: 4px solid ${p}; outline-offset: -8px; box-shadow: inset 0 0 0 6px #fef3c7;`;
+    if (f === 'thai_lai_thai') return `border: 12px double ${s}; outline: 3px solid ${p}; outline-offset: -6px; box-shadow: inset 0 0 0 18px ${patGold}18;`;
+    if (f === 'phunphin_gold') return `border: 14px ridge ${s}; outline: 3px solid ${p}; outline-offset: -4px; box-shadow: inset 0 0 18px rgba(0,0,0,0.18);`;
+    if (f === 'thai_kanok') return `border: 14px double ${s}; outline: 4px solid ${p}; outline-offset: -8px; box-shadow: inset 0 0 0 6px ${patGold}33;`;
     if (f === 'modern') return `border-left: 28px solid ${p}; border-top: 3px solid ${s}; border-right: 3px solid ${s}; border-bottom: 3px solid ${s};`;
     if (f === 'academic') return `border: 6px solid ${p}; outline: 2px solid ${s}; outline-offset: -14px;`;
     if (f === 'vintage') return `border: 6px dashed ${s}; outline: 3px solid ${p}; outline-offset: 4px;`;
@@ -3309,7 +3395,63 @@ function getCertFrameCSS(design) {
     return `border: 10px double ${p};`;
 }
 
-function getPhunphinGoldRibbonBackdropSVG() {
+function getThaiLaiThaiBackdropSVG(design = {}, transparentBg = false) {
+    const p = design.primaryColor || '#1e3a8a';
+    const s = design.secondaryColor || '#d4a017';
+    const patDark = design.patternDarkColor || p;
+    const patGold = design.patternGoldColor || s;
+    const patAccent = design.patternAccentColor || p;
+    const bg = design.bgColor || '#fffdf7';
+
+    const cornerMotif = (transformStr) => `
+        <g transform="${transformStr}">
+            <path d="M 18,18 L 135,18 C 115,28 95,28 78,40 C 60,52 52,70 40,86 C 28,102 28,120 18,138 Z" fill="${patGold}" opacity="0.22"/>
+            <path d="M 18,18 L 122,18 C 100,24 85,32 70,46 C 54,60 44,75 34,94 C 26,110 24,122 18,132 Z" fill="none" stroke="${patGold}" stroke-width="2.5"/>
+            <path d="M 24,24 C 55,22 76,30 92,24 C 78,36 64,40 48,44 C 66,46 78,52 84,64 C 68,58 54,56 40,62 C 50,74 52,88 46,102 C 40,86 34,74 24,62 Z" fill="${patGold}" stroke="${patDark}" stroke-width="0.9"/>
+            <path d="M 92,24 C 104,20 114,22 122,18 C 114,27 104,31 92,29 Z" fill="${patDark}"/>
+            <path d="M 46,102 C 42,114 36,124 24,134 C 31,122 33,112 31,100 Z" fill="${patDark}"/>
+            <circle cx="34" cy="34" r="9" fill="${patAccent}" stroke="${patGold}" stroke-width="2"/>
+            <polygon points="34,26 37,31 42,34 37,37 34,42 31,37 26,34 31,31" fill="#ffffff"/>
+        </g>
+    `;
+
+    return `
+        <svg viewBox="0 0 800 560" width="800" height="560" style="position:absolute; inset:0; width:100%; height:100%; pointer-events:none; z-index:2;">
+            ${transparentBg ? '' : `<rect x="0" y="0" width="800" height="560" fill="${bg}"/>`}
+            <rect x="14" y="14" width="772" height="532" fill="none" stroke="${s}" stroke-width="3"/>
+            <rect x="22" y="22" width="756" height="516" fill="none" stroke="${patDark}" stroke-width="1.5" stroke-dasharray="8 4"/>
+            ${cornerMotif('translate(0,0)')}
+            ${cornerMotif('translate(800,0) scale(-1,1)')}
+            ${cornerMotif('translate(0,560) scale(1,-1)')}
+            ${cornerMotif('translate(800,560) scale(-1,-1)')}
+            <g transform="translate(400, 18)">
+                <polygon points="0,-10 14,0 0,10 -14,0" fill="${patGold}" stroke="${patDark}" stroke-width="1.2"/>
+                <circle cx="0" cy="0" r="3.5" fill="${patAccent}"/>
+                <path d="M -14,0 C -32,-8 -48,-6 -62,0 C -48,6 -32,8 -14,0 Z" fill="${patGold}" opacity="0.85"/>
+                <path d="M 14,0 C 32,-8 48,-6 62,0 C 48,6 32,8 14,0 Z" fill="${patGold}" opacity="0.85"/>
+            </g>
+            <g transform="translate(400, 542)">
+                <polygon points="0,-10 14,0 0,10 -14,0" fill="${patGold}" stroke="${patDark}" stroke-width="1.2"/>
+                <circle cx="0" cy="0" r="3.5" fill="${patAccent}"/>
+                <path d="M -14,0 C -32,-8 -48,-6 -62,0 C -48,6 -32,8 -14,0 Z" fill="${patGold}" opacity="0.85"/>
+                <path d="M 14,0 C 32,-8 48,-6 62,0 C 48,6 32,8 14,0 Z" fill="${patGold}" opacity="0.85"/>
+            </g>
+        </svg>
+    `;
+}
+
+function getPhunphinGoldRibbonBackdropSVG(design = {}, transparentBg = false) {
+    const patGold = design.patternGoldColor || design.secondaryColor || '#d4a017';
+    const patDark = design.patternDarkColor || '#171717';
+    const patAccent = design.patternAccentColor || '#b91c1c';
+    const bg = design.bgColor || '#f8fafc';
+
+    const goldLight = shadeHexColor(patGold, 38);
+    const goldDark = shadeHexColor(patGold, -32);
+    const darkMid = shadeHexColor(patDark, 14);
+    const accentLight = shadeHexColor(patAccent, 22);
+    const accentDark = shadeHexColor(patAccent, -26);
+
     let starPoints = [];
     const cx = 135, cy = 228, outerR = 76, innerR = 67, teeth = 36;
     for (let i = 0; i < teeth * 2; i++) {
@@ -3318,100 +3460,100 @@ function getPhunphinGoldRibbonBackdropSVG() {
         starPoints.push(`${(cx + r * Math.cos(angle)).toFixed(1)},${(cy + r * Math.sin(angle)).toFixed(1)}`);
     }
     return `
-        <svg viewBox="0 0 800 560" width="800" height="560" style="position:absolute; inset:0; width:100%; height:100%; pointer-events:none; z-index:0;">
+        <svg viewBox="0 0 800 560" width="800" height="560" style="position:absolute; inset:0; width:100%; height:100%; pointer-events:none; z-index:2;">
             <defs>
                 <linearGradient id="ppGoldGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stop-color="#f6e27a"/>
-                    <stop offset="35%" stop-color="#d4af37"/>
-                    <stop offset="70%" stop-color="#aa7c11"/>
-                    <stop offset="100%" stop-color="#f6e27a"/>
+                    <stop offset="0%" stop-color="${goldLight}"/>
+                    <stop offset="45%" stop-color="${patGold}"/>
+                    <stop offset="100%" stop-color="${goldDark}"/>
                 </linearGradient>
                 <linearGradient id="ppGoldGrad2" x1="0%" y1="100%" x2="100%" y2="0%">
-                    <stop offset="0%" stop-color="#8a6209"/>
-                    <stop offset="50%" stop-color="#e5c158"/>
-                    <stop offset="100%" stop-color="#9e720f"/>
+                    <stop offset="0%" stop-color="${goldDark}"/>
+                    <stop offset="50%" stop-color="${patGold}"/>
+                    <stop offset="100%" stop-color="${goldLight}"/>
                 </linearGradient>
                 <linearGradient id="ppBlackCurve" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stop-color="#111111"/>
-                    <stop offset="50%" stop-color="#222222"/>
-                    <stop offset="100%" stop-color="#0a0a0a"/>
+                    <stop offset="0%" stop-color="${patDark}"/>
+                    <stop offset="50%" stop-color="${darkMid}"/>
+                    <stop offset="100%" stop-color="${patDark}"/>
                 </linearGradient>
                 <linearGradient id="ppCrimsonRing" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stop-color="#991b1b"/>
-                    <stop offset="50%" stop-color="#dc2626"/>
-                    <stop offset="100%" stop-color="#7f1d1d"/>
+                    <stop offset="0%" stop-color="${accentDark}"/>
+                    <stop offset="50%" stop-color="${accentLight}"/>
+                    <stop offset="100%" stop-color="${patAccent}"/>
                 </linearGradient>
                 <linearGradient id="ppRibbonTail" x1="0%" y1="0%" x2="0%" y2="100%">
-                    <stop offset="0%" stop-color="#78350f"/>
-                    <stop offset="55%" stop-color="#b45309"/>
-                    <stop offset="100%" stop-color="#d97706"/>
+                    <stop offset="0%" stop-color="${goldDark}"/>
+                    <stop offset="55%" stop-color="${patGold}"/>
+                    <stop offset="100%" stop-color="${goldLight}"/>
                 </linearGradient>
-                <path id="ppTopArc" d="M 85,228 A 50,50 0 1,1 185,228" />
-                <path id="ppBotArc" d="M 80,228 A 55,55 0 0,0 190,228" />
             </defs>
 
-            <!-- พื้นหลังโทนขาวนวล -->
-            <rect x="0" y="0" width="800" height="560" fill="#f8fafc"/>
-
-            <!-- แถบโค้งสีดำด้านซ้าย -->
+            ${transparentBg ? '' : `<rect x="0" y="0" width="800" height="560" fill="${bg}"/>`}
             <path d="M 0,0 L 235,0 C 125,135 125,375 315,560 L 0,560 Z" fill="url(#ppBlackCurve)"/>
-
-            <!-- ริบบิ้นสีทองชั้นในและชั้นนอก -->
             <path d="M 235,0 L 285,0 C 155,140 155,370 375,560 L 315,560 C 125,375 125,135 235,0 Z" fill="url(#ppGoldGrad1)"/>
-            <path d="M 35,0 L 65,0 C 15,185 35,390 195,560 L 155,560 C 15,395 -5,190 35,0 Z" fill="url(#ppGoldGrad2)" opacity="0.9"/>
-
-            <!-- แถบโค้งมุมขวาล่าง -->
+            <path d="M 35,0 L 65,0 C 15,185 35,390 195,560 L 155,560 C 15,395 -5,190 35,0 Z" fill="url(#ppGoldGrad2)" opacity="0.92"/>
             <path d="M 800,350 C 735,440 650,515 530,560 L 800,560 Z" fill="url(#ppBlackCurve)"/>
             <path d="M 800,315 C 725,420 630,505 485,560 L 530,560 C 650,515 735,440 800,350 Z" fill="url(#ppGoldGrad1)"/>
-
-            <!-- ริบบิ้นห้อยใต้เหรียญตรา -->
             <polygon points="103,285 167,285 167,375 135,356 103,375" fill="url(#ppRibbonTail)"/>
-            <line x1="111" y1="285" x2="111" y2="369" stroke="#f6e27a" stroke-width="1.5" opacity="0.75"/>
-            <line x1="159" y1="285" x2="159" y2="369" stroke="#f6e27a" stroke-width="1.5" opacity="0.75"/>
-
-            <!-- ขอบเหรียญตราหยักสีทองและแดงเลือดหมู -->
-            <polygon points="${starPoints.join(' ')}" fill="url(#ppGoldGrad1)" stroke="#92400e" stroke-width="1"/>
+            <line x1="111" y1="285" x2="111" y2="369" stroke="${goldLight}" stroke-width="1.5" opacity="0.85"/>
+            <line x1="159" y1="285" x2="159" y2="369" stroke="${goldLight}" stroke-width="1.5" opacity="0.85"/>
+            <polygon points="${starPoints.join(' ')}" fill="url(#ppGoldGrad1)" stroke="${goldDark}" stroke-width="1"/>
             <circle cx="135" cy="228" r="63" fill="url(#ppCrimsonRing)"/>
-            <circle cx="135" cy="228" r="59" fill="#ffffff" stroke="#d4af37" stroke-width="1.5"/>
-            <circle cx="135" cy="228" r="42" fill="#14532d" stroke="#d4af37" stroke-width="1.5"/>
-
-            <!-- ข้อความโค้งรอบวงกลมตราสัญลักษณ์โรงพยาบาลพุนพิน -->
-            <text font-size="11.5" font-weight="700" fill="#14532d" letter-spacing="0.5">
-                <textPath href="#ppTopArc" startOffset="50%" text-anchor="middle">โรงพยาบาลพุนพิน</textPath>
-            </text>
-            <text font-size="8.2" font-weight="700" fill="#14532d" letter-spacing="0.6">
-                <textPath href="#ppBotArc" startOffset="50%" text-anchor="middle">PHUNPHIN HOSPITAL</textPath>
-            </text>
-            <circle cx="85" cy="228" r="2" fill="#14532d"/>
-            <circle cx="185" cy="228" r="2" fill="#14532d"/>
-
-            <!-- สัญลักษณ์คบเพลิงและงูพันคบเพลิง (Caduceus) ตรงกลางสีขาว -->
-            <g transform="translate(135, 228)" fill="#ffffff" stroke="#14532d" stroke-width="0.6">
-                <!-- เปลวไฟด้านบน -->
-                <path d="M 0,-34 C -5,-27 -6,-21 0,-16 C 6,-21 5,-27 0,-34 Z"/>
-                <path d="M -4,-30 C -8,-24 -7,-19 -2,-16 C -3,-21 -2,-25 -4,-30 Z"/>
-                <path d="M 4,-30 C 8,-24 7,-19 2,-16 C 3,-21 2,-25 4,-30 Z"/>
-                <!-- ด้ามคบเพลิง -->
-                <polygon points="-4,-15 4,-15 2,26 -2,26"/>
-                <rect x="-5" y="-16" width="10" height="2.5" rx="1"/>
-                <!-- ปีกซ้าย-ขวา -->
-                <path d="M -4,-13 C -15,-18 -27,-17 -32,-10 C -24,-9 -16,-7 -4,-7 Z"/>
-                <path d="M -5,-7 C -14,-10 -22,-8 -26,-3 C -18,-3 -11,-2 -5,-3 Z"/>
-                <path d="M 4,-13 C 15,-18 27,-17 32,-10 C 24,-9 16,-7 4,-7 Z"/>
-                <path d="M 5,-7 C 14,-10 22,-8 26,-3 C 18,-3 11,-2 5,-3 Z"/>
-                <!-- งูพันคบเพลิง 2 ตัว -->
-                <path d="M -3,-4 C -16,-2 -16,7 0,9 C 14,11 14,18 -2,20" fill="none" stroke="#ffffff" stroke-width="2.6" stroke-linecap="round"/>
-                <path d="M 3,-4 C 16,-2 16,7 0,9 C -14,11 -14,18 2,20" fill="none" stroke="#ffffff" stroke-width="2.6" stroke-linecap="round"/>
-            </g>
         </svg>
     `;
 }
 
+function getModernAccentBackdropSVG(design = {}, transparentBg = false) {
+    const p = design.primaryColor || '#1e3a8a';
+    const s = design.secondaryColor || '#d4a017';
+    const patDark = design.patternDarkColor || p;
+    const patGold = design.patternGoldColor || s;
+    const patAccent = design.patternAccentColor || s;
+    const bg = design.bgColor || '#ffffff';
+    return `
+        <svg viewBox="0 0 800 560" width="800" height="560" style="position:absolute; inset:0; width:100%; height:100%; pointer-events:none; z-index:2;">
+            ${transparentBg ? '' : `<rect x="0" y="0" width="800" height="560" fill="${bg}"/>`}
+            <polygon points="0,0 160,0 70,560 0,560" fill="${patDark}" opacity="0.12"/>
+            <polygon points="800,0 800,140 660,0" fill="${patGold}" opacity="0.25"/>
+            <polygon points="800,560 620,560 800,420" fill="${patAccent}" opacity="0.22"/>
+            <line x1="28" y1="24" x2="772" y2="24" stroke="${patGold}" stroke-width="2"/>
+            <line x1="28" y1="536" x2="772" y2="536" stroke="${patGold}" stroke-width="2"/>
+        </svg>
+    `;
+}
+
+function buildElementFilterCSS(el) {
+    const hue = Number(el.hue) || 0;
+    const bri = el.brightness !== undefined ? Number(el.brightness) : 100;
+    const con = el.contrast !== undefined ? Number(el.contrast) : 100;
+    const sat = el.saturate !== undefined ? Number(el.saturate) : 100;
+    const gray = Number(el.grayscale) || 0;
+    const sepia = Number(el.sepia) || 0;
+    return `hue-rotate(${hue}deg) brightness(${bri}%) contrast(${con}%) saturate(${sat}%) grayscale(${gray}%) sepia(${sepia}%)`;
+}
+
 function buildCertificateCanvasHTML(design, dataObj, interactive = false) {
     const isPhunphinFrame = design.frameStyle === 'phunphin_gold';
-    const bgStyle = design.bgImage
-        ? `background-image:url('${design.bgImage}');background-size:cover;background-position:center;`
-        : `background-color:${design.bgColor || '#ffffff'};`;
+    const isThaiLaiThaiFrame = design.frameStyle === 'thai_lai_thai';
+    const isModernFrame = design.frameStyle === 'modern';
+    const hasBgImage = !!(design.bgImage && String(design.bgImage).trim());
+
+    const bgOpacity = design.bgOpacity !== undefined ? Number(design.bgOpacity) / 100 : 1;
+    const bgHue = Number(design.bgHue) || 0;
+    const bgBri = design.bgBrightness !== undefined ? Number(design.bgBrightness) : 100;
+    const bgCon = design.bgContrast !== undefined ? Number(design.bgContrast) : 100;
+    const bgSat = design.bgSaturate !== undefined ? Number(design.bgSaturate) : 100;
+    const bgTintColor = design.bgTintColor || '#ffffff';
+    const bgTintOpacity = Number(design.bgTintOpacity || 0) / 100;
+    const bgZIndex = design.bgLayerOrder === 'front' ? 4 : 1;
+
+    const bgImageLayerHtml = hasBgImage ? `
+        <div style="position:absolute; inset:0; z-index:${bgZIndex}; pointer-events:none;">
+            <img src="${sanitizeHTML(design.bgImage)}" crossorigin="anonymous" alt="" style="width:100%; height:100%; object-fit:cover; opacity:${bgOpacity}; filter:hue-rotate(${bgHue}deg) brightness(${bgBri}%) contrast(${bgCon}%) saturate(${bgSat}%);">
+            ${bgTintOpacity > 0 ? `<div style="position:absolute; inset:0; background-color:${bgTintColor}; opacity:${bgTintOpacity}; mix-blend-mode:multiply;"></div>` : ''}
+        </div>
+    ` : '';
 
     const replaceVars = (txt) => String(txt || '')
         .replace(/\{FullName\}/g, dataObj.name)
@@ -3420,27 +3562,45 @@ function buildCertificateCanvasHTML(design, dataObj, interactive = false) {
         .replace(/\{Date\}/g, dataObj.date)
         .replace(/\{CertID\}/g, dataObj.id);
 
-    const elsHtml = (design.elements || []).map(el => {
+    const elsHtml = (design.elements || []).map((el, idx) => {
         const isSel = interactive && el.id === selectedElementId;
         const dragAttr = interactive ? `onmousedown="startDragCertElement(event, '${el.id}')" onclick="selectCertElement(event, '${el.id}')"` : '';
         const dblClickAttr = (interactive && el.type === 'text') ? `ondblclick="focusCertInspectorText(event, '${el.id}')"` : '';
         const cursorCls = interactive ? 'cursor-move select-none' : '';
         const selCls = isSel ? 'cert-el-selected' : '';
+        const resizeHandle = isSel
+            ? `<div onmousedown="startResizeCertElement(event, '${el.id}')" title="ลากเพื่อปรับขนาด" style="position:absolute; right:-6px; bottom:-6px; width:13px; height:13px; background:#2563eb; border:2px solid #ffffff; border-radius:3px; cursor:nwse-resize; z-index:40;"></div>`
+            : '';
+
+        const elZIndex = el.layerOrder === 'behind_pattern' ? 1 : (10 + idx);
+        const elOpacity = el.opacity !== undefined ? Number(el.opacity) / 100 : 1;
 
         if (el.type === 'text') {
-            return `<div id="canvasEl_${el.id}" ${dragAttr} ${dblClickAttr} class="${cursorCls} ${selCls}" style="position:absolute; z-index:2; left:${el.x}px; top:${el.y}px; width:${el.width || 400}px; font-size:${el.fontSize || 16}px; color:${el.color || '#1e293b'}; font-weight:${el.bold ? '700' : '400'}; text-align:${el.align || 'center'}; white-space:pre-line; line-height:1.4;">${sanitizeHTML(replaceVars(el.text))}</div>`;
+            return `<div id="canvasEl_${el.id}" ${dragAttr} ${dblClickAttr} class="${cursorCls} ${selCls}" style="position:absolute; z-index:${elZIndex}; opacity:${elOpacity}; left:${el.x}px; top:${el.y}px; width:${el.width || 400}px; font-size:${el.fontSize || 16}px; color:${el.color || '#1e293b'}; font-weight:${el.bold ? '700' : '400'}; text-align:${el.align || 'center'}; white-space:pre-line; line-height:1.4;">${sanitizeHTML(replaceVars(el.text))}${resizeHandle}</div>`;
         }
         if (el.type === 'image') {
-            return `<img id="canvasEl_${el.id}" ${dragAttr} src="${sanitizeHTML(el.src)}" class="${cursorCls} ${selCls}" style="position:absolute; z-index:2; left:${el.x}px; top:${el.y}px; width:${el.width || 80}px; height:${el.height || 80}px; object-fit:contain;" crossorigin="anonymous" alt="">`;
+            const filterStr = buildElementFilterCSS(el);
+            const tintOp = Number(el.tintOpacity || 0) / 100;
+            const tintCol = el.tintColor || '#14532d';
+            return `<div id="canvasEl_${el.id}" ${dragAttr} class="${cursorCls} ${selCls}" style="position:absolute; z-index:${elZIndex}; opacity:${elOpacity}; left:${el.x}px; top:${el.y}px; width:${el.width || 80}px; height:${el.height || 80}px;">
+                <img src="${sanitizeHTML(el.src)}" style="width:100%; height:100%; object-fit:contain; pointer-events:none; border-radius:${el.isHospitalLogo ? '9999px' : '0'}; filter:${filterStr};" crossorigin="anonymous" alt="">
+                ${tintOp > 0 ? `<div style="position:absolute; inset:0; background-color:${tintCol}; opacity:${tintOp}; mix-blend-mode:color; border-radius:${el.isHospitalLogo ? '9999px' : '0'}; pointer-events:none;"></div>` : ''}
+                ${resizeHandle}
+            </div>`;
         }
         if (el.type === 'qr') {
-            return `<img id="canvasEl_${el.id}" ${dragAttr} src="${qrUrl(dataObj.verifyUrl)}" class="${cursorCls} ${selCls}" style="position:absolute; z-index:2; left:${el.x}px; top:${el.y}px; width:${el.width || 72}px; height:${el.height || 72}px; background:#fff; padding:3px; border:1px solid #cbd5e1; border-radius:6px;" crossorigin="anonymous" alt="QR">`;
+            return `<div id="canvasEl_${el.id}" ${dragAttr} class="${cursorCls} ${selCls}" style="position:absolute; z-index:${elZIndex}; opacity:${elOpacity}; left:${el.x}px; top:${el.y}px; width:${el.width || 72}px; height:${el.height || 72}px;">
+                <img src="${qrUrl(dataObj.verifyUrl)}" style="width:100%; height:100%; background:#fff; padding:3px; border:1px solid #cbd5e1; border-radius:6px; pointer-events:none;" crossorigin="anonymous" alt="QR">
+                ${resizeHandle}
+            </div>`;
         }
         return '';
     }).join('');
 
-    const backdropSvg = isPhunphinFrame ? getPhunphinGoldRibbonBackdropSVG() : '';
-    return `<div id="certCanvasSurface" style="position:relative; width:${design.width || 800}px; height:${design.height || 560}px; ${bgStyle} ${getCertFrameCSS(design)} font-family:${design.fontFamily || "'Noto Sans Thai', sans-serif"}; overflow:hidden; margin:0 auto; border-radius:8px;">${backdropSvg}${elsHtml}</div>`;
+    const backdropSvg = isPhunphinFrame
+        ? getPhunphinGoldRibbonBackdropSVG(design, hasBgImage)
+        : (isThaiLaiThaiFrame ? getThaiLaiThaiBackdropSVG(design, hasBgImage) : (isModernFrame ? getModernAccentBackdropSVG(design, hasBgImage) : ''));
+    return `<div id="certCanvasSurface" style="position:relative; width:${design.width || 800}px; height:${design.height || 560}px; background-color:${design.bgColor || '#ffffff'}; ${getCertFrameCSS(design)} font-family:${design.fontFamily || "'Noto Sans Thai', sans-serif"}; overflow:hidden; margin:0 auto; border-radius:8px;">${bgImageLayerHtml}${backdropSvg}${elsHtml}</div>`;
 }
 
 function previewCertificate(certId) {
@@ -3560,16 +3720,23 @@ async function shareCertToTelegramAndEmail() {
 // ==================== VIEW 5: LEADERBOARD ====================
 function renderLeaderboardView(container) {
     if (!hasPermission('viewLeaderboard')) return;
-    const ranked = [...db.Scores].filter(s => s.Stage === 'POST' || !s.Stage).sort((a, b) => b.Percent - a.Percent);
+    const ranked = getBestPostScoresPerUserCourse();
     container.innerHTML = `
         <div>
             <h2 class="text-2xl font-bold text-blue-900 dark:text-white"><i class="fa-solid fa-trophy text-amber-400 mr-2"></i>จัดอันดับผู้ทำคะแนนสูงสุด (Leaderboard)</h2>
-            <p class="text-xs text-slate-500">สรุปคะแนนแบบทดสอบหลังเรียนสูงสุดแยกตามรายวิชา</p>
+            <p class="text-xs text-slate-500">แสดงคะแนนสูงสุดเพียง 1 รายการต่อผู้เรียนในแต่ละรายวิชา พร้อมสรุปจำนวนครั้งที่ทำข้อสอบ</p>
         </div>
         <div class="custom-card bg-white dark:bg-slate-800 overflow-hidden shadow-sm border border-slate-100 dark:border-slate-700">
             <table class="w-full text-left text-xs sm:text-sm">
                 <thead class="bg-slate-100 dark:bg-slate-700">
-                    <tr><th class="p-4">อันดับ</th><th class="p-4">ชื่อ-นามสกุล</th><th class="p-4">แผนก</th><th class="p-4">รายวิชา</th><th class="p-4 text-center">คะแนน</th></tr>
+                    <tr>
+                        <th class="p-4">อันดับ</th>
+                        <th class="p-4">ชื่อ-นามสกุล</th>
+                        <th class="p-4">แผนก</th>
+                        <th class="p-4">รายวิชา / บทเรียน</th>
+                        <th class="p-4 text-center">จำนวนครั้งที่สอบ</th>
+                        <th class="p-4 text-center">คะแนนสูงสุด</th>
+                    </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 dark:divide-slate-700">
                     ${ranked.map((s, idx) => {
@@ -3580,9 +3747,14 @@ function renderLeaderboardView(container) {
                             <td class="p-4 font-bold">${sanitizeHTML(u.FullName)}</td>
                             <td class="p-4 text-xs">${sanitizeHTML(u.Department || '-')}</td>
                             <td class="p-4 text-xs">${sanitizeHTML(c.CourseName)}</td>
+                            <td class="p-4 text-center">
+                                <span class="px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 font-bold text-xs">
+                                    ${s.attempts} ครั้ง
+                                </span>
+                            </td>
                             <td class="p-4 text-center"><span class="px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 font-bold text-xs">${s.Score}/${s.Total} (${s.Percent}%)</span></td>
                         </tr>`;
-                    }).join('') || '<tr><td colspan="5" class="p-6 text-center text-xs text-slate-400">ยังไม่มีข้อมูลคะแนนสอบ</td></tr>'}
+                    }).join('') || '<tr><td colspan="6" class="p-6 text-center text-xs text-slate-400">ยังไม่มีข้อมูลคะแนนสอบ</td></tr>'}
                 </tbody>
             </table>
         </div>
@@ -4354,9 +4526,58 @@ let currentDesignerCourseId = 'CRS001';
 let certDraft = null;
 let selectedElementId = null;
 let dragState = null;
+let certUndoHistory = [];
+
+function pushCertUndoState() {
+    if (!certDraft) return;
+    const snap = JSON.stringify(certDraft);
+    if (certUndoHistory.length && certUndoHistory[certUndoHistory.length - 1] === snap) return;
+    certUndoHistory.push(snap);
+    if (certUndoHistory.length > 30) certUndoHistory.shift();
+    updateCertUndoButtonState();
+}
+
+function updateCertUndoButtonState() {
+    const btn = document.getElementById('btnCertUndoEdit');
+    if (btn) {
+        btn.disabled = certUndoHistory.length === 0;
+        btn.classList.toggle('opacity-40', certUndoHistory.length === 0);
+    }
+}
+
+function undoCertDesignEdit() {
+    if (!certUndoHistory.length) return;
+    const prevSnap = certUndoHistory.pop();
+    certDraft = JSON.parse(prevSnap);
+    if (!certDraft.elements.some(x => x.id === selectedElementId)) {
+        selectedElementId = certDraft.elements[0]?.id || null;
+    }
+    const setVal = (id, v) => { const el = document.getElementById(id); if (el) el.value = v; };
+    setVal('cdFrameStyle', certDraft.frameStyle);
+    setVal('cdFontFamily', certDraft.fontFamily);
+    setVal('cdPrimaryColor', certDraft.primaryColor);
+    setVal('cdSecondaryColor', certDraft.secondaryColor);
+    setVal('cdPatternDarkColor', certDraft.patternDarkColor || '#171717');
+    setVal('cdPatternGoldColor', certDraft.patternGoldColor || certDraft.secondaryColor || '#d4a017');
+    setVal('cdPatternAccentColor', certDraft.patternAccentColor || '#b91c1c');
+    setVal('cdBgColor', certDraft.bgColor);
+    setVal('cdBgImage', certDraft.bgImage || '');
+    setVal('cdBgOpacity', certDraft.bgOpacity ?? 100);
+    setVal('cdBgTintColor', certDraft.bgTintColor || '#ffffff');
+    setVal('cdBgTintOpacity', certDraft.bgTintOpacity ?? 0);
+    setVal('cdBgHue', certDraft.bgHue ?? 0);
+    setVal('cdBgBrightness', certDraft.bgBrightness ?? 100);
+    setVal('cdBgSaturate', certDraft.bgSaturate ?? 100);
+    setVal('cdBgLayerOrder', certDraft.bgLayerOrder || 'back');
+    renderSavedLogosGallery();
+    refreshCertStudioCanvas(true);
+    updateCertUndoButtonState();
+    showNonBlockingToast('ย้อนกลับก่อนแก้ไขเรียบร้อยแล้ว', 'info');
+}
 
 function openCourseCertDesigner(courseId) {
     currentDesignerCourseId = courseId;
+    certUndoHistory = [];
     switchView('certDesigner');
 }
 
@@ -4369,6 +4590,16 @@ function renderCertDesignerView(container) {
         db.CourseCertDesigns[currentDesignerCourseId] = JSON.parse(JSON.stringify(DEFAULT_CERT));
     }
     certDraft = JSON.parse(JSON.stringify(db.CourseCertDesigns[currentDesignerCourseId]));
+    if (!certDraft.patternDarkColor) certDraft.patternDarkColor = '#171717';
+    if (!certDraft.patternGoldColor) certDraft.patternGoldColor = certDraft.secondaryColor || '#d4a017';
+    if (!certDraft.patternAccentColor) certDraft.patternAccentColor = '#b91c1c';
+    if (certDraft.bgOpacity === undefined) certDraft.bgOpacity = 100;
+    if (certDraft.bgTintColor === undefined) certDraft.bgTintColor = '#ffffff';
+    if (certDraft.bgTintOpacity === undefined) certDraft.bgTintOpacity = 0;
+    if (certDraft.bgHue === undefined) certDraft.bgHue = 0;
+    if (certDraft.bgBrightness === undefined) certDraft.bgBrightness = 100;
+    if (certDraft.bgSaturate === undefined) certDraft.bgSaturate = 100;
+    if (!certDraft.bgLayerOrder) certDraft.bgLayerOrder = 'back';
     if (!selectedElementId && certDraft.elements.length) selectedElementId = certDraft.elements[0].id;
 
     container.innerHTML = `
@@ -4378,14 +4609,17 @@ function renderCertDesignerView(container) {
                     <i class="fa-solid fa-arrow-left mr-1"></i> ย้อนกลับหน้าคอร์สเรียน
                 </button>
                 <div>
-                    <h2 class="text-2xl font-bold text-blue-900 dark:text-white"><i class="fa-solid fa-palette mr-2 text-blue-600"></i>สตูดิโอออกแบบเกียรติบัตร (WYSIWYG & Drag-Drop)</h2>
-                    <p class="text-xs text-slate-500">คลิกหรือดับเบิลคลิกที่ข้อความเพื่อแก้ไข ลากย้ายตำแหน่งอิสระ หรือกด Ctrl+V วางรูปภาพจากคลิปบอร์ดได้ทันที</p>
+                    <h2 class="text-2xl font-bold text-blue-900 dark:text-white"><i class="fa-solid fa-palette mr-2 text-blue-600"></i>สตูดิโอออกแบบเกียรติบัตร</h2>
+                    <p class="text-xs text-slate-500">คลิกหรือดับเบิลคลิกที่ข้อความเพื่อแก้ไข ปรับโทนสี ความโปร่งใส (Transparent) และลำดับหน้า-หลังของรูปภาพและพื้นหลังได้ทันที</p>
                 </div>
             </div>
             <div class="flex flex-wrap items-center gap-2">
                 <select onchange="openCourseCertDesigner(this.value)" class="px-3 py-2 rounded-xl border dark:border-slate-700 dark:bg-slate-800 text-xs font-bold">
                     ${db.Courses.map(c => `<option value="${c.CourseID}" ${c.CourseID === currentDesignerCourseId ? 'selected' : ''}>รายวิชา: ${sanitizeHTML(c.CourseName)}</option>`).join('')}
                 </select>
+                <button id="btnCertUndoEdit" type="button" onclick="undoCertDesignEdit()" disabled class="px-3.5 py-2 rounded-xl bg-slate-700 hover:bg-slate-800 text-white text-xs font-bold shadow opacity-40 transition" title="ย้อนกลับไปยังสถานะก่อนแก้ไข">
+                    <i class="fa-solid fa-rotate-left mr-1"></i> Edit ย้อนกลับก่อนแก้ไข
+                </button>
                 <button onclick="applyPhunphinGoldPreset()" class="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold shadow"><i class="fa-solid fa-medal mr-1"></i> ใช้แม่แบบ รพ.พุนพิน</button>
                 <button onclick="saveCourseCertDesign()" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow"><i class="fa-solid fa-floppy-disk mr-1"></i> บันทึกแม่แบบ</button>
                 <button id="btnCertNextToCourses" onclick="switchView('manageLessons')" class="hidden px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow">ถัดไป (กลับหน้าคอร์สเรียน) <i class="fa-solid fa-arrow-right ml-1"></i></button>
@@ -4394,14 +4628,23 @@ function renderCertDesignerView(container) {
         </div>
 
         <div class="grid grid-cols-1 xl:grid-cols-12 gap-5">
-            <div class="xl:col-span-4 bg-white dark:bg-slate-800 rounded-3xl p-5 shadow-sm border border-slate-100 dark:border-slate-700 space-y-4 text-xs">
+            <div class="xl:col-span-4 bg-white dark:bg-slate-800 rounded-3xl p-5 shadow-sm border border-slate-100 dark:border-slate-700 space-y-4 text-xs max-h-[82vh] overflow-y-auto">
                 <div class="space-y-2 pb-3 border-b dark:border-slate-700">
-                    <div class="font-bold text-blue-900 dark:text-blue-300">1. พื้นหลัง กรอบ และฟอนต์หลัก</div>
+                    <div class="flex justify-between items-center">
+                        <span class="font-bold text-indigo-800 dark:text-indigo-300"><i class="fa-solid fa-bookmark mr-1"></i> แม่แบบที่บันทึกไว้ (เรียกใช้ซ้ำได้)</span>
+                        <button type="button" onclick="saveCurrentDesignAsNamedTemplate()" class="px-2.5 py-1 rounded-lg bg-indigo-600 text-white font-bold hover:bg-indigo-700">+ บันทึกเป็นแม่แบบเก็บไว้</button>
+                    </div>
+                    <div id="savedCertTemplatesList" class="space-y-1.5 max-h-36 overflow-y-auto pt-1"></div>
+                </div>
+
+                <div class="space-y-2 pb-3 border-b dark:border-slate-700">
+                    <div class="font-bold text-blue-900 dark:text-blue-300">1. พื้นหลัง กรอบ และสีลวดลายทุกส่วน</div>
                     <div class="grid grid-cols-2 gap-2">
                         <div>
                             <label class="block mb-1 font-semibold">รูปแบบกรอบ</label>
                             <select id="cdFrameStyle" onchange="updateCertGlobalStyle()" class="w-full px-2.5 py-1.5 rounded-lg border dark:bg-slate-900">
                                 <option value="phunphin_gold" ${certDraft.frameStyle === 'phunphin_gold' ? 'selected' : ''}>กรอบริบบิ้นดำ-ทอง พร้อมตรา รพ.พุนพิน</option>
+                                <option value="thai_lai_thai" ${certDraft.frameStyle === 'thai_lai_thai' ? 'selected' : ''}>กรอบลายไทยกนกทอง (Thai Lai Thai)</option>
                                 <option value="thai_kanok" ${certDraft.frameStyle === 'thai_kanok' ? 'selected' : ''}>กรอบลายไทยประยุกต์สีทอง</option>
                                 <option value="classic" ${certDraft.frameStyle === 'classic' ? 'selected' : ''}>Classic Double</option>
                                 <option value="modern" ${certDraft.frameStyle === 'modern' ? 'selected' : ''}>Modern Left Accent</option>
@@ -4424,17 +4667,81 @@ function renderCertDesignerView(container) {
                         </div>
                     </div>
                     <div class="grid grid-cols-3 gap-2">
-                        <div><label class="block mb-1">สีกรอบหลัก</label><input type="color" id="cdPrimaryColor" value="${certDraft.primaryColor}" onchange="updateCertGlobalStyle()" class="w-full h-7 rounded"></div>
-                        <div><label class="block mb-1">สีกรอบทอง/รอง</label><input type="color" id="cdSecondaryColor" value="${certDraft.secondaryColor}" onchange="updateCertGlobalStyle()" class="w-full h-7 rounded"></div>
-                        <div><label class="block mb-1">สีพื้นหลัง</label><input type="color" id="cdBgColor" value="${certDraft.bgColor}" onchange="updateCertGlobalStyle()" class="w-full h-7 rounded"></div>
+                        <div><label class="block mb-1 text-[11px]">สีกรอบนอกหลัก</label><input type="color" id="cdPrimaryColor" value="${certDraft.primaryColor}" onchange="updateCertGlobalStyle()" class="w-full h-7 rounded cursor-pointer"></div>
+                        <div><label class="block mb-1 text-[11px]">สีกรอบนอกรอง</label><input type="color" id="cdSecondaryColor" value="${certDraft.secondaryColor}" onchange="updateCertGlobalStyle()" class="w-full h-7 rounded cursor-pointer"></div>
+                        <div><label class="block mb-1 text-[11px]">สีพื้นหลังกระดาษ</label><input type="color" id="cdBgColor" value="${certDraft.bgColor}" onchange="updateCertGlobalStyle()" class="w-full h-7 rounded cursor-pointer"></div>
                     </div>
-                    <div class="flex gap-1.5 pt-1">
-                        <input type="text" id="cdBgImage" value="${sanitizeHTML(certDraft.bgImage)}" onchange="updateCertGlobalStyle()" placeholder="URL ภาพพื้นหลัง..." class="flex-1 px-2.5 py-1.5 rounded-lg border dark:bg-slate-900">
-                        <label class="px-2.5 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-700 font-semibold cursor-pointer">
-                            Import ภาพพื้นหลัง
-                            <input type="file" accept="image/*" class="hidden" onchange="uploadCertBgImage(this)">
+                    <div class="p-2.5 rounded-xl bg-amber-50/70 dark:bg-slate-900/60 border border-amber-200 dark:border-slate-700 space-y-1.5">
+                        <div class="font-bold text-[11px] text-amber-900 dark:text-amber-300"><i class="fa-solid fa-swatchbook mr-1"></i> ปรับสีลวดลายภายในประกาศนียบัตร (แม่แบบ รพ.พุนพิน / ลายไทย)</div>
+                        <div class="grid grid-cols-3 gap-2">
+                            <div><label class="block mb-1 text-[10px]">สีแถบโค้ง/ลายหลัก</label><input type="color" id="cdPatternDarkColor" value="${certDraft.patternDarkColor || '#171717'}" onchange="updateCertGlobalStyle()" class="w-full h-7 rounded cursor-pointer"></div>
+                            <div><label class="block mb-1 text-[10px]">สีริบบิ้น/ลายกนก</label><input type="color" id="cdPatternGoldColor" value="${certDraft.patternGoldColor || '#d4a017'}" onchange="updateCertGlobalStyle()" class="w-full h-7 rounded cursor-pointer"></div>
+                            <div><label class="block mb-1 text-[10px]">สีวงแหวนเหรียญตรา</label><input type="color" id="cdPatternAccentColor" value="${certDraft.patternAccentColor || '#b91c1c'}" onchange="updateCertGlobalStyle()" class="w-full h-7 rounded cursor-pointer"></div>
+                        </div>
+                    </div>
+
+                    <!-- ภาพพื้นหลังและการปรับสี / Transparent / ลำดับชั้น -->
+                    <div class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700 space-y-2">
+                        <div class="flex justify-between items-center">
+                            <span class="font-bold text-[11px] text-slate-700 dark:text-slate-200"><i class="fa-solid fa-image mr-1 text-blue-600"></i> ภาพพื้นหลัง (ปรับสี / โปร่งใส / หน้า-หลัง)</span>
+                            ${certDraft.bgImage ? `<button type="button" onclick="clearCertBgImage()" class="text-[10px] text-rose-600 font-bold hover:underline"><i class="fa-solid fa-trash-can"></i> ลบภาพพื้นหลัง</button>` : ''}
+                        </div>
+                        <div class="flex gap-1.5">
+                            <input type="text" id="cdBgImage" value="${sanitizeHTML(certDraft.bgImage)}" onchange="updateCertGlobalStyle()" placeholder="URL ภาพพื้นหลัง..." class="flex-1 px-2.5 py-1.5 rounded-lg border dark:bg-slate-900">
+                            <label class="px-2.5 py-1.5 rounded-lg bg-blue-600 text-white font-semibold cursor-pointer hover:bg-blue-700 shrink-0">
+                                Import ภาพ
+                                <input type="file" accept="image/*" class="hidden" onchange="uploadCertBgImage(this)">
+                            </label>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 pt-1">
+                            <div>
+                                <label class="block mb-0.5 text-[10px] font-semibold">ความโปร่งใสพื้นหลัง (Transparent): <span id="lblBgOpacity">${certDraft.bgOpacity ?? 100}%</span></label>
+                                <input type="range" id="cdBgOpacity" min="0" max="100" value="${certDraft.bgOpacity ?? 100}" oninput="document.getElementById('lblBgOpacity').textContent=this.value+'%'; updateCertGlobalStyle(false)" onchange="updateCertGlobalStyle(true)" class="w-full accent-blue-600">
+                            </div>
+                            <div>
+                                <label class="block mb-0.5 text-[10px] font-semibold">ตำแหน่งชั้นภาพพื้นหลัง</label>
+                                <select id="cdBgLayerOrder" onchange="updateCertGlobalStyle(true)" class="w-full px-2 py-1 rounded-lg border dark:bg-slate-900 text-[11px]">
+                                    <option value="back" ${certDraft.bgLayerOrder !== 'front' ? 'selected' : ''}>อยู่ด้านหลังลวดลายกรอบ (Back)</option>
+                                    <option value="front" ${certDraft.bgLayerOrder === 'front' ? 'selected' : ''}>อยู่ด้านหน้าลวดลายกรอบ (Front)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-3 gap-2">
+                            <div>
+                                <label class="block mb-0.5 text-[10px]">ปรับโทนสี (Hue): <span id="lblBgHue">${certDraft.bgHue ?? 0}°</span></label>
+                                <input type="range" id="cdBgHue" min="-180" max="180" value="${certDraft.bgHue ?? 0}" oninput="document.getElementById('lblBgHue').textContent=this.value+'°'; updateCertGlobalStyle(false)" onchange="updateCertGlobalStyle(true)" class="w-full accent-indigo-600">
+                            </div>
+                            <div>
+                                <label class="block mb-0.5 text-[10px]">ความสว่าง: <span id="lblBgBri">${certDraft.bgBrightness ?? 100}%</span></label>
+                                <input type="range" id="cdBgBrightness" min="30" max="200" value="${certDraft.bgBrightness ?? 100}" oninput="document.getElementById('lblBgBri').textContent=this.value+'%'; updateCertGlobalStyle(false)" onchange="updateCertGlobalStyle(true)" class="w-full accent-amber-600">
+                            </div>
+                            <div>
+                                <label class="block mb-0.5 text-[10px]">ความสดสี: <span id="lblBgSat">${certDraft.bgSaturate ?? 100}%</span></label>
+                                <input type="range" id="cdBgSaturate" min="0" max="250" value="${certDraft.bgSaturate ?? 100}" oninput="document.getElementById('lblBgSat').textContent=this.value+'%'; updateCertGlobalStyle(false)" onchange="updateCertGlobalStyle(true)" class="w-full accent-emerald-600">
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 items-center">
+                            <div class="flex items-center gap-1.5">
+                                <label class="text-[10px] shrink-0">ย้อมโทนสีพื้นหลัง:</label>
+                                <input type="color" id="cdBgTintColor" value="${certDraft.bgTintColor || '#ffffff'}" onchange="updateCertGlobalStyle(true)" class="w-8 h-6 rounded cursor-pointer">
+                            </div>
+                            <div>
+                                <label class="block mb-0.5 text-[10px]">ความเข้มสีย้อม: <span id="lblBgTintOp">${certDraft.bgTintOpacity ?? 0}%</span></label>
+                                <input type="range" id="cdBgTintOpacity" min="0" max="90" value="${certDraft.bgTintOpacity ?? 0}" oninput="document.getElementById('lblBgTintOp').textContent=this.value+'%'; updateCertGlobalStyle(false)" onchange="updateCertGlobalStyle(true)" class="w-full accent-rose-600">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-2 pb-3 border-b dark:border-slate-700">
+                    <div class="flex justify-between items-center">
+                        <span class="font-bold text-emerald-800 dark:text-emerald-300"><i class="fa-solid fa-hospital-symbol mr-1"></i> คลังโลโก้โรงพยาบาล / ตราสัญลักษณ์</span>
+                        <label class="px-2.5 py-1 rounded-lg bg-emerald-600 text-white font-bold cursor-pointer hover:bg-emerald-700">
+                            + อัปโหลดโลโก้เก็บไว้
+                            <input type="file" accept="image/*" class="hidden" onchange="uploadAndSaveLogoToLibrary(this)">
                         </label>
                     </div>
+                    <div id="savedLogosGallery" class="flex flex-wrap gap-2 pt-1"></div>
                 </div>
 
                 <div class="flex gap-2 pb-3 border-b dark:border-slate-700">
@@ -4453,14 +4760,192 @@ function renderCertDesignerView(container) {
             </div>
         </div>
     `;
+    renderSavedCertTemplatesList();
+    renderSavedLogosGallery();
     refreshCertStudioCanvas(true);
+    updateCertUndoButtonState();
+}
+
+function renderSavedCertTemplatesList() {
+    const holder = document.getElementById('savedCertTemplatesList');
+    if (!holder) return;
+    const list = db.SavedCertTemplates || [];
+    if (!list.length) {
+        holder.innerHTML = `<div class="text-[11px] text-slate-400 py-1">ยังไม่มีแม่แบบที่บันทึกไว้ (กด "บันทึกแม่แบบ" เพื่อเก็บไว้ใช้ซ้ำ)</div>`;
+        return;
+    }
+    holder.innerHTML = list.map((tpl, idx) => `
+        <div class="flex items-center justify-between gap-2 p-2 rounded-xl border bg-slate-50 dark:bg-slate-900">
+            <div class="truncate">
+                <div class="font-bold text-slate-800 dark:text-white truncate">${sanitizeHTML(tpl.name)}</div>
+                <div class="text-[10px] text-slate-400">บันทึกเมื่อ: ${sanitizeHTML(tpl.savedAt || '-')}</div>
+            </div>
+            <div class="flex items-center gap-1 shrink-0">
+                <button type="button" onclick="applySavedCertTemplate(${idx})" class="px-2.5 py-1 rounded-lg bg-indigo-100 text-indigo-800 font-bold hover:bg-indigo-200">เรียกใช้</button>
+                <button type="button" onclick="deleteSavedCertTemplate(${idx})" class="px-2 py-1 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100" title="ลบแม่แบบนี้"><i class="fa-solid fa-trash-can"></i></button>
+            </div>
+        </div>
+    `).join('');
+}
+
+function saveCurrentDesignAsNamedTemplate() {
+    if (!certDraft) return;
+    const course = db.Courses.find(c => c.CourseID === currentDesignerCourseId);
+    const defaultName = `แม่แบบ ${course ? course.CourseName : 'โรงพยาบาลพุนพิน'} (${getNowThai().split(' ')[0]})`;
+    Swal.fire({
+        title: 'ตั้งชื่อแม่แบบเกียรติบัตรเพื่อเก็บไว้ใช้ซ้ำ',
+        input: 'text',
+        inputValue: defaultName,
+        showCancelButton: true,
+        confirmButtonText: 'บันทึกเก็บไว้ในคลัง',
+        cancelButtonText: 'ยกเลิก',
+        confirmButtonColor: '#4f46e5'
+    }).then(res => {
+        if (res.isConfirmed && res.value.trim()) {
+            if (!db.SavedCertTemplates) db.SavedCertTemplates = [];
+            db.SavedCertTemplates.unshift({
+                id: 'tpl_' + Date.now(),
+                name: res.value.trim(),
+                savedAt: getNowThai(),
+                design: JSON.parse(JSON.stringify(certDraft))
+            });
+            saveDB();
+            renderSavedCertTemplatesList();
+            showNonBlockingToast('บันทึกแม่แบบเก็บไว้ในคลังเรียบร้อยแล้ว', 'success');
+        }
+    });
+}
+
+function applySavedCertTemplate(idx) {
+    const tpl = (db.SavedCertTemplates || [])[idx];
+    if (!tpl || !tpl.design) return;
+    pushCertUndoState();
+    certDraft = JSON.parse(JSON.stringify(tpl.design));
+    selectedElementId = certDraft.elements[0]?.id || null;
+    db.CourseCertDesigns[currentDesignerCourseId] = JSON.parse(JSON.stringify(certDraft));
+    saveDB();
+    renderCertDesignerView(document.getElementById('mainViewContent'));
+    showNonBlockingToast(`เรียกใช้แม่แบบ "${tpl.name}" เรียบร้อยแล้ว`, 'success');
+}
+
+function deleteSavedCertTemplate(idx) {
+    db.SavedCertTemplates.splice(idx, 1);
+    saveDB();
+    renderSavedCertTemplatesList();
+}
+
+function renderSavedLogosGallery() {
+    const holder = document.getElementById('savedLogosGallery');
+    if (!holder) return;
+    const defaultLogoSrc = getDefaultPhunphinLogoDataUri(certDraft?.primaryColor || '#14532d');
+    const allLogos = [
+        { id: 'builtin_phunphin', name: 'ตรา รพ.พุนพิน (ต้นแบบ)', src: defaultLogoSrc, builtin: true },
+        ...(db.SavedCertLogos || [])
+    ];
+
+    holder.innerHTML = allLogos.map((lg, idx) => `
+        <div class="relative group border rounded-xl p-1.5 bg-slate-50 dark:bg-slate-900 flex flex-col items-center gap-1 w-20" title="${sanitizeHTML(lg.name || 'โลโก้')}">
+            <img src="${sanitizeHTML(lg.src)}" onclick="applyLogoFromLibrary(${idx})" class="w-11 h-11 object-contain cursor-pointer hover:scale-105 transition rounded-full bg-white" alt="">
+            <button type="button" onclick="applyLogoFromLibrary(${idx})" class="w-full py-0.5 rounded bg-blue-100 text-blue-800 text-[10px] font-bold hover:bg-blue-200">ใช้โลโก้นี้</button>
+            ${!lg.builtin ? `<button type="button" onclick="deleteLogoFromLibrary('${lg.id}')" class="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-rose-600 text-white text-[9px] flex items-center justify-center shadow" title="ลบออกจากคลัง">×</button>` : ''}
+        </div>
+    `).join('');
+}
+
+function uploadAndSaveLogoToLibrary(inp) {
+    const f = inp.files[0];
+    if (!f) return;
+    const r = new FileReader();
+    r.onload = async () => {
+        const compressed = await compressImageDataUrl(r.result, 500, 0.9);
+        if (!db.SavedCertLogos) db.SavedCertLogos = [];
+        const newLogo = { id: 'logo_' + Date.now(), name: f.name, src: compressed };
+        db.SavedCertLogos.unshift(newLogo);
+        saveDB();
+        renderSavedLogosGallery();
+        applyLogoSrcToHospitalOrNew(compressed);
+        inp.value = '';
+        showNonBlockingToast('อัปโหลดและบันทึกตราโลโก้ลงคลังเรียบร้อย', 'success');
+    };
+    r.readAsDataURL(f);
+}
+
+function applyLogoFromLibrary(idx) {
+    const defaultLogoSrc = getDefaultPhunphinLogoDataUri(certDraft?.primaryColor || '#14532d');
+    const allLogos = [
+        { id: 'builtin_phunphin', name: 'ตรา รพ.พุนพิน (ต้นแบบ)', src: defaultLogoSrc, builtin: true },
+        ...(db.SavedCertLogos || [])
+    ];
+    const picked = allLogos[idx];
+    if (!picked) return;
+    applyLogoSrcToHospitalOrNew(picked.src);
+    showNonBlockingToast('นำตราโลโก้มาวางบนเกียรติบัตรแล้ว (ลากย้ายหรือย่อขยายได้ทันที)', 'success');
+}
+
+function applyLogoSrcToHospitalOrNew(logoSrc) {
+    if (!certDraft) return;
+    pushCertUndoState();
+    const selectedEl = certDraft.elements.find(x => x.id === selectedElementId && x.type === 'image');
+    const existingLogo = selectedEl || certDraft.elements.find(x => x.isHospitalLogo || x.id === 'el_logo');
+    if (existingLogo) {
+        existingLogo.src = logoSrc;
+        selectedElementId = existingLogo.id;
+    } else {
+        const newEl = {
+            id: 'el_logo_' + Date.now(),
+            type: 'image',
+            isHospitalLogo: true,
+            src: logoSrc,
+            x: 345,
+            y: 35,
+            width: 110,
+            height: 110,
+            opacity: 100,
+            hue: 0,
+            brightness: 100,
+            contrast: 100,
+            saturate: 100,
+            layerOrder: 'front'
+        };
+        certDraft.elements.unshift(newEl);
+        selectedElementId = newEl.id;
+    }
+    refreshCertStudioCanvas(true);
+}
+
+function deleteLogoFromLibrary(logoId) {
+    db.SavedCertLogos = (db.SavedCertLogos || []).filter(x => x.id !== logoId);
+    saveDB();
+    renderSavedLogosGallery();
+}
+
+function replaceSelectedImageFile(inp) {
+    const f = inp.files[0];
+    if (!f) return;
+    const r = new FileReader();
+    r.onload = async () => {
+        pushCertUndoState();
+        const compressed = await compressImageDataUrl(r.result, 600, 0.88);
+        if (!db.SavedCertLogos) db.SavedCertLogos = [];
+        db.SavedCertLogos.unshift({ id: 'logo_' + Date.now(), name: f.name, src: compressed });
+        saveDB();
+        renderSavedLogosGallery();
+        const el = certDraft.elements.find(x => x.id === selectedElementId && x.type === 'image');
+        if (el) {
+            el.src = compressed;
+            refreshCertStudioCanvas(true);
+            showNonBlockingToast('เปลี่ยนรูปตราโลโก้และบันทึกลงคลังแล้ว', 'success');
+        }
+    };
+    r.readAsDataURL(f);
 }
 
 function getCertPreviewSampleData() {
     const course = db.Courses.find(c => c.CourseID === currentDesignerCourseId) || { CourseName: 'ชื่อรายวิชาตัวอย่าง' };
+    const registeredName = (currentUser && currentUser.FullName) ? currentUser.FullName : 'ผู้ลงทะเบียน';
     return {
         id: 'CERT-2569-1001',
-        name: 'พว.มณี เรียนดี',
+        name: registeredName,
         course: course.CourseName,
         score: 100,
         date: getNowThai().split(' ')[0],
@@ -4506,20 +4991,53 @@ function focusCertInspectorText(e, elId) {
     }
 }
 
-function updateCertGlobalStyle() {
+function updateCertGlobalStyle(recordUndo = true) {
+    if (recordUndo) pushCertUndoState();
     certDraft.frameStyle = document.getElementById('cdFrameStyle').value;
     certDraft.fontFamily = document.getElementById('cdFontFamily').value;
     certDraft.primaryColor = document.getElementById('cdPrimaryColor').value;
     certDraft.secondaryColor = document.getElementById('cdSecondaryColor').value;
+    certDraft.patternDarkColor = document.getElementById('cdPatternDarkColor')?.value || '#171717';
+    certDraft.patternGoldColor = document.getElementById('cdPatternGoldColor')?.value || certDraft.secondaryColor;
+    certDraft.patternAccentColor = document.getElementById('cdPatternAccentColor')?.value || '#b91c1c';
     certDraft.bgColor = document.getElementById('cdBgColor').value;
     certDraft.bgImage = document.getElementById('cdBgImage').value.trim();
+
+    if (document.getElementById('cdBgOpacity')) certDraft.bgOpacity = Number(document.getElementById('cdBgOpacity').value);
+    if (document.getElementById('cdBgLayerOrder')) certDraft.bgLayerOrder = document.getElementById('cdBgLayerOrder').value;
+    if (document.getElementById('cdBgHue')) certDraft.bgHue = Number(document.getElementById('cdBgHue').value);
+    if (document.getElementById('cdBgBrightness')) certDraft.bgBrightness = Number(document.getElementById('cdBgBrightness').value);
+    if (document.getElementById('cdBgSaturate')) certDraft.bgSaturate = Number(document.getElementById('cdBgSaturate').value);
+    if (document.getElementById('cdBgTintColor')) certDraft.bgTintColor = document.getElementById('cdBgTintColor').value;
+    if (document.getElementById('cdBgTintOpacity')) certDraft.bgTintOpacity = Number(document.getElementById('cdBgTintOpacity').value);
+
+    const builtinLogoEl = certDraft.elements.find(x => x.id === 'el_logo' && String(x.src || '').startsWith('data:image/svg+xml'));
+    if (builtinLogoEl) {
+        builtinLogoEl.src = getDefaultPhunphinLogoDataUri(certDraft.primaryColor);
+    }
+
+    if (recordUndo) renderSavedLogosGallery();
     refreshCertStudioCanvas(false);
+}
+
+function clearCertBgImage() {
+    pushCertUndoState();
+    certDraft.bgImage = '';
+    const inp = document.getElementById('cdBgImage');
+    if (inp) inp.value = '';
+    renderCertDesignerView(document.getElementById('mainViewContent'));
 }
 
 function applyPhunphinGoldPreset() {
     if (!hasPermission('designCert')) return;
+    pushCertUndoState();
+    const currentLogo = certDraft?.elements?.find(x => x.isHospitalLogo || x.id === 'el_logo');
     certDraft = JSON.parse(JSON.stringify(DEFAULT_CERT));
-    selectedElementId = certDraft.elements[0]?.id || null;
+    if (currentLogo && currentLogo.src) {
+        const targetLogo = certDraft.elements.find(x => x.id === 'el_logo');
+        if (targetLogo) targetLogo.src = currentLogo.src;
+    }
+    selectedElementId = 'el_logo';
     db.CourseCertDesigns[currentDesignerCourseId] = JSON.parse(JSON.stringify(certDraft));
     saveDB();
     renderCertDesignerView(document.getElementById('mainViewContent'));
@@ -4531,9 +5049,11 @@ function uploadCertBgImage(inp) {
     if (!f) return;
     const r = new FileReader();
     r.onload = async () => {
+        pushCertUndoState();
         certDraft.bgImage = await compressImageDataUrl(r.result, 1200, 0.85);
         document.getElementById('cdBgImage').value = certDraft.bgImage;
-        refreshCertStudioCanvas(false);
+        renderCertDesignerView(document.getElementById('mainViewContent'));
+        showNonBlockingToast('อัปโหลดภาพพื้นหลังเรียบร้อย ปรับโทนสีและความโปร่งใสได้ทันที', 'success');
     };
     r.readAsDataURL(f);
 }
@@ -4544,20 +5064,74 @@ function selectCertElement(e, elId) {
     refreshCertStudioCanvas(true);
 }
 
+let resizeState = null;
+
 function startDragCertElement(e, elId) {
+    if (resizeState) return;
     selectedElementId = elId;
     const el = certDraft.elements.find(x => x.id === elId);
     if (!el) return;
     dragState = { id: elId, startX: e.clientX, startY: e.clientY, origX: el.x, origY: el.y, moved: false };
 }
 
+function startResizeCertElement(e, elId) {
+    e.stopPropagation();
+    e.preventDefault();
+    pushCertUndoState();
+    selectedElementId = elId;
+    const el = certDraft.elements.find(x => x.id === elId);
+    if (!el) return;
+    resizeState = {
+        id: elId,
+        startX: e.clientX,
+        startY: e.clientY,
+        origW: Number(el.width) || 120,
+        origH: Number(el.height) || 120,
+        origFontSize: Number(el.fontSize) || 16
+    };
+}
+
 window.addEventListener('mousemove', (e) => {
+    if (resizeState && certDraft) {
+        const el = certDraft.elements.find(x => x.id === resizeState.id);
+        if (!el) return;
+        const dx = e.clientX - resizeState.startX;
+        const dy = e.clientY - resizeState.startY;
+        el.width = Math.max(40, Math.round(resizeState.origW + dx));
+        const domEl = document.getElementById(`canvasEl_${el.id}`);
+        if (el.type === 'text') {
+            el.fontSize = Math.max(10, Math.min(96, Math.round(resizeState.origFontSize + (dy * 0.35))));
+            if (domEl) {
+                domEl.style.width = el.width + 'px';
+                domEl.style.fontSize = el.fontSize + 'px';
+            }
+            const inpW = document.getElementById('certInspectorWidth');
+            const inpFS = document.getElementById('certInspectorFontSize');
+            if (inpW) inpW.value = el.width;
+            if (inpFS) inpFS.value = el.fontSize;
+        } else {
+            el.height = Math.max(30, Math.round(resizeState.origH + dy));
+            if (domEl) {
+                domEl.style.width = el.width + 'px';
+                domEl.style.height = el.height + 'px';
+            }
+            const inpW = document.getElementById('certInspectorWidth');
+            const inpH = document.getElementById('certInspectorHeight');
+            if (inpW) inpW.value = el.width;
+            if (inpH) inpH.value = el.height;
+        }
+        return;
+    }
+
     if (!dragState || !certDraft) return;
     const el = certDraft.elements.find(x => x.id === dragState.id);
     if (!el) return;
     const dx = e.clientX - dragState.startX;
     const dy = e.clientY - dragState.startY;
-    if (Math.abs(dx) > 1 || Math.abs(dy) > 1) dragState.moved = true;
+    if (Math.abs(dx) > 1 || Math.abs(dy) > 1) {
+        if (!dragState.moved) pushCertUndoState();
+        dragState.moved = true;
+    }
     el.x = Math.max(0, Math.round(dragState.origX + dx));
     el.y = Math.max(0, Math.round(dragState.origY + dy));
 
@@ -4572,6 +5146,11 @@ window.addEventListener('mousemove', (e) => {
     if (inpY) inpY.value = el.y;
 });
 window.addEventListener('mouseup', () => {
+    if (resizeState) {
+        resizeState = null;
+        refreshCertStudioCanvas(true);
+        return;
+    }
     if (dragState && dragState.moved) {
         refreshCertStudioCanvas(true);
     }
@@ -4586,7 +5165,7 @@ window.addEventListener('paste', (e) => {
             const file = item.getAsFile();
             const reader = new FileReader();
             reader.onload = async () => {
-                const compressed = await compressImageDataUrl(reader.result, 850, 0.8);
+                const compressed = await compressImageDataUrl(reader.result, 850, 0.85);
                 const lessonOpen = !document.getElementById('lessonModal')?.classList.contains('hidden');
                 const quizOpen = !document.getElementById('quizModal')?.classList.contains('hidden');
                 if (lessonOpen) {
@@ -4603,11 +5182,16 @@ window.addEventListener('paste', (e) => {
                 if (currentView === 'certDesigner' && certDraft) {
                     const activeTag = document.activeElement?.tagName;
                     if (activeTag === 'INPUT' || activeTag === 'TEXTAREA') return;
-                    const newEl = { id: 'el_img_' + Date.now(), type: 'image', src: compressed, x: 320, y: 200, width: 140, height: 140 };
+                    pushCertUndoState();
+                    if (!db.SavedCertLogos) db.SavedCertLogos = [];
+                    db.SavedCertLogos.unshift({ id: 'logo_' + Date.now(), name: 'โลโก้ที่วางใหม่', src: compressed });
+                    saveDB();
+                    renderSavedLogosGallery();
+                    const newEl = { id: 'el_img_' + Date.now(), type: 'image', isHospitalLogo: false, src: compressed, x: 320, y: 200, width: 120, height: 120, opacity: 100, hue: 0, brightness: 100, contrast: 100, saturate: 100, layerOrder: 'front' };
                     certDraft.elements.push(newEl);
                     selectedElementId = newEl.id;
                     refreshCertStudioCanvas(true);
-                    showNonBlockingToast('วางรูปภาพจากคลิปบอร์ดสำเร็จ', 'success');
+                    showNonBlockingToast('วางรูปภาพจากคลิปบอร์ดและเก็บลงคลังโลโก้สำเร็จ', 'success');
                 }
             };
             reader.readAsDataURL(file);
@@ -4616,7 +5200,8 @@ window.addEventListener('paste', (e) => {
 });
 
 function addCertTextElement() {
-    const newEl = { id: 'el_txt_' + Date.now(), type: 'text', text: 'ข้อความใหม่ (พิมพ์แก้ไขด้านซ้ายมือ)', x: 250, y: 250, width: 300, fontSize: 18, color: '#1e3a8a', bold: true, align: 'center' };
+    pushCertUndoState();
+    const newEl = { id: 'el_txt_' + Date.now(), type: 'text', text: 'ข้อความใหม่ (พิมพ์แก้ไขด้านซ้ายมือ)', x: 250, y: 250, width: 300, fontSize: 18, color: '#1e3a8a', bold: true, align: 'center', opacity: 100, layerOrder: 'front' };
     certDraft.elements.push(newEl);
     selectedElementId = newEl.id;
     refreshCertStudioCanvas(true);
@@ -4631,13 +5216,54 @@ function addCertImageElement(inp) {
     if (!f) return;
     const r = new FileReader();
     r.onload = async () => {
+        pushCertUndoState();
         const compressed = await compressImageDataUrl(r.result, 600, 0.85);
-        const newEl = { id: 'el_img_' + Date.now(), type: 'image', src: compressed, x: 330, y: 180, width: 120, height: 120 };
+        if (!db.SavedCertLogos) db.SavedCertLogos = [];
+        db.SavedCertLogos.unshift({ id: 'logo_' + Date.now(), name: f.name, src: compressed });
+        saveDB();
+        renderSavedLogosGallery();
+        const newEl = { id: 'el_img_' + Date.now(), type: 'image', isHospitalLogo: false, src: compressed, x: 330, y: 180, width: 120, height: 120, opacity: 100, hue: 0, brightness: 100, contrast: 100, saturate: 100, layerOrder: 'front' };
         certDraft.elements.push(newEl);
         selectedElementId = newEl.id;
         refreshCertStudioCanvas(true);
     };
     r.readAsDataURL(f);
+}
+
+function moveSelectedCertElementLayer(direction) {
+    if (!certDraft || !selectedElementId) return;
+    const idx = certDraft.elements.findIndex(x => x.id === selectedElementId);
+    if (idx === -1) return;
+    pushCertUndoState();
+    const [el] = certDraft.elements.splice(idx, 1);
+    if (direction === 'front') {
+        el.layerOrder = 'front';
+        certDraft.elements.push(el);
+    } else if (direction === 'back') {
+        certDraft.elements.unshift(el);
+    } else if (direction === 'behind_pattern') {
+        el.layerOrder = 'behind_pattern';
+        certDraft.elements.unshift(el);
+    } else if (direction === 'above_pattern') {
+        el.layerOrder = 'front';
+        certDraft.elements.push(el);
+    }
+    refreshCertStudioCanvas(true);
+}
+
+function resetSelectedImageFilters() {
+    const el = certDraft.elements.find(x => x.id === selectedElementId);
+    if (!el) return;
+    pushCertUndoState();
+    el.opacity = 100;
+    el.hue = 0;
+    el.brightness = 100;
+    el.contrast = 100;
+    el.saturate = 100;
+    el.grayscale = 0;
+    el.sepia = 0;
+    el.tintOpacity = 0;
+    refreshCertStudioCanvas(true);
 }
 
 function renderCertElementInspector() {
@@ -4654,13 +5280,37 @@ function renderCertElementInspector() {
             <span class="font-bold text-blue-900 dark:text-blue-300">2. แก้ไของค์ประกอบที่เลือก (${el.type.toUpperCase()})</span>
             <button type="button" onclick="deleteSelectedCertElement()" class="text-rose-600 font-bold hover:underline"><i class="fa-solid fa-trash"></i> ลบส่วนนี้</button>
         </div>
+
+        <!-- การจัดลำดับชั้น (อยู่ด้านหน้า / ด้านหลัง) และความโปร่งใส -->
+        <div class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700 space-y-2">
+            <div class="font-bold text-[11px] text-slate-700 dark:text-slate-200"><i class="fa-solid fa-layer-group mr-1 text-indigo-600"></i> จัดลำดับชั้น (หน้า-หลัง) & ความโปร่งใส (Transparent)</div>
+            <div class="grid grid-cols-2 gap-1.5">
+                <button type="button" onclick="moveSelectedCertElementLayer('front')" class="py-1.5 px-2 rounded-lg bg-white dark:bg-slate-800 border font-semibold hover:bg-blue-50 text-[11px]">
+                    <i class="fa-solid fa-bring-front mr-1 text-blue-600"></i> อยู่ด้านหน้าสุด (Front)
+                </button>
+                <button type="button" onclick="moveSelectedCertElementLayer('back')" class="py-1.5 px-2 rounded-lg bg-white dark:bg-slate-800 border font-semibold hover:bg-blue-50 text-[11px]">
+                    <i class="fa-solid fa-send-back mr-1 text-slate-600"></i> อยู่ด้านหลังข้อความ (Back)
+                </button>
+                <button type="button" onclick="moveSelectedCertElementLayer('behind_pattern')" class="col-span-2 py-1.5 px-2 rounded-lg ${el.layerOrder === 'behind_pattern' ? 'bg-indigo-600 text-white' : 'bg-white dark:bg-slate-800'} border font-semibold text-[11px]">
+                    <i class="fa-solid fa-clone mr-1"></i> ${el.layerOrder === 'behind_pattern' ? '✓ กำลังอยู่ด้านหลังลวดลายกรอบ (คลิกเพื่อสลับ)' : 'วางซ้อนด้านหลังลวดลายกรอบ (Behind Frame)'}
+                </button>
+            </div>
+            <div>
+                <label class="block mb-0.5 text-[11px] font-semibold">ระดับความโปร่งใส (Transparent / Opacity): <span id="lblElOpacity">${el.opacity ?? 100}%</span></label>
+                <input type="range" min="0" max="100" value="${el.opacity ?? 100}" oninput="document.getElementById('lblElOpacity').textContent=this.value+'%'; updateSelectedElProp('opacity', Number(this.value), false)" onchange="updateSelectedElProp('opacity', Number(this.value), true)" class="w-full accent-blue-600">
+            </div>
+        </div>
+
         ${el.type === 'text' ? `
             <div>
-                <label class="block mb-1 font-semibold">พิมพ์แก้ไขข้อความ (ตัวแปร: {FullName}, {CourseName}, {Score}, {Date}, {CertID})</label>
-                <textarea id="certInspectorTextInput" rows="3" oninput="updateSelectedCertTextLive(this.value)" class="w-full px-3 py-2 rounded-xl border-2 border-blue-400 focus:border-blue-600 outline-none bg-blue-50/30 dark:bg-slate-900 font-medium text-sm">${sanitizeHTML(el.text)}</textarea>
+                <label class="block mb-1 font-semibold">พิมพ์แก้ไขข้อความ (ตัวแปร: {FullName}, {CourseName}, {Score}, {Date})</label>
+                <textarea id="certInspectorTextInput" rows="3" onfocus="pushCertUndoState()" oninput="updateSelectedCertTextLive(this.value)" class="w-full px-3 py-2 rounded-xl border-2 border-blue-400 focus:border-blue-600 outline-none bg-blue-50/30 dark:bg-slate-900 font-medium text-sm">${sanitizeHTML(el.text)}</textarea>
             </div>
-            <div class="grid grid-cols-3 gap-2">
-                <div><label class="block mb-1">ขนาดตัวอักษร</label><input type="number" value="${el.fontSize}" onchange="updateSelectedElProp('fontSize', Number(this.value))" class="w-full px-2 py-1 rounded-lg border dark:bg-slate-900"></div>
+            <div class="grid grid-cols-2 gap-2">
+                <div><label class="block mb-1">ขนาดตัวอักษร (px)</label><input id="certInspectorFontSize" type="number" min="8" max="120" value="${el.fontSize}" onchange="updateSelectedElProp('fontSize', Number(this.value))" class="w-full px-2 py-1 rounded-lg border dark:bg-slate-900"></div>
+                <div><label class="block mb-1">ความกว้างกล่องข้อความ (px)</label><input id="certInspectorWidth" type="number" min="50" max="800" value="${el.width || 400}" onchange="updateSelectedElProp('width', Number(this.value))" class="w-full px-2 py-1 rounded-lg border dark:bg-slate-900"></div>
+            </div>
+            <div class="grid grid-cols-2 gap-2">
                 <div><label class="block mb-1">สีข้อความ</label><input type="color" value="${el.color}" onchange="updateSelectedElProp('color', this.value)" class="w-full h-7 rounded"></div>
                 <div><label class="block mb-1">จัดวาง</label>
                     <select onchange="updateSelectedElProp('align', this.value)" class="w-full px-2 py-1 rounded-lg border dark:bg-slate-900">
@@ -4674,9 +5324,57 @@ function renderCertElementInspector() {
                 <input type="checkbox" ${el.bold ? 'checked' : ''} onchange="updateSelectedElProp('bold', this.checked)"> ตัวหนา (Bold)
             </label>
         ` : `
+            ${el.type === 'image' ? `
+            <div class="p-2.5 rounded-xl bg-blue-50/60 dark:bg-slate-900/60 border border-blue-200 dark:border-slate-700 space-y-2">
+                <div class="flex items-center justify-between gap-2">
+                    <span class="font-bold text-blue-900 dark:text-blue-300">เปลี่ยนรูป & ปรับโทนสีรูปภาพ</span>
+                    <div class="flex gap-1.5">
+                        <button type="button" onclick="resetSelectedImageFilters()" class="px-2 py-1 rounded-lg bg-slate-200 dark:bg-slate-700 text-[10px] font-bold">รีเซ็ตสี</button>
+                        <label class="px-2.5 py-1 rounded-lg bg-blue-600 text-white font-bold cursor-pointer hover:bg-blue-700">
+                            <i class="fa-solid fa-upload mr-1"></i> แนบรูปใหม่
+                            <input type="file" accept="image/*" class="hidden" onchange="replaceSelectedImageFile(this)">
+                        </label>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block mb-0.5 text-[10px]">ปรับโทนสี (Hue): <span id="lblImgHue">${el.hue ?? 0}°</span></label>
+                        <input type="range" min="-180" max="180" value="${el.hue ?? 0}" oninput="document.getElementById('lblImgHue').textContent=this.value+'°'; updateSelectedElProp('hue', Number(this.value), false)" onchange="updateSelectedElProp('hue', Number(this.value), true)" class="w-full accent-indigo-600">
+                    </div>
+                    <div>
+                        <label class="block mb-0.5 text-[10px]">ความสดสี (Saturate): <span id="lblImgSat">${el.saturate ?? 100}%</span></label>
+                        <input type="range" min="0" max="250" value="${el.saturate ?? 100}" oninput="document.getElementById('lblImgSat').textContent=this.value+'%'; updateSelectedElProp('saturate', Number(this.value), false)" onchange="updateSelectedElProp('saturate', Number(this.value), true)" class="w-full accent-emerald-600">
+                    </div>
+                    <div>
+                        <label class="block mb-0.5 text-[10px]">ความสว่าง (Brightness): <span id="lblImgBri">${el.brightness ?? 100}%</span></label>
+                        <input type="range" min="30" max="200" value="${el.brightness ?? 100}" oninput="document.getElementById('lblImgBri').textContent=this.value+'%'; updateSelectedElProp('brightness', Number(this.value), false)" onchange="updateSelectedElProp('brightness', Number(this.value), true)" class="w-full accent-amber-600">
+                    </div>
+                    <div>
+                        <label class="block mb-0.5 text-[10px]">ความคมชัด (Contrast): <span id="lblImgCon">${el.contrast ?? 100}%</span></label>
+                        <input type="range" min="50" max="200" value="${el.contrast ?? 100}" oninput="document.getElementById('lblImgCon').textContent=this.value+'%'; updateSelectedElProp('contrast', Number(this.value), false)" onchange="updateSelectedElProp('contrast', Number(this.value), true)" class="w-full accent-blue-600">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-2 items-center pt-1">
+                    <div class="flex items-center gap-1.5">
+                        <label class="text-[10px] shrink-0">ย้อมโทนสีภาพ:</label>
+                        <input type="color" value="${el.tintColor || '#14532d'}" onchange="updateSelectedElProp('tintColor', this.value, true)" class="w-8 h-6 rounded cursor-pointer">
+                    </div>
+                    <div>
+                        <label class="block mb-0.5 text-[10px]">ระดับสีย้อม: <span id="lblImgTint">${el.tintOpacity ?? 0}%</span></label>
+                        <input type="range" min="0" max="100" value="${el.tintOpacity ?? 0}" oninput="document.getElementById('lblImgTint').textContent=this.value+'%'; updateSelectedElProp('tintOpacity', Number(this.value), false)" onchange="updateSelectedElProp('tintOpacity', Number(this.value), true)" class="w-full accent-rose-600">
+                    </div>
+                </div>
+                <div class="flex gap-1.5 items-center pt-1">
+                    <button type="button" onclick="updateSelectedElProp('width', Math.max(20, (certDraft.elements.find(x=>x.id===selectedElementId)?.width||100)-10)); updateSelectedElProp('height', Math.max(20, (certDraft.elements.find(x=>x.id===selectedElementId)?.height||100)-10)); refreshCertStudioCanvas(true)" class="flex-1 py-1 rounded bg-white dark:bg-slate-800 border font-bold">- ย่อขนาด</button>
+                    <button type="button" onclick="updateSelectedElProp('width', (certDraft.elements.find(x=>x.id===selectedElementId)?.width||100)+10); updateSelectedElProp('height', (certDraft.elements.find(x=>x.id===selectedElementId)?.height||100)+10); refreshCertStudioCanvas(true)" class="flex-1 py-1 rounded bg-white dark:bg-slate-800 border font-bold">+ ขยายขนาด</button>
+                </div>
+                <label class="flex items-center gap-2 font-semibold">
+                    <input type="checkbox" ${el.isHospitalLogo ? 'checked' : ''} onchange="updateSelectedElProp('isHospitalLogo', this.checked)"> ตัดขอบเป็นวงกลม (สำหรับตราโลโก้)
+                </label>
+            </div>` : ''}
             <div class="grid grid-cols-2 gap-2">
-                <div><label class="block mb-1">ความกว้าง (px)</label><input type="number" value="${el.width}" onchange="updateSelectedElProp('width', Number(this.value))" class="w-full px-2 py-1 rounded-lg border dark:bg-slate-900"></div>
-                <div><label class="block mb-1">ความสูง (px)</label><input type="number" value="${el.height}" onchange="updateSelectedElProp('height', Number(this.value))" class="w-full px-2 py-1 rounded-lg border dark:bg-slate-900"></div>
+                <div><label class="block mb-1">ความกว้าง (px)</label><input id="certInspectorWidth" type="number" min="20" max="800" value="${el.width}" onchange="updateSelectedElProp('width', Number(this.value))" class="w-full px-2 py-1 rounded-lg border dark:bg-slate-900"></div>
+                <div><label class="block mb-1">ความสูง (px)</label><input id="certInspectorHeight" type="number" min="20" max="560" value="${el.height}" onchange="updateSelectedElProp('height', Number(this.value))" class="w-full px-2 py-1 rounded-lg border dark:bg-slate-900"></div>
             </div>
         `}
         <div class="grid grid-cols-2 gap-2 pt-1">
@@ -4686,13 +5384,15 @@ function renderCertElementInspector() {
     `;
 }
 
-function updateSelectedElProp(key, val) {
+function updateSelectedElProp(key, val, recordUndo = true) {
     const el = certDraft.elements.find(x => x.id === selectedElementId);
     if (!el) return;
+    if (recordUndo) pushCertUndoState();
     el[key] = val;
     refreshCertStudioCanvas(false);
 }
 function deleteSelectedCertElement() {
+    pushCertUndoState();
     certDraft.elements = certDraft.elements.filter(x => x.id !== selectedElementId);
     selectedElementId = certDraft.elements[0]?.id || null;
     refreshCertStudioCanvas(true);
@@ -4700,14 +5400,30 @@ function deleteSelectedCertElement() {
 function saveCourseCertDesign() {
     if (!hasPermission('designCert')) return;
     db.CourseCertDesigns[currentDesignerCourseId] = JSON.parse(JSON.stringify(certDraft));
+
+    if (!db.SavedCertTemplates) db.SavedCertTemplates = [];
+    const course = db.Courses.find(c => c.CourseID === currentDesignerCourseId);
+    const tplName = `แม่แบบ ${course ? course.CourseName : 'โรงพยาบาลพุนพิน'}`;
+    const existingIdx = db.SavedCertTemplates.findIndex(t => t.courseId === currentDesignerCourseId);
+    const tplObj = {
+        id: 'tpl_' + currentDesignerCourseId,
+        courseId: currentDesignerCourseId,
+        name: tplName,
+        savedAt: getNowThai(),
+        design: JSON.parse(JSON.stringify(certDraft))
+    };
+    if (existingIdx > -1) db.SavedCertTemplates[existingIdx] = tplObj;
+    else db.SavedCertTemplates.unshift(tplObj);
+
     saveDB();
+    renderSavedCertTemplatesList();
     pushRecordToGoogleSheet('saveCertSettings', db.CourseCertDesigns);
     const nextBtn = document.getElementById('btnCertNextToCourses');
     if (nextBtn) nextBtn.classList.remove('hidden');
     Swal.fire({
         icon: 'success',
         title: 'บันทึกแม่แบบเกียรติบัตรเรียบร้อย!',
-        text: 'คุณสามารถแก้ไขต่อ หรือกดปุ่ม "ถัดไป" เพื่อกลับไปยังหน้าจัดการคอร์สเรียนได้ทันที',
+        text: 'แม่แบบถูกบันทึกเก็บไว้ในคลังสามารถเรียกกลับมาใช้กับคอร์สอื่นได้ตลอดเวลา',
         showCancelButton: true,
         confirmButtonText: 'ถัดไป (กลับหน้าคอร์สเรียน) ➔',
         cancelButtonText: 'แก้ไขต่อ',
@@ -4720,6 +5436,7 @@ function saveCourseCertDesign() {
 }
 function resetCourseCertDesign() {
     if (!hasPermission('designCert')) return;
+    pushCertUndoState();
     certDraft = JSON.parse(JSON.stringify(DEFAULT_CERT));
     db.CourseCertDesigns[currentDesignerCourseId] = JSON.parse(JSON.stringify(DEFAULT_CERT));
     saveDB();
