@@ -816,7 +816,7 @@ async function syncAllDataWithGoogleSheet(showToast = false) {
             }
             updateSyncStatusUI('Google Sheets ซิงก์แล้ว', 'emerald');
             if (showToast) {
-                Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'ดึงข้อมูลล่าสุดจาก Google Sheets สำเร็จ', showConfirmButton: false, timer: 1400 });
+                showNonBlockingToast('ดึงข้อมูลล่าสุดจาก Google Sheets สำเร็จ', 'success');
             }
         }
     } catch (err) {
@@ -848,7 +848,11 @@ function hasPermission(permKey) {
     return rolePerms.includes(permKey);
 }
 function saveDB() {
-    localStorage.setItem('edulearn_hospital_db_v4', JSON.stringify(db));
+    try {
+        localStorage.setItem('edulearn_hospital_db_v4', JSON.stringify(db));
+    } catch (err) {
+        showNonBlockingToast('พื้นที่เก็บข้อมูลในเบราว์เซอร์ใกล้เต็ม กรุณาใช้รูปภาพขนาดเล็กลงหรือลิงก์ URL', 'error');
+    }
 }
 function sanitizeHTML(str) {
     return String(str || '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
@@ -857,6 +861,57 @@ function getNowThai() {
     const d = new Date();
     return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear() + 543} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 }
+
+function showNonBlockingToast(message, tone = 'success') {
+    let holder = document.getElementById('nonBlockingToastHolder');
+    if (!holder) {
+        holder = document.createElement('div');
+        holder.id = 'nonBlockingToastHolder';
+        holder.className = 'fixed top-4 right-4 z-[99999] flex flex-col gap-2 pointer-events-none';
+        document.body.appendChild(holder);
+    }
+    const item = document.createElement('div');
+    const bgCls = tone === 'error' ? 'bg-rose-600' : (tone === 'warning' ? 'bg-amber-600' : 'bg-emerald-600');
+    const iconCls = tone === 'error' ? 'fa-circle-exclamation' : (tone === 'warning' ? 'fa-triangle-exclamation' : 'fa-circle-check');
+    item.className = `${bgCls} text-white px-4 py-2.5 rounded-xl shadow-xl text-xs font-bold flex items-center gap-2 transition-all duration-300`;
+    item.innerHTML = `<i class="fa-solid ${iconCls}"></i><span>${sanitizeHTML(message)}</span>`;
+    holder.appendChild(item);
+    setTimeout(() => {
+        item.style.opacity = '0';
+        setTimeout(() => item.remove(), 300);
+    }, 1800);
+}
+
+function compressImageDataUrl(rawDataUrl, maxWidth = 850, quality = 0.8) {
+    return new Promise((resolve) => {
+        if (!rawDataUrl || !rawDataUrl.startsWith('data:image')) {
+            resolve(rawDataUrl);
+            return;
+        }
+        const img = new Image();
+        img.onload = () => {
+            let w = img.width;
+            let h = img.height;
+            if (w > maxWidth) {
+                h = Math.round((h * maxWidth) / w);
+                w = maxWidth;
+            }
+            const canvas = document.createElement('canvas');
+            canvas.width = w;
+            canvas.height = h;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, w, h);
+            try {
+                resolve(canvas.toDataURL('image/jpeg', quality));
+            } catch (e) {
+                resolve(rawDataUrl);
+            }
+        };
+        img.onerror = () => resolve(rawDataUrl);
+        img.src = rawDataUrl;
+    });
+}
+
 function clearInputField(targetInputId, previewImgId = null) {
     const el = document.getElementById(targetInputId);
     if (el) {
@@ -888,43 +943,64 @@ function updateImgPreview(inputId, previewId) {
 }
 
 function handlePasteToTarget(e, targetInputId, previewImgId = null) {
-    const items = e.clipboardData?.items || [];
-    for (const item of items) {
-        if (item.type.startsWith('image/')) {
-            e.preventDefault();
-            const file = item.getAsFile();
-            const reader = new FileReader();
-            reader.onload = () => {
-                const target = document.getElementById(targetInputId);
-                if (target) {
-                    target.value = reader.result;
-                    target.dispatchEvent(new Event('input', { bubbles: true }));
-                }
-                if (previewImgId) updateImgPreview(targetInputId, previewImgId);
-                Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'วางรูปภาพจากคลิปบอร์ดสำเร็จ', showConfirmButton: false, timer: 1200 });
-            };
-            reader.readAsDataURL(file);
-            return;
+    const clipboard = e.clipboardData || window.clipboardData;
+    if (!clipboard) return;
+    let imageFile = null;
+    if (clipboard.items) {
+        for (let i = 0; i < clipboard.items.length; i++) {
+            if (clipboard.items[i].type && clipboard.items[i].type.startsWith('image/')) {
+                imageFile = clipboard.items[i].getAsFile();
+                break;
+            }
         }
+    }
+    if (!imageFile && clipboard.files && clipboard.files.length > 0) {
+        for (let i = 0; i < clipboard.files.length; i++) {
+            if (clipboard.files[i].type && clipboard.files[i].type.startsWith('image/')) {
+                imageFile = clipboard.files[i];
+                break;
+            }
+        }
+    }
+
+    if (imageFile) {
+        e.preventDefault();
+        e.stopPropagation();
+        const reader = new FileReader();
+        reader.onload = async () => {
+            const compressed = await compressImageDataUrl(reader.result, 850, 0.8);
+            const target = document.getElementById(targetInputId);
+            if (target) {
+                target.value = compressed;
+                target.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+            if (previewImgId) updateImgPreview(targetInputId, previewImgId);
+            showNonBlockingToast('วางรูปภาพจากคลิปบอร์ดสำเร็จ', 'success');
+        };
+        reader.readAsDataURL(imageFile);
     }
 }
 
 function importFileToInput(fileInput, targetInputId) {
     const file = fileInput.files[0];
     if (!file) return;
-    if (file.size > 4 * 1024 * 1024) {
-        Swal.fire('ไฟล์ขนาดใหญ่เกินไป', 'กรุณาเลือกไฟล์ขนาดไม่เกิน 4 MB หรือใช้ลิงก์ URL แทน', 'warning');
+    if (!file.type.startsWith('image/') && file.size > 4 * 1024 * 1024) {
+        showNonBlockingToast('ไฟล์ขนาดใหญ่เกิน 4 MB กรุณาใช้ลิงก์ URL แทน', 'warning');
+        fileInput.value = '';
         return;
     }
     const reader = new FileReader();
-    reader.onload = () => {
+    reader.onload = async () => {
+        const finalVal = file.type.startsWith('image/')
+            ? await compressImageDataUrl(reader.result, 850, 0.8)
+            : reader.result;
         const target = document.getElementById(targetInputId);
         if (target) {
-            target.value = reader.result;
+            target.value = finalVal;
             target.dispatchEvent(new Event('input', { bubbles: true }));
         }
         fileInput.value = '';
-        Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: `นำเข้าไฟล์ "${file.name}" สำเร็จ`, showConfirmButton: false, timer: 1400 });
+        showNonBlockingToast(`นำเข้าไฟล์ "${file.name}" สำเร็จ`, 'success');
     };
     reader.readAsDataURL(file);
 }
@@ -2451,7 +2527,7 @@ function openCoursePlayer(courseId, lessonId) {
         vid.addEventListener('seeking', () => {
             if (vid.currentTime > maxAllowedTime + 1) {
                 vid.currentTime = maxAllowedTime;
-                Swal.fire({ toast: true, position: 'top', icon: 'warning', title: 'ไม่อนุญาตให้กดเลื่อนข้ามวิดีโอ กรุณารับชมตามปกติ', showConfirmButton: false, timer: 1800 });
+                showNonBlockingToast('ไม่อนุญาตให้กดเลื่อนข้ามวิดีโอ กรุณารับชมตามปกติ', 'warning');
             }
         });
     }
@@ -3902,7 +3978,7 @@ function renderBulkQuizEditorView(stageFilter = 'ALL') {
                                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
                                         <div class="space-y-1">
                                             <div class="flex gap-1">
-                                                <input id="bqImg_${realIdx}" type="text" oninput="updateImgPreview('bqImg_${realIdx}', 'bqImgPrev_${realIdx}')" value="${sanitizeHTML(q.ImageURL || '')}" placeholder="URL รูปภาพ (หรือ Ctrl+V)" class="bq-image flex-1 px-2 py-1.5 rounded-lg border text-[11px]">
+                                                <input id="bqImg_${realIdx}" type="text" oninput="updateImgPreview('bqImg_${realIdx}', 'bqImgPrev_${realIdx}')" onpaste="handlePasteToTarget(event, 'bqImg_${realIdx}', 'bqImgPrev_${realIdx}')" value="${sanitizeHTML(q.ImageURL || '')}" placeholder="URL รูปภาพ (หรือ Ctrl+V)" class="bq-image flex-1 px-2 py-1.5 rounded-lg border text-[11px]">
                                                 <label class="px-2 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 font-semibold cursor-pointer shrink-0" title="นำเข้ารูปภาพ">
                                                     <i class="fa-solid fa-image"></i>
                                                     <input type="file" accept="image/*" class="hidden" onchange="importFileToInput(this, 'bqImg_${realIdx}')">
@@ -4307,9 +4383,9 @@ function uploadCertBgImage(inp) {
     const f = inp.files[0];
     if (!f) return;
     const r = new FileReader();
-    r.onload = () => {
-        certDraft.bgImage = r.result;
-        document.getElementById('cdBgImage').value = r.result;
+    r.onload = async () => {
+        certDraft.bgImage = await compressImageDataUrl(r.result, 1200, 0.85);
+        document.getElementById('cdBgImage').value = certDraft.bgImage;
         refreshCertStudioCanvas();
     };
     r.readAsDataURL(f);
@@ -4345,28 +4421,29 @@ window.addEventListener('paste', (e) => {
         if (item.type.startsWith('image/')) {
             const file = item.getAsFile();
             const reader = new FileReader();
-            reader.onload = () => {
+            reader.onload = async () => {
+                const compressed = await compressImageDataUrl(reader.result, 850, 0.8);
                 const lessonOpen = !document.getElementById('lessonModal')?.classList.contains('hidden');
                 const quizOpen = !document.getElementById('quizModal')?.classList.contains('hidden');
                 if (lessonOpen) {
-                    document.getElementById('fmLessonImg').value = reader.result;
-                    Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'วางรูปภาพลงในบทเรียนสำเร็จ', showConfirmButton: false, timer: 1200 });
+                    document.getElementById('fmLessonImg').value = compressed;
+                    showNonBlockingToast('วางรูปภาพลงในบทเรียนสำเร็จ', 'success');
                     return;
                 }
                 if (quizOpen) {
-                    document.getElementById('fmQuizImage').value = reader.result;
+                    document.getElementById('fmQuizImage').value = compressed;
                     updateImgPreview('fmQuizImage', 'fmQuizImagePreview');
-                    Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'วางรูปภาพลงในโจทย์ข้อสอบสำเร็จ', showConfirmButton: false, timer: 1200 });
+                    showNonBlockingToast('วางรูปภาพลงในโจทย์ข้อสอบสำเร็จ', 'success');
                     return;
                 }
                 if (currentView === 'certDesigner' && certDraft) {
                     const activeTag = document.activeElement?.tagName;
                     if (activeTag === 'INPUT' || activeTag === 'TEXTAREA') return;
-                    const newEl = { id: 'el_img_' + Date.now(), type: 'image', src: reader.result, x: 320, y: 200, width: 140, height: 140 };
+                    const newEl = { id: 'el_img_' + Date.now(), type: 'image', src: compressed, x: 320, y: 200, width: 140, height: 140 };
                     certDraft.elements.push(newEl);
                     selectedElementId = newEl.id;
                     refreshCertStudioCanvas(true);
-                    Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'วางรูปภาพจากคลิปบอร์ดสำเร็จ', showConfirmButton: false, timer: 1200 });
+                    showNonBlockingToast('วางรูปภาพจากคลิปบอร์ดสำเร็จ', 'success');
                 }
             };
             reader.readAsDataURL(file);
@@ -4385,8 +4462,9 @@ function addCertImageElement(inp) {
     const f = inp.files[0];
     if (!f) return;
     const r = new FileReader();
-    r.onload = () => {
-        const newEl = { id: 'el_img_' + Date.now(), type: 'image', src: r.result, x: 330, y: 180, width: 120, height: 120 };
+    r.onload = async () => {
+        const compressed = await compressImageDataUrl(r.result, 600, 0.85);
+        const newEl = { id: 'el_img_' + Date.now(), type: 'image', src: compressed, x: 330, y: 180, width: 120, height: 120 };
         certDraft.elements.push(newEl);
         selectedElementId = newEl.id;
         refreshCertStudioCanvas();
@@ -4771,7 +4849,7 @@ function toggleRolePermission(role, permKey, isEnabled) {
         db.RolePermissions[role] = db.RolePermissions[role].filter(k => k !== permKey);
     }
     saveDB();
-    Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: `อัปเดตสิทธิ์ของ ${role} แล้ว`, showConfirmButton: false, timer: 1000 });
+    showNonBlockingToast(`อัปเดตสิทธิ์ของ ${role} แล้ว`, 'success');
 }
 
 function openUserCustomPermissionModal(userId) {
