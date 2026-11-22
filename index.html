@@ -174,7 +174,7 @@
 
         <div class="flex items-center gap-2 sm:gap-3">
             <!-- Google Sheets Sync Status Pill -->
-            <button onclick="syncAllDataWithGoogleSheet(true)" id="gsSyncStatusBtn" class="hidden md:flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1.5 rounded-xl bg-emerald-50 dark:bg-slate-700 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-slate-600 hover:bg-emerald-100 transition" title="คลิกเพื่อซิงก์ข้อมูลกับ Google Sheets ทันที">
+            <button onclick="syncAllDataWithGoogleSheet(true)" id="gsSyncStatusBtn" class="hidden md:flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1.5 rounded-xl bg-emerald-50 dark:bg-slate-700 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-slate-600 hover:bg-emerald-100 transition" title="คลิกเพื่อซิงก์ข้อมูลทั้งหมดระหว่างทุกเครื่องกับ Google Sheets ทันที">
                 <i class="fa-solid fa-cloud-arrow-up"></i>
                 <span id="gsSyncStatusText">Google Sheets Ready</span>
             </button>
@@ -231,10 +231,10 @@
             <div class="space-y-1 mt-12 lg:mt-0" id="sidebarMenuContainer"></div>
             <div class="mt-6 p-3.5 rounded-2xl bg-gradient-to-br from-blue-900 to-blue-700 text-white text-xs space-y-1.5">
                 <div class="flex items-center justify-between">
-                    <span class="font-bold"><i class="fa-brands fa-telegram text-sky-300 mr-1"></i> Telegram & Sheets</span>
+                    <span class="font-bold"><i class="fa-solid fa-cloud-check text-emerald-300 mr-1"></i> Cloud Sync Active</span>
                     <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
                 </div>
-                <p class="text-blue-100 text-[11px]">เชื่อมต่อ Google Sheets และส่งเกียรติบัตร PDF เข้า Telegram อัตโนมัติ</p>
+                <p class="text-blue-100 text-[11px]">ข้อมูลซิงก์อัตโนมัติทุกเครื่องผ่าน Google Sheets และส่ง PDF เข้า Telegram</p>
             </div>
         </aside>
 
@@ -483,14 +483,17 @@
 
 <script>
 /**
- * ============================================================================
- * E-LEARNING PHARMACY - FULL ENTERPRISE SPA CONTROLLER + GOOGLE SHEETS SYNC
- * ============================================================================
+- ============================================================================
+- E-LEARNING PHARMACY - FULL ENTERPRISE SPA CONTROLLER + CROSS-DEVICE CLOUD SYNC
+- ============================================================================
  */
-const DEFAULT_GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz7Y4dfyvfHDg6-SsRxtIbAa_LHYsGJfbE5E96HIhPOh5enz1GxBm9U08A2i8qSmiFtNw/exec";
+const DEFAULT_GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxxlEzPsSt5HDZRW2rtJ460d-INBAlkFXiXrlRMJ3XpseEcmDU_Bcal2htpv9FCvmN9-g/exec";
+const OLD_GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz7Y4dfyvfHDg6-SsRxtIbAa_LHYsGJfbE5E96HIhPOh5enz1GxBm9U08A2i8qSmiFtNw/exec";
 
 function getGasUrl() {
-    return (db && db.SiteThemeSettings && db.SiteThemeSettings.gasWebAppUrl) || DEFAULT_GAS_WEB_APP_URL;
+    const savedUrl = db && db.SiteThemeSettings && db.SiteThemeSettings.gasWebAppUrl;
+    if (!savedUrl || savedUrl === OLD_GAS_WEB_APP_URL) return DEFAULT_GAS_WEB_APP_URL;
+    return savedUrl;
 }
 
 const initialDatabase = {
@@ -616,14 +619,17 @@ const initialDatabase = {
         Teacher: ['manageCourses', 'designCert', 'viewLeaderboard'],
         Student: []
     },
-    UserPermissions: {}
+    UserPermissions: {},
+    SavedLearningStates: {}
 };
 
 let db = JSON.parse(localStorage.getItem('edulearn_hospital_db_v4')) || initialDatabase;
 if (!db.HospitalDepartments) db.HospitalDepartments = [...initialDatabase.HospitalDepartments];
 if (!db.Professions) db.Professions = [...initialDatabase.Professions];
 if (!db.SiteThemeSettings) db.SiteThemeSettings = { ...initialDatabase.SiteThemeSettings };
-db.SiteThemeSettings.gasWebAppUrl = DEFAULT_GAS_WEB_APP_URL;
+if (!db.SiteThemeSettings.gasWebAppUrl || db.SiteThemeSettings.gasWebAppUrl === OLD_GAS_WEB_APP_URL) {
+    db.SiteThemeSettings.gasWebAppUrl = DEFAULT_GAS_WEB_APP_URL;
+}
 if (!db.SiteThemeSettings.telegramBotToken) db.SiteThemeSettings.telegramBotToken = "9280509192:AAE6Ux-E2cQ3yHvoHvBoyJLMxL_wbFW28TE";
 if (!db.SiteThemeSettings.telegramChatId) db.SiteThemeSettings.telegramChatId = "127792770";
 if (!db.ClassroomLayoutConfig) db.ClassroomLayoutConfig = JSON.parse(JSON.stringify(initialDatabase.ClassroomLayoutConfig));
@@ -666,30 +672,79 @@ let activeLearningSession = { courseId: null, lessonId: null, timerInterval: nul
 let activeQuizTimer = null;
 let dashboardChartInstances = [];
 let profAuditChartInstance = null;
+let isCloudSyncing = false;
+let cloudSyncTimer = null;
 
-// ==================== GOOGLE SHEETS REAL-TIME SYNC ENGINE ====================
+// ==================== CROSS-DEVICE CLOUD PERSISTENCE & GOOGLE SHEETS SYNC ====================
+function saveDB(syncCloudConfig = false) {
+    localStorage.setItem('edulearn_hospital_db_v4', JSON.stringify(db));
+    if (syncCloudConfig) {
+        scheduleCloudSnapshotBackup();
+    }
+}
+
+function scheduleCloudSnapshotBackup() {
+    if (cloudSyncTimer) clearTimeout(cloudSyncTimer);
+    cloudSyncTimer = setTimeout(() => {
+        pushSystemStateSnapshotToCloud();
+    }, 600);
+}
+
+async function pushSystemStateSnapshotToCloud() {
+    const snapshot = {
+        HospitalDepartments: db.HospitalDepartments,
+        Professions: db.Professions,
+        SiteThemeSettings: db.SiteThemeSettings,
+        ClassroomLayoutConfig: db.ClassroomLayoutConfig,
+        ProfessionStatsConfig: db.ProfessionStatsConfig,
+        DashboardConfig: db.DashboardConfig,
+        CourseCertDesigns: db.CourseCertDesigns,
+        RolePermissions: db.RolePermissions,
+        UserPermissions: db.UserPermissions,
+        SavedLearningStates: db.SavedLearningStates,
+        updatedAt: getNowThai()
+    };
+    await pushRecordToGoogleSheet('saveSystemConfig', {
+        configKey: 'GLOBAL_APP_STATE',
+        configJson: JSON.stringify(snapshot)
+    });
+}
+
 async function pushRecordToGoogleSheet(actionName, payloadObj) {
     const url = getGasUrl();
     if (!url || !url.startsWith('http')) return null;
-    updateSyncStatusUI('กำลังบันทึก Google Sheets...', 'amber');
+    updateSyncStatusUI('กำลังซิงก์ขึ้น Cloud...', 'amber');
     try {
         const res = await fetch(url, {
             method: 'POST',
             body: JSON.stringify({ action: actionName, payload: payloadObj })
         });
         const data = await res.json();
-        updateSyncStatusUI('Google Sheets ซิงก์แล้ว', 'emerald');
+        updateSyncStatusUI('ซิงก์ข้อมูลทุกเครื่องแล้ว', 'emerald');
         return data;
     } catch (err) {
-        updateSyncStatusUI('ออฟไลน์ (บันทึกในเครื่อง)', 'slate');
+        updateSyncStatusUI('บันทึกในเครื่องแล้ว (รอซิงก์)', 'slate');
         return null;
     }
 }
 
+function mergeByUniqueKey(localArr, remoteArr, keyName) {
+    const map = new Map();
+    (localArr || []).forEach(item => {
+        if (item && item[keyName]) map.set(String(item[keyName]), item);
+    });
+    (remoteArr || []).forEach(item => {
+        if (item && item[keyName]) map.set(String(item[keyName]), item);
+    });
+    return Array.from(map.values());
+}
+
 async function syncAllDataWithGoogleSheet(showToast = false) {
     const url = getGasUrl();
-    if (!url || !url.startsWith('http')) return;
-    updateSyncStatusUI('กำลังซิงก์ข้อมูล...', 'amber');
+    if (!url || !url.startsWith('http') || isCloudSyncing) return;
+    isCloudSyncing = true;
+    updateSyncStatusUI('กำลังดึงข้อมูลล่าสุด...', 'amber');
+
     try {
         const res = await fetch(url, {
             method: 'POST',
@@ -698,35 +753,91 @@ async function syncAllDataWithGoogleSheet(showToast = false) {
         const json = await res.json();
         if (json.status === 'success' && json.data) {
             const remote = json.data;
-            if (Array.isArray(remote.Users) && remote.Users.length > 0) db.Users = remote.Users;
-            if (Array.isArray(remote.Courses)) db.Courses = remote.Courses.map(c => ({
-                ...c,
-                Professions: typeof c.Professions === 'string' ? c.Professions.split(',').map(s => s.trim()).filter(Boolean) : (c.Professions || ['ALL'])
-            }));
-            if (Array.isArray(remote.Lessons)) db.Lessons = remote.Lessons.map(l => ({
-                ...l,
-                Professions: typeof l.Professions === 'string' ? l.Professions.split(',').map(s => s.trim()).filter(Boolean) : (l.Professions || ['ALL']),
-                StrictVideo: l.StrictVideo === true || String(l.StrictVideo).toUpperCase() === 'TRUE'
-            }));
-            if (Array.isArray(remote.Progress)) db.Progress = remote.Progress;
-            if (Array.isArray(remote.Quiz)) db.Quiz = remote.Quiz;
-            if (Array.isArray(remote.Scores)) db.Scores = remote.Scores;
-            if (Array.isArray(remote.Certificates)) db.Certificates = remote.Certificates;
-            if (Array.isArray(remote.Notifications) && remote.Notifications.length > 0) db.Notifications = remote.Notifications;
-            saveDB();
+
+            // 1. กู้คืนการตั้งค่าทั้งหมดจาก Cloud Snapshot (แผนก, วิชาชีพ, ธีม, เกียรติบัตร, แดชบอร์ด, สิทธิ์)
+            if (remote.SystemConfig && remote.SystemConfig.GLOBAL_APP_STATE) {
+                try {
+                    const snap = typeof remote.SystemConfig.GLOBAL_APP_STATE === 'string'
+                        ? JSON.parse(remote.SystemConfig.GLOBAL_APP_STATE)
+                        : remote.SystemConfig.GLOBAL_APP_STATE;
+                    if (Array.isArray(snap.HospitalDepartments) && snap.HospitalDepartments.length) db.HospitalDepartments = snap.HospitalDepartments;
+                    if (Array.isArray(snap.Professions) && snap.Professions.length) db.Professions = snap.Professions;
+                    if (snap.SiteThemeSettings) {
+                        const keepUrl = getGasUrl();
+                        const incomingUrl = (snap.SiteThemeSettings.gasWebAppUrl && snap.SiteThemeSettings.gasWebAppUrl !== OLD_GAS_WEB_APP_URL)
+                            ? snap.SiteThemeSettings.gasWebAppUrl
+                            : keepUrl;
+                        db.SiteThemeSettings = { ...db.SiteThemeSettings, ...snap.SiteThemeSettings, gasWebAppUrl: incomingUrl };
+                    }
+                    if (snap.ClassroomLayoutConfig) db.ClassroomLayoutConfig = snap.ClassroomLayoutConfig;
+                    if (snap.ProfessionStatsConfig) db.ProfessionStatsConfig = snap.ProfessionStatsConfig;
+                    if (snap.DashboardConfig) db.DashboardConfig = snap.DashboardConfig;
+                    if (snap.CourseCertDesigns) db.CourseCertDesigns = { ...db.CourseCertDesigns, ...snap.CourseCertDesigns };
+                    if (snap.RolePermissions) db.RolePermissions = snap.RolePermissions;
+                    if (snap.UserPermissions) db.UserPermissions = snap.UserPermissions;
+                    if (snap.SavedLearningStates) db.SavedLearningStates = { ...db.SavedLearningStates, ...snap.SavedLearningStates };
+                } catch (parseErr) {}
+            }
+
+            // 2. ผสานข้อมูลตารางหลักทั้งหมดจาก Google Sheets (ป้องกันข้อมูลหายข้ามเครื่อง)
+            if (Array.isArray(remote.Users) && remote.Users.length > 0) {
+                db.Users = mergeByUniqueKey(db.Users, remote.Users, 'UserID');
+            }
+            if (Array.isArray(remote.Courses)) {
+                const normalizedCourses = remote.Courses.map(c => ({
+                    ...c,
+                    Professions: typeof c.Professions === 'string' ? c.Professions.split(',').map(s => s.trim()).filter(Boolean) : (c.Professions || ['ALL'])
+                }));
+                db.Courses = normalizedCourses.length ? normalizedCourses : db.Courses;
+            }
+            if (Array.isArray(remote.Lessons)) {
+                const normalizedLessons = remote.Lessons.map(l => ({
+                    ...l,
+                    Professions: typeof l.Professions === 'string' ? l.Professions.split(',').map(s => s.trim()).filter(Boolean) : (l.Professions || ['ALL']),
+                    StrictVideo: l.StrictVideo === true || String(l.StrictVideo).toUpperCase() === 'TRUE'
+                }));
+                db.Lessons = normalizedLessons.length ? normalizedLessons : db.Lessons;
+            }
+            if (Array.isArray(remote.Progress)) {
+                db.Progress = mergeByUniqueKey(db.Progress, remote.Progress, 'ProgressID');
+            }
+            if (Array.isArray(remote.Quiz)) {
+                db.Quiz = remote.Quiz.length ? remote.Quiz : db.Quiz;
+            }
+            if (Array.isArray(remote.Scores)) {
+                db.Scores = mergeByUniqueKey(db.Scores, remote.Scores, 'ScoreID');
+            }
+            if (Array.isArray(remote.Certificates)) {
+                db.Certificates = mergeByUniqueKey(db.Certificates, remote.Certificates, 'CertificateID');
+            }
+            if (Array.isArray(remote.Notifications) && remote.Notifications.length > 0) {
+                db.Notifications = mergeByUniqueKey(db.Notifications, remote.Notifications, 'NotificationID');
+            }
+
+            saveDB(false);
+            applyGlobalSiteTheme();
+            populateRegisterDropdowns();
+
             if (currentUser) {
                 const updatedMe = db.Users.find(u => u.UserID === currentUser.UserID);
-                if (updatedMe) currentUser = updatedMe;
+                if (updatedMe) {
+                    currentUser = updatedMe;
+                    sessionStorage.setItem('edulearn_hospital_session', JSON.stringify(currentUser));
+                }
                 renderNotifications();
-                switchView(currentView);
+                if (currentView !== 'certDesigner') {
+                    switchView(currentView);
+                }
             }
-            updateSyncStatusUI('Google Sheets ซิงก์แล้ว', 'emerald');
+            updateSyncStatusUI('ซิงก์ข้อมูลทุกเครื่องแล้ว', 'emerald');
             if (showToast) {
-                Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'ดึงข้อมูลล่าสุดจาก Google Sheets สำเร็จ', showConfirmButton: false, timer: 1400 });
+                Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'ซิงก์ข้อมูลล่าสุดจาก Cloud เรียบร้อยแล้ว', showConfirmButton: false, timer: 1400 });
             }
         }
     } catch (err) {
-        updateSyncStatusUI('Google Sheets Ready', 'emerald');
+        updateSyncStatusUI('พร้อมใช้งาน (Cloud Sync)', 'emerald');
+    } finally {
+        isCloudSyncing = false;
     }
 }
 
@@ -753,9 +864,6 @@ function hasPermission(permKey) {
     const rolePerms = (db.RolePermissions && db.RolePermissions[currentUser.Role]) || [];
     return rolePerms.includes(permKey);
 }
-function saveDB() {
-    localStorage.setItem('edulearn_hospital_db_v4', JSON.stringify(db));
-}
 function sanitizeHTML(str) {
     return String(str || '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
 }
@@ -779,10 +887,18 @@ function importFileToInput(fileInput, targetInputId) {
 }
 
 // ==================== INITIALIZATION & GLOBAL THEME ====================
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     applyGlobalSiteTheme();
     populateRegisterDropdowns();
-    syncAllDataWithGoogleSheet(false);
+    await syncAllDataWithGoogleSheet(false);
+
+    // ซิงก์ข้อมูลอัตโนมัติทุกๆ 45 วินาที เพื่อให้ข้อมูลอัปเดตตรงกันทุกเครื่องตลอดเวลา
+    setInterval(() => {
+        if (currentUser && currentView !== 'certDesigner' && !activeQuizTimer) {
+            syncAllDataWithGoogleSheet(false);
+        }
+    }, 45000);
+
     const savedSession = sessionStorage.getItem('edulearn_hospital_session');
     if (savedSession) {
         currentUser = JSON.parse(savedSession);
@@ -845,7 +961,7 @@ function togglePasswordVisibility() {
 }
 
 // ==================== AUTHENTICATION, REGISTER & FORGOT PASSWORD ====================
-function handleLoginSubmit(e) {
+async function handleLoginSubmit(e) {
     if (e) e.preventDefault();
     const identityEl = document.getElementById('loginIdentity');
     const passEl = document.getElementById('loginPass');
@@ -858,6 +974,9 @@ function handleLoginSubmit(e) {
         Swal.fire({ icon: 'warning', title: 'กรุณากรอกข้อมูล', text: 'โปรดระบุชื่อผู้ใช้/อีเมล และรหัสผ่านให้ครบถ้วน', confirmButtonColor: '#1d4ed8' });
         return;
     }
+
+    // ดึงข้อมูลล่าสุดจากฐานข้อมูลกลางก่อนตรวจสอบ Login เสมอ (เพื่อให้เข้าจากเครื่องไหนก็ได้ทันที)
+    await syncAllDataWithGoogleSheet(false);
 
     const user = (db.Users || []).find(u =>
         (String(u.UserID || '').toLowerCase() === identity.toLowerCase() ||
@@ -876,7 +995,7 @@ function handleLoginSubmit(e) {
     }
 
     user.LastLogin = getNowThai();
-    saveDB();
+    saveDB(false);
     pushRecordToGoogleSheet('saveUser', user);
     currentUser = user;
     sessionStorage.setItem('edulearn_hospital_session', JSON.stringify(user));
@@ -908,7 +1027,7 @@ function promptOneTimeProfessionSelect() {
             currentUser.Profession = chosen;
             const idx = db.Users.findIndex(u => u.UserID === currentUser.UserID);
             if (idx > -1) db.Users[idx].Profession = chosen;
-            saveDB();
+            saveDB(false);
             pushRecordToGoogleSheet('saveUser', currentUser);
             sessionStorage.setItem('edulearn_hospital_session', JSON.stringify(currentUser));
             launchPlatform();
@@ -916,8 +1035,9 @@ function promptOneTimeProfessionSelect() {
     });
 }
 
-document.getElementById('registerForm').addEventListener('submit', (e) => {
+document.getElementById('registerForm').addEventListener('submit', async (e) => {
     e.preventDefault();
+    await syncAllDataWithGoogleSheet(false);
     const uid = document.getElementById('regUserId').value.trim().toUpperCase();
     const pass = document.getElementById('regPass').value.trim();
     const name = document.getElementById('regFullName').value.trim();
@@ -948,13 +1068,13 @@ document.getElementById('registerForm').addEventListener('submit', (e) => {
     };
 
     db.Users.push(newUser);
-    saveDB();
-    pushRecordToGoogleSheet('saveUser', newUser);
+    saveDB(false);
+    await pushRecordToGoogleSheet('saveUser', newUser);
 
     Swal.fire({
         icon: 'success',
         title: 'ลงทะเบียนสำเร็จ!',
-        text: `ยินดีต้อนรับคุณ ${name} (${prof}) บันทึกลง Google Sheets เรียบร้อย สามารถเข้าสู่ระบบได้ทันที`,
+        text: `ยินดีต้อนรับคุณ ${name} (${prof}) บันทึกขึ้นฐานข้อมูลกลางเรียบร้อย สามารถเข้าสู่ระบบได้จากทุกเครื่อง`,
         confirmButtonColor: '#059669'
     }).then(() => {
         document.getElementById('loginIdentity').value = email;
@@ -991,7 +1111,8 @@ function openForgotPasswordModal() {
         confirmButtonText: 'ส่งรหัสผ่านเข้าอีเมล',
         cancelButtonText: 'ยกเลิก',
         confirmButtonColor: '#2563eb',
-        preConfirm: () => {
+        preConfirm: async () => {
+            await syncAllDataWithGoogleSheet(false);
             const id = document.getElementById('fpIdentity').value.trim();
             const q = document.getElementById('fpQuestion').value;
             const ans = document.getElementById('fpAnswer').value.trim();
@@ -1016,7 +1137,7 @@ function openForgotPasswordModal() {
             const maskedEmail = u.Email.replace(/(.{2})(.*)(@.*)/, (_, a, b, c) => a + '*'.repeat(Math.max(3, b.length)) + c);
             pushRecordToGoogleSheet('forgotPassword', { identity: u.Email, question: u.SecQuestion, answer: u.SecAnswer });
             pushNotification(u.UserID, `🔐 ระบบได้ส่งข้อมูลรหัสผ่านไปยังอีเมล ${maskedEmail} เรียบร้อยแล้ว`, 'Security');
-            saveDB();
+            saveDB(false);
             Swal.fire({
                 icon: 'success',
                 title: 'ส่งข้อมูลไปยังอีเมลเรียบร้อยแล้ว',
@@ -1096,7 +1217,7 @@ function openRequestProfessionChangeModal() {
             const reason = document.getElementById('reqProfReason').value.trim() || '-';
             const adminUser = db.Users.find(u => u.Role === 'Admin');
             pushNotification(adminUser ? adminUser.UserID : 'admin', `📩 คำขอแก้ไขสายวิชาชีพจาก ${currentUser.FullName} (${currentUser.UserID}): ขอเปลี่ยนเป็น "${newProf}" เหตุผล: ${reason}`, 'System');
-            saveDB();
+            saveDB(false);
             Swal.fire({ icon: 'success', title: 'ส่งคำขอเรียบร้อยแล้ว', text: 'ผู้ดูแลระบบได้รับแจ้งเตือนคำขอของคุณแล้วครับ', confirmButtonColor: '#059669' });
         }
     });
@@ -1383,7 +1504,7 @@ function moveDashboardMainSection(idx, dir) {
     const target = idx + dir;
     if (target < 0 || target >= arr.length) return;
     [arr[idx], arr[target]] = [arr[target], arr[idx]];
-    saveDB();
+    saveDB(true);
     renderDashboardView(document.getElementById('mainViewContent'));
     promptReorderDashboardSections();
 }
@@ -1418,7 +1539,7 @@ function promptEditDashboardContent() {
             cfg.bannerFrom = document.getElementById('dcFrom').value;
             cfg.bannerVia = document.getElementById('dcVia').value;
             cfg.bannerTo = document.getElementById('dcTo').value;
-            saveDB();
+            saveDB(true);
             renderDashboardView(document.getElementById('mainViewContent'));
         }
     });
@@ -1498,7 +1619,7 @@ function promptManageKpiCards() {
                     visible: true
                 });
             }
-            saveDB();
+            saveDB(true);
             renderDashboardView(document.getElementById('mainViewContent'));
         }
     });
@@ -1509,7 +1630,7 @@ function moveKpiCard(idx, dir) {
     const target = idx + dir;
     if (target < 0 || target >= cards.length) return;
     [cards[idx], cards[target]] = [cards[target], cards[idx]];
-    saveDB();
+    saveDB(true);
     renderDashboardView(document.getElementById('mainViewContent'));
     promptManageKpiCards();
 }
@@ -1574,7 +1695,7 @@ function promptEditSingleKpiCard(idx) {
             card.color = document.getElementById('ekColor').value;
             card.imageUrl = document.getElementById('ekImage').value.trim();
             card.icon = document.getElementById('ekIcon').value;
-            saveDB();
+            saveDB(true);
             renderDashboardView(document.getElementById('mainViewContent'));
         }
         promptManageKpiCards();
@@ -1583,7 +1704,7 @@ function promptEditSingleKpiCard(idx) {
 
 function deleteKpiCard(idx) {
     db.DashboardConfig.customKpiCards.splice(idx, 1);
-    saveDB();
+    saveDB(true);
     renderDashboardView(document.getElementById('mainViewContent'));
     promptManageKpiCards();
 }
@@ -1662,7 +1783,7 @@ function promptManageDashboardCharts() {
                     datasets: [{ metric: m, label: nTitle, color: document.getElementById('newChColor').value }]
                 });
             }
-            saveDB();
+            saveDB(true);
             renderDashboardView(document.getElementById('mainViewContent'));
         }
     });
@@ -1673,7 +1794,7 @@ function moveDashChart(idx, dir) {
     const target = idx + dir;
     if (target < 0 || target >= charts.length) return;
     [charts[idx], charts[target]] = [charts[target], charts[idx]];
-    saveDB();
+    saveDB(true);
     renderDashboardView(document.getElementById('mainViewContent'));
     promptManageDashboardCharts();
 }
@@ -1741,7 +1862,7 @@ function promptEditSingleDashChart(idx) {
                 ch.datasets[1].label = document.getElementById('ecLabel1').value.trim();
                 ch.datasets[1].color = document.getElementById('ecColor1').value;
             }
-            saveDB();
+            saveDB(true);
             renderDashboardView(document.getElementById('mainViewContent'));
         }
         promptManageDashboardCharts();
@@ -1750,7 +1871,7 @@ function promptEditSingleDashChart(idx) {
 
 function deleteDashChart(idx) {
     db.DashboardConfig.customCharts.splice(idx, 1);
-    saveDB();
+    saveDB(true);
     renderDashboardView(document.getElementById('mainViewContent'));
     promptManageDashboardCharts();
 }
@@ -1771,13 +1892,13 @@ function saveUserLearningState(stateObj) {
         ...stateObj,
         updatedAt: getNowThai()
     };
-    saveDB();
+    saveDB(true);
 }
 
 function clearUserLearningState() {
     if (!currentUser || !db.SavedLearningStates) return;
     delete db.SavedLearningStates[currentUser.UserID];
-    saveDB();
+    saveDB(true);
 }
 
 function enterCourseFlow(courseId, preferredLessonId = null) {
@@ -2030,7 +2151,7 @@ function openClassroomLayoutCustomizer() {
                 const i = Number(chk.dataset.idx);
                 if (cfg.sections[i]) cfg.sections[i].visible = chk.checked;
             });
-            saveDB();
+            saveDB(true);
             renderClassroomView(document.getElementById('mainViewContent'));
         }
     });
@@ -2041,7 +2162,7 @@ function moveClassroomSection(idx, dir) {
     const targetIdx = idx + dir;
     if (targetIdx < 0 || targetIdx >= secs.length) return;
     [secs[idx], secs[targetIdx]] = [secs[targetIdx], secs[idx]];
-    saveDB();
+    saveDB(true);
     openClassroomLayoutCustomizer();
 }
 
@@ -2247,7 +2368,7 @@ function openCoursePlayer(courseId, lessonId) {
         const lbl = document.getElementById('liveTimerLabel');
         if (lbl) lbl.textContent = `${prevMinutes + addMin} นาที ${String(remSec).padStart(2, '0')} วินาที`;
 
-        if (activeLearningSession.secondsElapsed % 5 === 0) {
+        if (activeLearningSession.secondsElapsed % 15 === 0) {
             saveUserLearningState({
                 mode: 'lesson',
                 courseId,
@@ -2308,7 +2429,7 @@ function markCurrentLessonComplete(courseId, lessonId, isStrict) {
         saveUserLearningState({ mode: 'quiz', courseId, stage: 'POST' });
     }
 
-    saveDB();
+    saveDB(false);
     Swal.fire({
         icon: 'success',
         title: 'ยืนยันเรียนจบบทนี้เรียบร้อย!',
@@ -2494,7 +2615,7 @@ function startCourseQuiz(courseId, stage = 'POST', isResuming = false) {
                 }
             }
         }
-        saveDB();
+        saveDB(false);
         renderNotifications();
 
         document.getElementById('quizAnswerReviewBox').innerHTML = `
@@ -2908,7 +3029,7 @@ function renderCertificatesView(container) {
 function setProfessionStatsDisplayMode(mode) {
     if (!db.ProfessionStatsConfig) db.ProfessionStatsConfig = JSON.parse(JSON.stringify(initialDatabase.ProfessionStatsConfig));
     db.ProfessionStatsConfig.displayMode = mode;
-    saveDB();
+    saveDB(true);
     renderCertificatesView(document.getElementById('mainViewContent'));
 }
 
@@ -2987,7 +3108,7 @@ function openProfessionStatsCustomizer() {
                 else delete cfg.professionTargets[profName];
             });
 
-            saveDB();
+            saveDB(true);
             renderCertificatesView(document.getElementById('mainViewContent'));
             Swal.fire({ icon: 'success', title: 'บันทึกการตั้งค่าสถิติและเป้าหมายแล้ว', timer: 1200, showConfirmButton: false });
         }
@@ -3025,17 +3146,18 @@ function buildCertificateCanvasHTML(design, dataObj, interactive = false) {
     const elsHtml = (design.elements || []).map(el => {
         const isSel = interactive && el.id === selectedElementId;
         const dragAttr = interactive ? `onmousedown="startDragCertElement(event, '${el.id}')" onclick="selectCertElement(event, '${el.id}')"` : '';
+        const dblClickAttr = (interactive && el.type === 'text') ? `ondblclick="focusCertInspectorText(event, '${el.id}')"` : '';
         const cursorCls = interactive ? 'cursor-move select-none' : '';
         const selCls = isSel ? 'cert-el-selected' : '';
 
         if (el.type === 'text') {
-            return `<div ${dragAttr} class="${cursorCls} ${selCls}" style="position:absolute; left:${el.x}px; top:${el.y}px; width:${el.width || 400}px; font-size:${el.fontSize || 16}px; color:${el.color || '#1e293b'}; font-weight:${el.bold ? '700' : '400'}; text-align:${el.align || 'center'}; white-space:pre-line; line-height:1.4;">${sanitizeHTML(replaceVars(el.text))}</div>`;
+            return `<div id="canvasEl_${el.id}" ${dragAttr} ${dblClickAttr} class="${cursorCls} ${selCls}" style="position:absolute; left:${el.x}px; top:${el.y}px; width:${el.width || 400}px; font-size:${el.fontSize || 16}px; color:${el.color || '#1e293b'}; font-weight:${el.bold ? '700' : '400'}; text-align:${el.align || 'center'}; white-space:pre-line; line-height:1.4;">${sanitizeHTML(replaceVars(el.text))}</div>`;
         }
         if (el.type === 'image') {
-            return `<img ${dragAttr} src="${sanitizeHTML(el.src)}" class="${cursorCls} ${selCls}" style="position:absolute; left:${el.x}px; top:${el.y}px; width:${el.width || 80}px; height:${el.height || 80}px; object-fit:contain;" crossorigin="anonymous" alt="">`;
+            return `<img id="canvasEl_${el.id}" ${dragAttr} src="${sanitizeHTML(el.src)}" class="${cursorCls} ${selCls}" style="position:absolute; left:${el.x}px; top:${el.y}px; width:${el.width || 80}px; height:${el.height || 80}px; object-fit:contain;" crossorigin="anonymous" alt="">`;
         }
         if (el.type === 'qr') {
-            return `<img ${dragAttr} src="${qrUrl(dataObj.verifyUrl)}" class="${cursorCls} ${selCls}" style="position:absolute; left:${el.x}px; top:${el.y}px; width:${el.width || 72}px; height:${el.height || 72}px; background:#fff; padding:3px; border:1px solid #cbd5e1; border-radius:6px;" crossorigin="anonymous" alt="QR">`;
+            return `<img id="canvasEl_${el.id}" ${dragAttr} src="${qrUrl(dataObj.verifyUrl)}" class="${cursorCls} ${selCls}" style="position:absolute; left:${el.x}px; top:${el.y}px; width:${el.width || 72}px; height:${el.height || 72}px; background:#fff; padding:3px; border:1px solid #cbd5e1; border-radius:6px;" crossorigin="anonymous" alt="QR">`;
         }
         return '';
     }).join('');
@@ -3401,7 +3523,7 @@ document.getElementById('courseForm').addEventListener('submit', (e) => {
     pushRecordToGoogleSheet('saveCourse', payload);
     closeModal('courseModal');
     promptAdminCustomNotification(`📚 อัปเดตรายวิชา "${payload.CourseName}" โดย ${payload.Teacher}`, 'ALL', () => {
-        saveDB();
+        saveDB(false);
         renderNotifications();
         switchView('manageLessons');
     });
@@ -3411,7 +3533,7 @@ function toggleCourseStatus(courseId) {
     const c = db.Courses.find(x => x.CourseID === courseId);
     if (!c) return;
     c.Status = c.Status === 'Active' ? 'Inactive' : 'Active';
-    saveDB();
+    saveDB(false);
     pushRecordToGoogleSheet('saveCourse', c);
     switchView('manageLessons');
 }
@@ -3538,7 +3660,7 @@ document.getElementById('quizFormModal').addEventListener('submit', (e) => {
     } else {
         db.Quiz.push(quizPayload);
     }
-    saveDB();
+    saveDB(false);
     pushRecordToGoogleSheet('saveQuiz', quizPayload);
     closeModal('quizModal');
     if (currentView === 'manageLessons') renderManageLessonsView(document.getElementById('mainViewContent'));
@@ -3550,7 +3672,7 @@ function deleteQuizItem(quizId) {
     Swal.fire({ title: 'ยืนยันการลบข้อสอบนี้?', icon: 'warning', showCancelButton: true, confirmButtonText: 'ลบเลย', cancelButtonText: 'ยกเลิก', confirmButtonColor: '#e11d48' }).then(res => {
         if (res.isConfirmed) {
             db.Quiz = db.Quiz.filter(q => q.QuizID !== quizId);
-            saveDB();
+            saveDB(false);
             pushRecordToGoogleSheet('deleteRecord', { sheetName: 'Quiz', primaryKey: 'QuizID', id: quizId });
             renderManageLessonsView(document.getElementById('mainViewContent'));
         }
@@ -3678,7 +3800,7 @@ function renderBulkQuizEditorView(stageFilter = 'ALL') {
     }).then(res => {
         if (res.isConfirmed) {
             db.Quiz = db.Quiz.filter(q => q.CourseID !== bulkQuizCourseId).concat(bulkQuizDraftList);
-            saveDB();
+            saveDB(false);
             bulkQuizDraftList.forEach(q => pushRecordToGoogleSheet('saveQuiz', q));
             renderManageLessonsView(document.getElementById('mainViewContent'));
             Swal.fire({ icon: 'success', title: 'บันทึกข้อสอบทั้งหมดเรียบร้อยแล้ว!', timer: 1300, showConfirmButton: false });
@@ -3770,7 +3892,7 @@ document.getElementById('lessonForm').addEventListener('submit', (e) => {
     pushRecordToGoogleSheet('saveLesson', payload);
     closeModal('lessonModal');
     promptAdminCustomNotification(`📖 อัปเดตบทเรียน "${payload.Title}" เรียบร้อยแล้ว`, 'ALL', () => {
-        saveDB();
+        saveDB(false);
         renderNotifications();
         switchView('manageLessons');
     });
@@ -3780,7 +3902,7 @@ function toggleLessonStatus(lessonId) {
     const l = db.Lessons.find(x => x.LessonID === lessonId);
     if (!l) return;
     l.Status = l.Status === 'Active' ? 'Inactive' : 'Active';
-    saveDB();
+    saveDB(false);
     pushRecordToGoogleSheet('saveLesson', l);
     switchView('manageLessons');
 }
@@ -3789,7 +3911,7 @@ function deleteLessonItem(lessonId) {
     Swal.fire({ title: 'ยืนยันการลบบทเรียนนี้?', icon: 'warning', showCancelButton: true, confirmButtonText: 'ลบเลย', cancelButtonText: 'ยกเลิก', confirmButtonColor: '#e11d48' }).then(res => {
         if (res.isConfirmed) {
             db.Lessons = db.Lessons.filter(l => l.LessonID !== lessonId);
-            saveDB();
+            saveDB(false);
             pushRecordToGoogleSheet('deleteRecord', { sheetName: 'Lessons', primaryKey: 'LessonID', id: lessonId });
             switchView('manageLessons');
         }
@@ -3861,7 +3983,7 @@ function renderCertDesignerView(container) {
                 </button>
                 <div>
                     <h2 class="text-2xl font-bold text-blue-900 dark:text-white"><i class="fa-solid fa-palette mr-2 text-blue-600"></i>สตูดิโอออกแบบเกียรติบัตร (WYSIWYG & Drag-Drop)</h2>
-                    <p class="text-xs text-slate-500">คลิกที่องค์ประกอบเพื่อแก้ไขข้อความ/ฟอนต์/สี ลากย้ายตำแหน่งอิสระ หรือกด Ctrl+V วางรูปภาพจากคลิปบอร์ดได้ทันที</p>
+                    <p class="text-xs text-slate-500">คลิกหรือดับเบิลคลิกที่ข้อความเพื่อแก้ไข ลากย้ายตำแหน่งอิสระ หรือกด Ctrl+V วางรูปภาพจากคลิปบอร์ดได้ทันที</p>
                 </div>
             </div>
             <div class="flex flex-wrap items-center gap-2">
@@ -3933,22 +4055,58 @@ function renderCertDesignerView(container) {
             </div>
         </div>
     `;
-    refreshCertStudioCanvas();
+    refreshCertStudioCanvas(true);
 }
 
-function refreshCertStudioCanvas() {
-    const holder = document.getElementById('certDesignerCanvasHolder');
-    if (!holder || !certDraft) return;
+function getCertPreviewSampleData() {
     const course = db.Courses.find(c => c.CourseID === currentDesignerCourseId) || { CourseName: 'ชื่อรายวิชาตัวอย่าง' };
-    holder.innerHTML = buildCertificateCanvasHTML(certDraft, {
+    return {
         id: 'CERT-2569-1001',
         name: 'พว.มณี เรียนดี',
         course: course.CourseName,
         score: 100,
         date: getNowThai().split(' ')[0],
         verifyUrl: 'https://elearning.pharmacy.go.th/verify?id=CERT-2569-1001'
-    }, true);
-    renderCertElementInspector();
+    };
+}
+
+function refreshCertStudioCanvas(updateInspector = true) {
+    const holder = document.getElementById('certDesignerCanvasHolder');
+    if (!holder || !certDraft) return;
+    holder.innerHTML = buildCertificateCanvasHTML(certDraft, getCertPreviewSampleData(), true);
+    if (updateInspector) {
+        renderCertElementInspector();
+    }
+}
+
+function updateSelectedCertTextLive(newTextVal) {
+    const el = certDraft.elements.find(x => x.id === selectedElementId);
+    if (!el) return;
+    el.text = newTextVal;
+
+    // อัปเดตข้อความบนแผ่นเกียรติบัตรโดยตรงโดยไม่รีเฟรช Inspector เพื่อให้พิมพ์ต่อเนื่องได้ไม่หลุดโฟกัส
+    const domEl = document.getElementById(`canvasEl_${el.id}`);
+    if (domEl) {
+        const dataObj = getCertPreviewSampleData();
+        const rendered = String(newTextVal || '')
+            .replace(/\{FullName\}/g, dataObj.name)
+            .replace(/\{CourseName\}/g, dataObj.course)
+            .replace(/\{Score\}/g, dataObj.score)
+            .replace(/\{Date\}/g, dataObj.date)
+            .replace(/\{CertID\}/g, dataObj.id);
+        domEl.textContent = rendered;
+    }
+}
+
+function focusCertInspectorText(e, elId) {
+    e.stopPropagation();
+    selectedElementId = elId;
+    refreshCertStudioCanvas(true);
+    const ta = document.getElementById('certInspectorTextInput');
+    if (ta) {
+        ta.focus();
+        ta.select();
+    }
 }
 
 function updateCertGlobalStyle() {
@@ -3958,7 +4116,7 @@ function updateCertGlobalStyle() {
     certDraft.secondaryColor = document.getElementById('cdSecondaryColor').value;
     certDraft.bgColor = document.getElementById('cdBgColor').value;
     certDraft.bgImage = document.getElementById('cdBgImage').value.trim();
-    refreshCertStudioCanvas();
+    refreshCertStudioCanvas(false);
 }
 
 function uploadCertBgImage(inp) {
@@ -3968,7 +4126,7 @@ function uploadCertBgImage(inp) {
     r.onload = () => {
         certDraft.bgImage = r.result;
         document.getElementById('cdBgImage').value = r.result;
-        refreshCertStudioCanvas();
+        refreshCertStudioCanvas(false);
     };
     r.readAsDataURL(f);
 }
@@ -3976,28 +4134,47 @@ function uploadCertBgImage(inp) {
 function selectCertElement(e, elId) {
     e.stopPropagation();
     selectedElementId = elId;
-    refreshCertStudioCanvas();
+    refreshCertStudioCanvas(true);
 }
 
 function startDragCertElement(e, elId) {
     selectedElementId = elId;
     const el = certDraft.elements.find(x => x.id === elId);
     if (!el) return;
-    dragState = { id: elId, startX: e.clientX, startY: e.clientY, origX: el.x, origY: el.y };
+    dragState = { id: elId, startX: e.clientX, startY: e.clientY, origX: el.x, origY: el.y, moved: false };
 }
 
 window.addEventListener('mousemove', (e) => {
     if (!dragState || !certDraft) return;
     const el = certDraft.elements.find(x => x.id === dragState.id);
     if (!el) return;
-    el.x = Math.max(0, Math.round(dragState.origX + (e.clientX - dragState.startX)));
-    el.y = Math.max(0, Math.round(dragState.origY + (e.clientY - dragState.startY)));
-    refreshCertStudioCanvas();
+    const dx = e.clientX - dragState.startX;
+    const dy = e.clientY - dragState.startY;
+    if (Math.abs(dx) > 1 || Math.abs(dy) > 1) dragState.moved = true;
+    el.x = Math.max(0, Math.round(dragState.origX + dx));
+    el.y = Math.max(0, Math.round(dragState.origY + dy));
+
+    const domEl = document.getElementById(`canvasEl_${el.id}`);
+    if (domEl) {
+        domEl.style.left = el.x + 'px';
+        domEl.style.top = el.y + 'px';
+    }
+    const inpX = document.getElementById('certInspectorPosX');
+    const inpY = document.getElementById('certInspectorPosY');
+    if (inpX) inpX.value = el.x;
+    if (inpY) inpY.value = el.y;
 });
-window.addEventListener('mouseup', () => { dragState = null; });
+window.addEventListener('mouseup', () => {
+    if (dragState && dragState.moved) {
+        refreshCertStudioCanvas(true);
+    }
+    dragState = null;
+});
 
 window.addEventListener('paste', (e) => {
     if (currentView !== 'certDesigner' || !certDraft) return;
+    const activeTag = document.activeElement?.tagName;
+    if (activeTag === 'INPUT' || activeTag === 'TEXTAREA') return;
     const items = e.clipboardData?.items || [];
     for (const item of items) {
         if (item.type.startsWith('image/')) {
@@ -4007,7 +4184,7 @@ window.addEventListener('paste', (e) => {
                 const newEl = { id: 'el_img_' + Date.now(), type: 'image', src: reader.result, x: 320, y: 200, width: 140, height: 140 };
                 certDraft.elements.push(newEl);
                 selectedElementId = newEl.id;
-                refreshCertStudioCanvas();
+                refreshCertStudioCanvas(true);
                 Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'วางรูปภาพจากคลิปบอร์ดสำเร็จ', showConfirmButton: false, timer: 1200 });
             };
             reader.readAsDataURL(file);
@@ -4016,10 +4193,14 @@ window.addEventListener('paste', (e) => {
 });
 
 function addCertTextElement() {
-    const newEl = { id: 'el_txt_' + Date.now(), type: 'text', text: 'ข้อความใหม่ (คลิกเพื่อแก้ไข)', x: 250, y: 250, width: 300, fontSize: 18, color: '#1e3a8a', bold: true, align: 'center' };
+    const newEl = { id: 'el_txt_' + Date.now(), type: 'text', text: 'ข้อความใหม่ (พิมพ์แก้ไขด้านซ้ายมือ)', x: 250, y: 250, width: 300, fontSize: 18, color: '#1e3a8a', bold: true, align: 'center' };
     certDraft.elements.push(newEl);
     selectedElementId = newEl.id;
-    refreshCertStudioCanvas();
+    refreshCertStudioCanvas(true);
+    setTimeout(() => {
+        const ta = document.getElementById('certInspectorTextInput');
+        if (ta) { ta.focus(); ta.select(); }
+    }, 30);
 }
 
 function addCertImageElement(inp) {
@@ -4030,7 +4211,7 @@ function addCertImageElement(inp) {
         const newEl = { id: 'el_img_' + Date.now(), type: 'image', src: r.result, x: 330, y: 180, width: 120, height: 120 };
         certDraft.elements.push(newEl);
         selectedElementId = newEl.id;
-        refreshCertStudioCanvas();
+        refreshCertStudioCanvas(true);
     };
     r.readAsDataURL(f);
 }
@@ -4051,8 +4232,8 @@ function renderCertElementInspector() {
         </div>
         ${el.type === 'text' ? `
             <div>
-                <label class="block mb-1 font-semibold">ข้อความ (ตัวแปร: {FullName}, {CourseName}, {Score}, {Date}, {CertID})</label>
-                <textarea rows="2" oninput="updateSelectedElProp('text', this.value)" class="w-full px-2.5 py-1.5 rounded-lg border dark:bg-slate-900">${sanitizeHTML(el.text)}</textarea>
+                <label class="block mb-1 font-semibold">พิมพ์แก้ไขข้อความ (ตัวแปร: {FullName}, {CourseName}, {Score}, {Date}, {CertID})</label>
+                <textarea id="certInspectorTextInput" rows="3" oninput="updateSelectedCertTextLive(this.value)" class="w-full px-3 py-2 rounded-xl border-2 border-blue-400 focus:border-blue-600 outline-none bg-blue-50/30 dark:bg-slate-900 font-medium text-sm">${sanitizeHTML(el.text)}</textarea>
             </div>
             <div class="grid grid-cols-3 gap-2">
                 <div><label class="block mb-1">ขนาดตัวอักษร</label><input type="number" value="${el.fontSize}" onchange="updateSelectedElProp('fontSize', Number(this.value))" class="w-full px-2 py-1 rounded-lg border dark:bg-slate-900"></div>
@@ -4075,8 +4256,8 @@ function renderCertElementInspector() {
             </div>
         `}
         <div class="grid grid-cols-2 gap-2 pt-1">
-            <div><label class="block mb-1">ตำแหน่ง X</label><input type="number" value="${el.x}" onchange="updateSelectedElProp('x', Number(this.value))" class="w-full px-2 py-1 rounded-lg border dark:bg-slate-900"></div>
-            <div><label class="block mb-1">ตำแหน่ง Y</label><input type="number" value="${el.y}" onchange="updateSelectedElProp('y', Number(this.value))" class="w-full px-2 py-1 rounded-lg border dark:bg-slate-900"></div>
+            <div><label class="block mb-1">ตำแหน่ง X</label><input id="certInspectorPosX" type="number" value="${el.x}" onchange="updateSelectedElProp('x', Number(this.value))" class="w-full px-2 py-1 rounded-lg border dark:bg-slate-900"></div>
+            <div><label class="block mb-1">ตำแหน่ง Y</label><input id="certInspectorPosY" type="number" value="${el.y}" onchange="updateSelectedElProp('y', Number(this.value))" class="w-full px-2 py-1 rounded-lg border dark:bg-slate-900"></div>
         </div>
     `;
 }
@@ -4085,24 +4266,24 @@ function updateSelectedElProp(key, val) {
     const el = certDraft.elements.find(x => x.id === selectedElementId);
     if (!el) return;
     el[key] = val;
-    refreshCertStudioCanvas();
+    refreshCertStudioCanvas(false);
 }
 function deleteSelectedCertElement() {
     certDraft.elements = certDraft.elements.filter(x => x.id !== selectedElementId);
     selectedElementId = certDraft.elements[0]?.id || null;
-    refreshCertStudioCanvas();
+    refreshCertStudioCanvas(true);
 }
 function saveCourseCertDesign() {
     if (!hasPermission('designCert')) return;
     db.CourseCertDesigns[currentDesignerCourseId] = JSON.parse(JSON.stringify(certDraft));
-    saveDB();
+    saveDB(true);
     pushRecordToGoogleSheet('saveCertSettings', db.CourseCertDesigns);
     const nextBtn = document.getElementById('btnCertNextToCourses');
     if (nextBtn) nextBtn.classList.remove('hidden');
     Swal.fire({
         icon: 'success',
         title: 'บันทึกแม่แบบเกียรติบัตรเรียบร้อย!',
-        text: 'คุณสามารถแก้ไขต่อ หรือกดปุ่ม "ถัดไป" เพื่อกลับไปยังหน้าจัดการคอร์สเรียนได้ทันที',
+        text: 'แม่แบบถูกบันทึกขึ้น Cloud แล้ว สามารถใช้งานได้จากทุกเครื่อง',
         showCancelButton: true,
         confirmButtonText: 'ถัดไป (กลับหน้าคอร์สเรียน) ➔',
         cancelButtonText: 'แก้ไขต่อ',
@@ -4117,7 +4298,7 @@ function resetCourseCertDesign() {
     if (!hasPermission('designCert')) return;
     certDraft = JSON.parse(JSON.stringify(DEFAULT_CERT));
     db.CourseCertDesigns[currentDesignerCourseId] = JSON.parse(JSON.stringify(DEFAULT_CERT));
-    saveDB();
+    saveDB(true);
     renderCertDesignerView(document.getElementById('mainViewContent'));
 }
 
@@ -4130,7 +4311,7 @@ function renderAdminRegConfigView(container) {
     container.innerHTML = `
         <div>
             <h2 class="text-2xl font-bold text-blue-900 dark:text-white"><i class="fa-solid fa-hospital mr-2 text-blue-600"></i>จัดการแผนกในโรงพยาบาล & สายวิชาชีพ</h2>
-            <p class="text-xs text-slate-500">เพิ่ม แก้ไข หรือลบรายชื่อแผนกและสายวิชาชีพสำหรับใช้ในหน้าลงทะเบียนและการแบ่งระดับเนื้อหา</p>
+            <p class="text-xs text-slate-500">เพิ่ม แก้ไข หรือลบรายชื่อแผนกและสายวิชาชีพ (ซิงก์ข้อมูลทุกเครื่องอัตโนมัติ)</p>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div class="custom-card bg-white dark:bg-slate-800 p-6 shadow-sm border space-y-4">
@@ -4173,29 +4354,29 @@ function renderAdminRegConfigView(container) {
 }
 function addHospitalDeptItem() {
     Swal.fire({ title: 'เพิ่มแผนกในโรงพยาบาล', input: 'text', showCancelButton: true }).then(r => {
-        if (r.isConfirmed && r.value.trim()) { db.HospitalDepartments.push(r.value.trim()); saveDB(); renderAdminRegConfigView(document.getElementById('mainViewContent')); }
+        if (r.isConfirmed && r.value.trim()) { db.HospitalDepartments.push(r.value.trim()); saveDB(true); renderAdminRegConfigView(document.getElementById('mainViewContent')); }
     });
 }
 function editHospitalDeptItem(idx) {
     Swal.fire({ title: 'แก้ไขชื่อแผนก', input: 'text', inputValue: db.HospitalDepartments[idx], showCancelButton: true }).then(r => {
-        if (r.isConfirmed && r.value.trim()) { db.HospitalDepartments[idx] = r.value.trim(); saveDB(); renderAdminRegConfigView(document.getElementById('mainViewContent')); }
+        if (r.isConfirmed && r.value.trim()) { db.HospitalDepartments[idx] = r.value.trim(); saveDB(true); renderAdminRegConfigView(document.getElementById('mainViewContent')); }
     });
 }
 function deleteHospitalDeptItem(idx) {
-    db.HospitalDepartments.splice(idx, 1); saveDB(); renderAdminRegConfigView(document.getElementById('mainViewContent'));
+    db.HospitalDepartments.splice(idx, 1); saveDB(true); renderAdminRegConfigView(document.getElementById('mainViewContent'));
 }
 function addProfessionItem() {
     Swal.fire({ title: 'เพิ่มสายวิชาชีพ', input: 'text', showCancelButton: true }).then(r => {
-        if (r.isConfirmed && r.value.trim()) { db.Professions.push(r.value.trim()); saveDB(); renderAdminRegConfigView(document.getElementById('mainViewContent')); }
+        if (r.isConfirmed && r.value.trim()) { db.Professions.push(r.value.trim()); saveDB(true); renderAdminRegConfigView(document.getElementById('mainViewContent')); }
     });
 }
 function editProfessionItem(idx) {
     Swal.fire({ title: 'แก้ไขสายวิชาชีพ', input: 'text', inputValue: db.Professions[idx], showCancelButton: true }).then(r => {
-        if (r.isConfirmed && r.value.trim()) { db.Professions[idx] = r.value.trim(); saveDB(); renderAdminRegConfigView(document.getElementById('mainViewContent')); }
+        if (r.isConfirmed && r.value.trim()) { db.Professions[idx] = r.value.trim(); saveDB(true); renderAdminRegConfigView(document.getElementById('mainViewContent')); }
     });
 }
 function deleteProfessionItem(idx) {
-    db.Professions.splice(idx, 1); saveDB(); renderAdminRegConfigView(document.getElementById('mainViewContent'));
+    db.Professions.splice(idx, 1); saveDB(true); renderAdminRegConfigView(document.getElementById('mainViewContent'));
 }
 
 // ==================== VIEW 9: MANAGE USERS (ADMIN) ====================
@@ -4301,7 +4482,7 @@ function openEditUserModal(userId) {
 
             pushRecordToGoogleSheet('saveUser', u);
             promptAdminCustomNotification(`✅ ผู้ดูแลระบบได้อัปเดตข้อมูล/สายวิชาชีพ (${u.Profession || u.Role}) ของคุณเรียบร้อยแล้ว`, u.UserID, () => {
-                saveDB();
+                saveDB(false);
                 renderNotifications();
                 renderManageUsersView(document.getElementById('mainViewContent'));
             });
@@ -4411,7 +4592,7 @@ function toggleRolePermission(role, permKey, isEnabled) {
     } else if (!isEnabled) {
         db.RolePermissions[role] = db.RolePermissions[role].filter(k => k !== permKey);
     }
-    saveDB();
+    saveDB(true);
     Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: `อัปเดตสิทธิ์ของ ${role} แล้ว`, showConfirmButton: false, timer: 1000 });
 }
 
@@ -4447,12 +4628,12 @@ function openUserCustomPermissionModal(userId) {
     }).then(res => {
         if (res.isConfirmed) {
             db.UserPermissions[userId] = [...document.querySelectorAll('.uCustomPermChk:checked')].map(el => el.value);
-            saveDB();
+            saveDB(true);
             renderAdminPermissionsView(document.getElementById('mainViewContent'));
             Swal.fire({ icon: 'success', title: 'บันทึกสิทธิ์เฉพาะบุคคลสำเร็จ', timer: 1100, showConfirmButton: false });
         } else if (res.isDenied) {
             delete db.UserPermissions[userId];
-            saveDB();
+            saveDB(true);
             renderAdminPermissionsView(document.getElementById('mainViewContent'));
             Swal.fire({ icon: 'info', title: 'คืนค่าให้ใช้สิทธิ์ตามตำแหน่งแล้ว', timer: 1100, showConfirmButton: false });
         }
@@ -4463,7 +4644,7 @@ function resetDefaultPermissions() {
     if (!isAdmin()) return;
     db.RolePermissions = JSON.parse(JSON.stringify(initialDatabase.RolePermissions));
     db.UserPermissions = {};
-    saveDB();
+    saveDB(true);
     renderAdminPermissionsView(document.getElementById('mainViewContent'));
     Swal.fire({ icon: 'success', title: 'คืนค่าสิทธิ์มาตรฐานเรียบร้อย', timer: 1100, showConfirmButton: false });
 }
@@ -4476,7 +4657,7 @@ function renderAdminThemeSettingsView(container) {
         <div class="flex justify-between items-center">
             <div>
                 <h2 class="text-2xl font-bold text-blue-900 dark:text-white"><i class="fa-solid fa-font mr-2 text-blue-600"></i>ตั้งค่าระบบ / Google Sheets / Telegram / ฟอนต์</h2>
-                <p class="text-xs text-slate-500">ปรับเปลี่ยนลิงก์เชื่อมต่อ Google Apps Script, Telegram Bot, ชนิดฟอนต์ และข้อความทุกหน้าต่างได้ทันที</p>
+                <p class="text-xs text-slate-500">ปรับเปลี่ยนลิงก์เชื่อมต่อ Google Apps Script, Telegram Bot, ชนิดฟอนต์ และข้อความทุกหน้าต่างได้ทันที (ซิงก์ทุกเครื่อง)</p>
             </div>
             <button onclick="saveGlobalThemeForm()" class="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow">
                 <i class="fa-solid fa-floppy-disk mr-1"></i> บันทึกการตั้งค่าทั้งหมด
@@ -4571,9 +4752,9 @@ function saveGlobalThemeForm() {
     t.gasWebAppUrl = document.getElementById('thGasUrl').value.trim();
     t.telegramBotToken = document.getElementById('thTgToken').value.trim();
     t.telegramChatId = document.getElementById('thTgChatId').value.trim();
-    saveDB();
+    saveDB(true);
     applyGlobalSiteTheme();
-    Swal.fire({ icon: 'success', title: 'บันทึกการตั้งค่าระบบ Google Sheets และ Telegram เรียบร้อย', timer: 1300, showConfirmButton: false });
+    Swal.fire({ icon: 'success', title: 'บันทึกการตั้งค่าระบบขึ้น Cloud เรียบร้อย', timer: 1300, showConfirmButton: false });
 }
 
 // ==================== VIEW 12: ADMIN BACKEND DATABASE VIEWER ====================
@@ -4589,11 +4770,16 @@ function renderAdminDBView(container) {
         <div class="flex flex-wrap justify-between items-center gap-3">
             <div>
                 <h2 class="text-2xl font-bold text-blue-900 dark:text-white">🗄️ ฐานข้อมูลเบื้องหลัง (Admin DB Viewer)</h2>
-                <p class="text-xs text-slate-500">แสดงข้อมูลทุกตารางในระบบแบบเรียลไทม์ (เชื่อมต่อกับ Google Sheets)</p>
+                <p class="text-xs text-slate-500">แสดงข้อมูลทุกตารางในระบบแบบเรียลไทม์ (เชื่อมต่อกับ Google Sheets ข้ามเครื่องอัตโนมัติ)</p>
             </div>
-            <button onclick="syncAllDataWithGoogleSheet(true)" class="px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold shadow">
-                <i class="fa-solid fa-cloud-arrow-down mr-1"></i> ดึงข้อมูลล่าสุดจาก Google Sheets
-            </button>
+            <div class="flex gap-2">
+                <button onclick="pushSystemStateSnapshotToCloud().then(() => Swal.fire('สำรองขึ้น Cloud สำเร็จ', 'บันทึกการตั้งค่าและแม่แบบทั้งหมดขึ้น Google Sheets แล้ว', 'success'))" class="px-4 py-2 rounded-xl bg-blue-600 text-white text-xs font-bold shadow">
+                    <i class="fa-solid fa-cloud-arrow-up mr-1"></i> อัปโหลดการตั้งค่าขึ้น Cloud
+                </button>
+                <button onclick="syncAllDataWithGoogleSheet(true)" class="px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold shadow">
+                    <i class="fa-solid fa-cloud-arrow-down mr-1"></i> ดึงข้อมูลล่าสุดจาก Google Sheets
+                </button>
+            </div>
         </div>
         <div class="flex flex-wrap gap-2">
             ${names.map(n => `<button onclick="setAdminDbTable('${n}')" class="px-3 py-1.5 rounded-xl text-xs font-semibold ${n === adminDbTable ? 'bg-blue-700 text-white' : 'bg-white dark:bg-slate-800 border'}">${n} (${db[n].length})</button>`).join('')}
@@ -4623,7 +4809,7 @@ function renderArchitectureGuideView(container) {
                 <ol class="list-decimal pl-5 space-y-1.5">
                     <li>นำไฟล์ <code>index.html</code>, <code>Code.gs</code>, <code>README.md</code> และ <code>.gitignore</code> อัปโหลดขึ้น GitHub Repository และเปิดใช้งาน GitHub Pages</li>
                     <li>สร้าง Google Sheets ใหม่ ไปที่เมนู <b>ส่วนขยาย (Extensions) &gt; Apps Script</b> แล้ววางโค้ดจากไฟล์ <code>Code.gs</code></li>
-                    <li>เลือกฟังก์ชัน <code>SetupAllSheet</code> แล้วกด <b>Run (เรียกใช้)</b> 1 ครั้งเพื่อสร้างตารางทั้ง 9 ชีตและบัญชี Admin อัตโนมัติ</li>
+                    <li>เลือกฟังก์ชัน <code>SetupAllSheet</code> แล้วกด <b>Run (เรียกใช้)</b> 1 ครั้งเพื่อสร้างตารางและบัญชี Admin อัตโนมัติ</li>
                     <li>กด <b>Deploy &gt; New deployment &gt; Web app</b> เลือก Execute as: <b>Me</b> และ Who has access: <b>Anyone</b> แล้วนำ Web App URL มากรอกในหน้า <b>ตั้งค่าระบบ / Sheets / Telegram</b></li>
                 </ol>
             </div>
@@ -4661,12 +4847,12 @@ function renderNotifications() {
 function showBroadcastNotifPrompt() {
     if (!hasPermission('broadcastNotif')) return;
     promptAdminCustomNotification('', 'ALL', () => {
-        saveDB();
+        saveDB(false);
         renderNotifications();
     });
 }
 function toggleNotifPanel() { document.getElementById('notifDropdown').classList.toggle('hidden'); }
-function markAllNotifRead() { db.Notifications.forEach(n => { n.Status = 'Read'; }); saveDB(); renderNotifications(); }
+function markAllNotifRead() { db.Notifications.forEach(n => { n.Status = 'Read'; }); saveDB(false); renderNotifications(); }
 function toggleDarkMode() {
     document.documentElement.classList.toggle('dark');
     document.getElementById('darkModeIcon').className = document.documentElement.classList.contains('dark') ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
