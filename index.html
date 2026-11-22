@@ -1,4 +1,4 @@
-
+<!DOCTYPE html>
 <html lang="th" class="light">
 <head>
     <meta charset="UTF-8">
@@ -487,7 +487,7 @@
  * E-LEARNING PHARMACY - FULL ENTERPRISE SPA CONTROLLER + GOOGLE SHEETS SYNC
  * ============================================================================
  */
-const DEFAULT_GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzW7yF6LDdKP0TDE97xM_b0F_ibY-wxWEXdOpbHxL02dj-XFmesBESPnzVsBB6vAL11/exec";
+const DEFAULT_GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz7Y4dfyvfHDg6-SsRxtIbAa_LHYsGJfbE5E96HIhPOh5enz1GxBm9U08A2i8qSmiFtNw/exec";
 
 function getGasUrl() {
     return (db && db.SiteThemeSettings && db.SiteThemeSettings.gasWebAppUrl) || DEFAULT_GAS_WEB_APP_URL;
@@ -623,7 +623,7 @@ let db = JSON.parse(localStorage.getItem('edulearn_hospital_db_v4')) || initialD
 if (!db.HospitalDepartments) db.HospitalDepartments = [...initialDatabase.HospitalDepartments];
 if (!db.Professions) db.Professions = [...initialDatabase.Professions];
 if (!db.SiteThemeSettings) db.SiteThemeSettings = { ...initialDatabase.SiteThemeSettings };
-if (!db.SiteThemeSettings.gasWebAppUrl) db.SiteThemeSettings.gasWebAppUrl = DEFAULT_GAS_WEB_APP_URL;
+db.SiteThemeSettings.gasWebAppUrl = DEFAULT_GAS_WEB_APP_URL;
 if (!db.SiteThemeSettings.telegramBotToken) db.SiteThemeSettings.telegramBotToken = "9280509192:AAE6Ux-E2cQ3yHvoHvBoyJLMxL_wbFW28TE";
 if (!db.SiteThemeSettings.telegramChatId) db.SiteThemeSettings.telegramChatId = "127792770";
 if (!db.ClassroomLayoutConfig) db.ClassroomLayoutConfig = JSON.parse(JSON.stringify(initialDatabase.ClassroomLayoutConfig));
