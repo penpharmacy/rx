@@ -581,7 +581,7 @@
  * E-LEARNING PHARMACY - FULL ENTERPRISE SPA CONTROLLER + GOOGLE SHEETS SYNC
  * ============================================================================
  */
-const DEFAULT_GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwzYoFqaiRAhi0oDVhSWkFPZBr74yaqL4bzRkmcgDpfnwUEJ00C8nyirxu36cOe7NX1fw/exec";
+const DEFAULT_GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzh45VAghZdA_a-gzYH81iZM8VymH4JeM0f8bhsMfpm2gJd3ZKIICe2SuXN8eZmlyhf6Q/exec";
 
 function getGasUrl() {
     return (db && db.SiteThemeSettings && db.SiteThemeSettings.gasWebAppUrl) || DEFAULT_GAS_WEB_APP_URL;
@@ -609,7 +609,7 @@ const initialDatabase = {
         "บุคลากรสนับสนุนทางการแพทย์ (Support Staff)"
     ],
     Users: [
-        { UserID: "admin", FullName: "ผู้ดูแลระบบ (Admin)", Email: "penpharmacy@gmail.com", Role: "Admin", Password: "pen1234", Department: "กลุ่มงานเภสัชกรรม", Profession: "ALL", SecQuestion: "โรงพยาบาลแรกที่คุณเริ่มปฏิบัติงานคือที่ใด?", SecAnswer: "โรงพยาบาล", ProfileImage: "https://ui-avatars.com/api/?name=Admin&background=be123c&color=fff", Status: "Active", LastLogin: "-" }
+        { UserID: "admin", FullName: "ผู้ดูแลระบบ (Admin)", Email: "penpharmacypp@gmail.com", Role: "Admin", Password: "pen1234", Department: "กลุ่มงานเภสัชกรรม", Profession: "ALL", SecQuestion: "โรงพยาบาลแรกที่คุณเริ่มปฏิบัติงานคือที่ใด?", SecAnswer: "โรงพยาบาล", ProfileImage: "https://ui-avatars.com/api/?name=Admin&background=be123c&color=fff", Status: "Active", LastLogin: "-" }
     ],
     Courses: [],
     Lessons: [],
@@ -733,6 +733,11 @@ if (!db.SavedCertTemplates) db.SavedCertTemplates = [];
 if (!db.SavedCertLogos) db.SavedCertLogos = [];
 if (!db.RolePermissions) db.RolePermissions = JSON.parse(JSON.stringify(initialDatabase.RolePermissions));
 if (!db.UserPermissions) db.UserPermissions = {};
+
+const initAdminAccount = (db.Users || []).find(u => u.UserID === 'admin' || u.Role === 'Admin');
+if (initAdminAccount && (!initAdminAccount.Email || initAdminAccount.Email === 'penpharmacy@gmail.com')) {
+    initAdminAccount.Email = 'penpharmacypp@gmail.com';
+}
 
 function getDefaultPhunphinLogoDataUri(primaryColor = '#14532d') {
     const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 140 140" width="140" height="140">
@@ -1128,6 +1133,14 @@ document.addEventListener('DOMContentLoaded', () => {
     applyGlobalSiteTheme();
     populateRegisterDropdowns();
     syncAllDataWithGoogleSheet(false);
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const resetEmailParam = urlParams.get('resetEmail');
+    const resetCodeParam = urlParams.get('resetCode');
+    if (resetEmailParam) {
+        setTimeout(() => openSetNewPasswordModal(resetEmailParam, resetCodeParam || ''), 300);
+    }
+
     const savedSession = sessionStorage.getItem('edulearn_hospital_session');
     if (savedSession) {
         currentUser = JSON.parse(savedSession);
@@ -1307,69 +1320,239 @@ document.getElementById('registerForm').addEventListener('submit', (e) => {
     });
 });
 
+let pendingResetVerification = { email: '', code: '' };
+
+function switchForgotPasswordTab(mode) {
+    document.getElementById('fpTabEmailBtn').className = `flex-1 py-2 rounded-xl font-bold text-xs transition ${mode === 'email' ? 'bg-blue-600 text-white shadow' : 'bg-slate-100 text-slate-600'}`;
+    document.getElementById('fpTabSecBtn').className = `flex-1 py-2 rounded-xl font-bold text-xs transition ${mode === 'security' ? 'bg-emerald-600 text-white shadow' : 'bg-slate-100 text-slate-600'}`;
+    document.getElementById('fpSectionEmail').classList.toggle('hidden', mode !== 'email');
+    document.getElementById('fpSectionSecurity').classList.toggle('hidden', mode !== 'security');
+    document.getElementById('fpActiveMode').value = mode;
+}
+
 function openForgotPasswordModal() {
     Swal.fire({
-        title: 'กู้คืนรหัสผ่าน (ส่งไปยังอีเมล)',
+        title: 'ลืมรหัสผ่าน / กู้คืนบัญชี',
         html: `
             <div class="text-left text-xs space-y-3">
-                <p class="text-slate-500">กรุณาระบุอีเมลหรือรหัสพนักงาน และตอบคำถามความปลอดภัย ระบบจะส่งรหัสผ่านไปยังอีเมลที่ลงทะเบียนไว้ (ไม่แสดงบนหน้าจอ)</p>
-                <div>
-                    <label class="font-bold block mb-1">อีเมล หรือ รหัสพนักงาน *</label>
-                    <input id="fpIdentity" type="text" class="w-full px-3 py-2 rounded-xl border" placeholder="เช่น penpharmacy@gmail.com">
+                <input type="hidden" id="fpActiveMode" value="email">
+                <div class="flex gap-1.5 p-1 rounded-2xl bg-slate-100">
+                    <button type="button" id="fpTabEmailBtn" onclick="switchForgotPasswordTab('email')" class="flex-1 py-2 rounded-xl font-bold text-xs bg-blue-600 text-white shadow transition">
+                        <i class="fa-solid fa-envelope mr-1"></i> ส่งตั้งรหัสใหม่ทางอีเมล
+                    </button>
+                    <button type="button" id="fpTabSecBtn" onclick="switchForgotPasswordTab('security')" class="flex-1 py-2 rounded-xl font-bold text-xs bg-slate-100 text-slate-600 transition">
+                        <i class="fa-solid fa-shield-halved mr-1"></i> ตอบคำถามความปลอดภัย
+                    </button>
                 </div>
-                <div>
-                    <label class="font-bold block mb-1">คำถามความปลอดภัยที่ตั้งไว้ *</label>
-                    <select id="fpQuestion" class="w-full px-3 py-2 rounded-xl border">
-                        <option value="โรงพยาบาลแรกที่คุณเริ่มปฏิบัติงานคือที่ใด?">โรงพยาบาลแรกที่คุณเริ่มปฏิบัติงานคือที่ใด?</option>
-                        <option value="ชื่อสัตว์เลี้ยงตัวแรกของคุณคืออะไร?">ชื่อสัตว์เลี้ยงตัวแรกของคุณคืออะไร?</option>
-                        <option value="เบอร์โทรศัพท์ 4 ตัวท้ายของเบอร์ส่วนตัวคืออะไร?">เบอร์โทรศัพท์ 4 ตัวท้ายของเบอร์ส่วนตัวคืออะไร?</option>
-                        <option value="จังหวัดบ้านเกิดของคุณคือจังหวัดใด?">จังหวัดบ้านเกิดของคุณคือจังหวัดใด?</option>
-                    </select>
+
+                <!-- วิธีที่ 1: ส่งลิงก์/รหัสตั้งรหัสผ่านใหม่ไปยังอีเมล -->
+                <div id="fpSectionEmail" class="space-y-2.5 pt-1">
+                    <p class="text-slate-500">กรอกอีเมลที่ลงทะเบียนไว้ ระบบจะส่งลิงก์และรหัสยืนยันสำหรับตั้งรหัสผ่านใหม่ไปยังอีเมลของคุณ</p>
+                    <div>
+                        <label class="font-bold block mb-1">อีเมลที่ลงทะเบียนไว้ *</label>
+                        <input id="fpEmailOnly" type="email" class="w-full px-3 py-2 rounded-xl border" placeholder="เช่น penpharmacypp@gmail.com">
+                    </div>
                 </div>
-                <div>
-                    <label class="font-bold block mb-1">คำตอบความปลอดภัย *</label>
-                    <input id="fpAnswer" type="text" class="w-full px-3 py-2 rounded-xl border" placeholder="ระบุคำตอบของคุณ">
+
+                <!-- วิธีที่ 2: ตอบคำถามความปลอดภัย เพื่อดูรหัสผ่านที่เคยบันทึกไว้ -->
+                <div id="fpSectionSecurity" class="hidden space-y-2.5 pt-1">
+                    <p class="text-slate-500">ระบุรหัสพนักงานหรืออีเมล และตอบคำถามความปลอดภัยที่จำได้ ระบบจะแจ้งรหัสผ่านที่เคยบันทึกไว้ให้ทราบทันที</p>
+                    <div>
+                        <label class="font-bold block mb-1">ชื่อผู้ใช้ / รหัสพนักงาน หรือ อีเมล *</label>
+                        <input id="fpIdentity" type="text" class="w-full px-3 py-2 rounded-xl border" placeholder="เช่น admin หรือ penpharmacypp@gmail.com">
+                    </div>
+                    <div>
+                        <label class="font-bold block mb-1">คำถามความปลอดภัยที่เคยตั้งไว้ *</label>
+                        <select id="fpQuestion" class="w-full px-3 py-2 rounded-xl border">
+                            <option value="โรงพยาบาลแรกที่คุณเริ่มปฏิบัติงานคือที่ใด?">โรงพยาบาลแรกที่คุณเริ่มปฏิบัติงานคือที่ใด?</option>
+                            <option value="ชื่อสัตว์เลี้ยงตัวแรกของคุณคืออะไร?">ชื่อสัตว์เลี้ยงตัวแรกของคุณคืออะไร?</option>
+                            <option value="เบอร์โทรศัพท์ 4 ตัวท้ายของเบอร์ส่วนตัวคืออะไร?">เบอร์โทรศัพท์ 4 ตัวท้ายของเบอร์ส่วนตัวคืออะไร?</option>
+                            <option value="จังหวัดบ้านเกิดของคุณคือจังหวัดใด?">จังหวัดบ้านเกิดของคุณคือจังหวัดใด?</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="font-bold block mb-1">คำตอบความปลอดภัย *</label>
+                        <input id="fpAnswer" type="text" class="w-full px-3 py-2 rounded-xl border" placeholder="ระบุคำตอบของคุณ">
+                    </div>
                 </div>
             </div>
         `,
         showCancelButton: true,
-        confirmButtonText: 'ส่งรหัสผ่านเข้าอีเมล',
+        confirmButtonText: 'ดำเนินการต่อ',
         cancelButtonText: 'ยกเลิก',
         confirmButtonColor: '#2563eb',
         preConfirm: () => {
-            const id = document.getElementById('fpIdentity').value.trim();
-            const q = document.getElementById('fpQuestion').value;
-            const ans = document.getElementById('fpAnswer').value.trim();
-            if (!id || !ans) {
-                Swal.showValidationMessage('กรุณากรอกข้อมูลให้ครบถ้วน');
+            const mode = document.getElementById('fpActiveMode').value;
+            if (mode === 'email') {
+                const email = document.getElementById('fpEmailOnly').value.trim();
+                if (!email) {
+                    Swal.showValidationMessage('กรุณากรอกอีเมลที่ลงทะเบียนไว้');
+                    return false;
+                }
+                const user = db.Users.find(u => String(u.Email || '').toLowerCase() === email.toLowerCase());
+                if (!user) {
+                    Swal.showValidationMessage('ไม่พบอีเมลนี้ในระบบ');
+                    return false;
+                }
+                return { mode: 'email', user };
+            } else {
+                const id = document.getElementById('fpIdentity').value.trim();
+                const q = document.getElementById('fpQuestion').value;
+                const ans = document.getElementById('fpAnswer').value.trim();
+                if (!id || !ans) {
+                    Swal.showValidationMessage('กรุณากรอกข้อมูลให้ครบถ้วน');
+                    return false;
+                }
+                const user = db.Users.find(u =>
+                    String(u.UserID || '').toLowerCase() === id.toLowerCase() ||
+                    String(u.Email || '').toLowerCase() === id.toLowerCase()
+                );
+                if (!user) {
+                    Swal.showValidationMessage('ไม่พบบัญชีผู้ใช้นี้ในระบบ');
+                    return false;
+                }
+                if (user.SecQuestion !== q || String(user.SecAnswer || '').trim().toLowerCase() !== ans.toLowerCase()) {
+                    Swal.showValidationMessage('คำถามหรือคำตอบความปลอดภัยไม่ถูกต้อง');
+                    return false;
+                }
+                return { mode: 'security', user };
+            }
+        }
+    }).then(async (res) => {
+        if (!res.isConfirmed || !res.value) return;
+        const { mode, user } = res.value;
+
+        if (mode === 'email') {
+            const resetCode = String(Math.floor(100000 + Math.random() * 900000));
+            pendingResetVerification = { email: user.Email, code: resetCode };
+
+            Swal.fire({
+                title: 'กำลังส่งลิงก์ตั้งรหัสผ่านใหม่...',
+                text: `กำลังส่งข้อมูลไปยัง ${user.Email}`,
+                allowOutsideClick: false,
+                didOpen: () => Swal.showLoading()
+            });
+
+            await pushRecordToGoogleSheet('sendResetPasswordEmail', {
+                email: user.Email,
+                resetCode,
+                appUrl: window.location.href
+            });
+
+            pushNotification(user.UserID, `📧 ส่งคำขอตั้งรหัสผ่านใหม่ไปยังอีเมล ${user.Email} เรียบร้อยแล้ว`, 'Security');
+            saveDB();
+
+            Swal.fire({
+                icon: 'success',
+                title: 'ส่งการตั้งรหัสผ่านใหม่ไปยังอีเมลแล้ว!',
+                html: `
+                    <div class="text-xs text-slate-600 space-y-2">
+                        <p>ระบบได้ส่งรหัสยืนยัน (OTP) และลิงก์สำหรับตั้งรหัสผ่านใหม่ไปยังอีเมล <strong>${sanitizeHTML(user.Email)}</strong> เรียบร้อยแล้ว</p>
+                        <p class="text-blue-700 font-semibold">คุณสามารถเปิดลิงก์ในอีเมล หรือกดปุ่มด้านล่างเพื่อกรอกรหัสยืนยันและตั้งรหัสผ่านใหม่ได้ทันที</p>
+                    </div>
+                `,
+                showCancelButton: true,
+                confirmButtonText: 'ตั้งรหัสผ่านใหม่ทันที',
+                cancelButtonText: 'กลับหน้า Login',
+                confirmButtonColor: '#2563eb'
+            }).then(nextRes => {
+                if (nextRes.isConfirmed) {
+                    openSetNewPasswordModal(user.Email, '');
+                } else {
+                    document.getElementById('loginIdentity').value = user.Email;
+                    switchAuthView('login');
+                }
+            });
+        } else {
+            Swal.fire({
+                icon: 'success',
+                title: 'ยืนยันคำตอบความปลอดภัยสำเร็จ!',
+                html: `
+                    <div class="text-xs space-y-3">
+                        <p class="text-slate-600">บัญชีผู้ใช้: <strong>${sanitizeHTML(user.FullName)}</strong> (${sanitizeHTML(user.UserID)})</p>
+                        <div class="p-3.5 rounded-2xl bg-emerald-50 border-2 border-emerald-300">
+                            <div class="text-[11px] text-emerald-700 font-semibold mb-1">รหัสผ่านที่เคยบันทึกไว้ในระบบคือ:</div>
+                            <div class="text-xl font-extrabold font-mono text-emerald-900 select-all">${sanitizeHTML(user.Password)}</div>
+                        </div>
+                    </div>
+                `,
+                confirmButtonText: 'นำรหัสผ่านไปหน้า Login ทันที',
+                confirmButtonColor: '#059669'
+            }).then(() => {
+                document.getElementById('loginIdentity').value = user.UserID;
+                document.getElementById('loginPass').value = user.Password;
+                switchAuthView('login');
+            });
+        }
+    });
+}
+
+function openSetNewPasswordModal(email, prefillCode = '') {
+    const user = db.Users.find(u => String(u.Email || '').toLowerCase() === String(email || '').toLowerCase());
+    if (!user) return;
+
+    Swal.fire({
+        title: 'ตั้งรหัสผ่านใหม่ (New Password)',
+        html: `
+            <div class="text-left text-xs space-y-2.5">
+                <p class="text-slate-500">บัญชี: <strong>${sanitizeHTML(user.Email)}</strong> (${sanitizeHTML(user.UserID)})</p>
+                <div>
+                    <label class="font-bold block mb-1">รหัสยืนยัน 6 หลักที่ได้รับทางอีเมล *</label>
+                    <input id="npOtpCode" type="text" value="${sanitizeHTML(prefillCode)}" placeholder="กรอกรหัส 6 หลักจากอีเมล" class="w-full px-3 py-2 rounded-xl border font-mono">
+                </div>
+                <div>
+                    <label class="font-bold block mb-1">รหัสผ่านใหม่ *</label>
+                    <input id="npNewPass" type="password" placeholder="ตั้งรหัสผ่านใหม่" class="w-full px-3 py-2 rounded-xl border">
+                </div>
+                <div>
+                    <label class="font-bold block mb-1">ยืนยันรหัสผ่านใหม่อีกครั้ง *</label>
+                    <input id="npConfirmPass" type="password" placeholder="กรอกรหัสผ่านใหม่อีกครั้ง" class="w-full px-3 py-2 rounded-xl border">
+                </div>
+            </div>
+        `,
+        showCancelButton: true,
+        confirmButtonText: 'บันทึกรหัสผ่านใหม่',
+        cancelButtonText: 'ยกเลิก',
+        confirmButtonColor: '#059669',
+        preConfirm: () => {
+            const code = document.getElementById('npOtpCode').value.trim();
+            const p1 = document.getElementById('npNewPass').value.trim();
+            const p2 = document.getElementById('npConfirmPass').value.trim();
+            if (!code || code.length < 4) {
+                Swal.showValidationMessage('กรุณากรอกรหัสยืนยันที่ได้รับทางอีเมล');
                 return false;
             }
-            const user = db.Users.find(u => u.UserID.toLowerCase() === id.toLowerCase() || u.Email.toLowerCase() === id.toLowerCase());
-            if (!user) {
-                Swal.showValidationMessage('ไม่พบบัญชีผู้ใช้นี้ในระบบ');
+            if (pendingResetVerification.email.toLowerCase() === user.Email.toLowerCase() && pendingResetVerification.code && code !== pendingResetVerification.code) {
+                Swal.showValidationMessage('รหัสยืนยันไม่ถูกต้อง กรุณาตรวจสอบในอีเมลอีกครั้ง');
                 return false;
             }
-            if (user.SecQuestion !== q || String(user.SecAnswer || '').trim().toLowerCase() !== ans.toLowerCase()) {
-                Swal.showValidationMessage('คำถามหรือคำตอบความปลอดภัยไม่ถูกต้อง');
+            if (!p1 || p1.length < 4) {
+                Swal.showValidationMessage('กรุณาตั้งรหัสผ่านใหม่อย่างน้อย 4 ตัวอักษร');
                 return false;
             }
-            return user;
+            if (p1 !== p2) {
+                Swal.showValidationMessage('รหัสผ่านใหม่ทั้ง 2 ช่องไม่ตรงกัน');
+                return false;
+            }
+            return p1;
         }
     }).then(res => {
         if (res.isConfirmed && res.value) {
-            const u = res.value;
-            const maskedEmail = u.Email.replace(/(.{2})(.*)(@.*)/, (_, a, b, c) => a + '*'.repeat(Math.max(3, b.length)) + c);
-            pushRecordToGoogleSheet('forgotPassword', { identity: u.Email, question: u.SecQuestion, answer: u.SecAnswer });
-            pushNotification(u.UserID, `🔐 ระบบได้ส่งข้อมูลรหัสผ่านไปยังอีเมล ${maskedEmail} เรียบร้อยแล้ว`, 'Security');
+            user.Password = res.value;
             saveDB();
+            pushRecordToGoogleSheet('saveUser', user);
+            pendingResetVerification = { email: '', code: '' };
+            if (window.history && window.history.replaceState) {
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
             Swal.fire({
                 icon: 'success',
-                title: 'ส่งข้อมูลไปยังอีเมลเรียบร้อยแล้ว',
-                text: `ระบบได้ส่งรหัสผ่านไปยังอีเมล ${maskedEmail} กรุณาตรวจสอบกล่องจดหมายของคุณ`,
-                confirmButtonText: 'ตกลง (OK)',
-                confirmButtonColor: '#059669'
+                title: 'เปลี่ยนรหัสผ่านใหม่เรียบร้อย!',
+                text: 'คุณสามารถเข้าสู่ระบบด้วยรหัสผ่านใหม่ได้ทันที',
+                confirmButtonColor: '#2563eb'
             }).then(() => {
-                document.getElementById('loginIdentity').value = u.Email;
+                document.getElementById('loginIdentity').value = user.Email;
+                document.getElementById('loginPass').value = '';
                 switchAuthView('login');
             });
         }
@@ -4680,7 +4863,6 @@ function renderCertDesignerView(container) {
                         </div>
                     </div>
 
-                    <!-- ภาพพื้นหลังและการปรับสี / Transparent / ลำดับชั้น -->
                     <div class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700 space-y-2">
                         <div class="flex justify-between items-center">
                             <span class="font-bold text-[11px] text-slate-700 dark:text-slate-200"><i class="fa-solid fa-image mr-1 text-blue-600"></i> ภาพพื้นหลัง (ปรับสี / โปร่งใส / หน้า-หลัง)</span>
@@ -5281,7 +5463,6 @@ function renderCertElementInspector() {
             <button type="button" onclick="deleteSelectedCertElement()" class="text-rose-600 font-bold hover:underline"><i class="fa-solid fa-trash"></i> ลบส่วนนี้</button>
         </div>
 
-        <!-- การจัดลำดับชั้น (อยู่ด้านหน้า / ด้านหลัง) และความโปร่งใส -->
         <div class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700 space-y-2">
             <div class="font-bold text-[11px] text-slate-700 dark:text-slate-200"><i class="fa-solid fa-layer-group mr-1 text-indigo-600"></i> จัดลำดับชั้น (หน้า-หลัง) & ความโปร่งใส (Transparent)</div>
             <div class="grid grid-cols-2 gap-1.5">
