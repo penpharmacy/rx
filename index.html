@@ -174,7 +174,7 @@
 
         <div class="flex items-center gap-2 sm:gap-3">
             <!-- Google Sheets Sync Status Pill -->
-            <button onclick="syncAllDataWithGoogleSheet(true)" id="gsSyncStatusBtn" class="hidden md:flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1.5 rounded-xl bg-emerald-50 dark:bg-slate-700 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-slate-600 hover:bg-emerald-100 transition" title="คลิกเพื่อซิงก์ข้อมูลกับ Google Sheets ทันที">
+            <button onclick="syncAllDataWithGoogleSheet(true)" id="gsSyncStatusBtn" class="flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1.5 rounded-xl bg-emerald-50 dark:bg-slate-700 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-slate-600 hover:bg-emerald-100 transition" title="คลิกเพื่อซิงก์ข้อมูลกับ Google Sheets ทันที">
                 <i class="fa-solid fa-cloud-arrow-up"></i>
                 <span id="gsSyncStatusText">Google Sheets Ready</span>
             </button>
@@ -581,7 +581,7 @@
  * E-LEARNING PHARMACY - FULL ENTERPRISE SPA CONTROLLER + GOOGLE SHEETS SYNC
  * ============================================================================
  */
-const DEFAULT_GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbznikPdqe_621kdlsztkl2Lf0YlgRbBQafOJWIiSckJXVKod0HjGQjqhC4pMyKkgfwhPg/exec";
+const DEFAULT_GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzh45VAghZdA_a-gzYH81iZM8VymH4JeM0f8bhsMfpm2gJd3ZKIICe2SuXN8eZmlyhf6Q/exec";
 
 function getGasUrl() {
     return (db && db.SiteThemeSettings && db.SiteThemeSettings.gasWebAppUrl) || DEFAULT_GAS_WEB_APP_URL;
@@ -859,6 +859,7 @@ async function syncAllDataWithGoogleSheet(showToast = false) {
             if (Array.isArray(remote.Scores)) db.Scores = remote.Scores;
             if (Array.isArray(remote.Certificates)) db.Certificates = remote.Certificates;
             if (Array.isArray(remote.Notifications) && remote.Notifications.length > 0) db.Notifications = remote.Notifications;
+            applyDeletedRegistryFilter();
             saveDB();
             if (currentUser) {
                 const updatedMe = db.Users.find(u => u.UserID === currentUser.UserID);
@@ -881,7 +882,7 @@ function updateSyncStatusUI(text, colorTone) {
     const btn = document.getElementById('gsSyncStatusBtn');
     if (lbl) lbl.textContent = text;
     if (btn) {
-        btn.className = `hidden md:flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1.5 rounded-xl border transition ${
+        btn.className = `flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1.5 rounded-xl border transition ${
             colorTone === 'amber' ? 'bg-amber-50 text-amber-700 border-amber-200' :
             colorTone === 'slate' ? 'bg-slate-100 text-slate-600 border-slate-200' :
             'bg-emerald-50 dark:bg-slate-700 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-slate-600'
@@ -4018,6 +4019,7 @@ function renderManageLessonsView(container) {
                                 </td>
                                 <td class="p-3 text-right space-x-1">
                                     <button onclick="openCourseModal('${c.CourseID}')" class="px-2.5 py-1.5 rounded-lg bg-blue-50 text-blue-600"><i class="fa-solid fa-pen"></i></button>
+                                    <button onclick="deleteCourseItem('${c.CourseID}')" class="px-2.5 py-1.5 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100" title="ลบคอร์สเรียนนี้"><i class="fa-solid fa-trash"></i></button>
                                 </td>
                             </tr>
                         `).join('') || '<tr><td colspan="6" class="p-6 text-center text-slate-400">ยังไม่มีรายวิชา กดปุ่ม "+ สร้างคอร์สใหม่" ด้านบนเพื่อเริ่มต้น</td></tr>'}
@@ -4093,9 +4095,14 @@ function renderManageLessonsView(container) {
                                 <h4 class="font-bold text-sm text-blue-900 dark:text-white mt-1">${sanitizeHTML(c.CourseName)}</h4>
                                 <div class="text-[11px] text-slate-500 mt-1">บทเรียนในชุด: ${cLessons.map(l => sanitizeHTML(l.Title)).join(', ') || 'ยังไม่มีบทเรียน'}</div>
                             </div>
-                            <button onclick="openBulkQuizEditor('${c.CourseID}')" class="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow transition flex items-center justify-center gap-1.5">
-                                <i class="fa-solid fa-pen-to-square"></i> แก้ไขข้อสอบทั้งหมดในชุดนี้ (${cQuizzes.length} ข้อ)
-                            </button>
+                            <div class="flex gap-2">
+                                <button onclick="openBulkQuizEditor('${c.CourseID}')" class="flex-1 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow transition flex items-center justify-center gap-1.5">
+                                    <i class="fa-solid fa-pen-to-square"></i> แก้ไขข้อสอบทั้งหมดในชุดนี้ (${cQuizzes.length} ข้อ)
+                                </button>
+                                <button onclick="deleteAllQuizzesInCourse('${c.CourseID}')" class="px-3 py-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-bold border border-rose-200 transition shrink-0" title="ลบข้อสอบทั้งหมดในชุดนี้">
+                                    <i class="fa-solid fa-trash-can"></i> ลบทั้งหมด
+                                </button>
+                            </div>
                         </div>
                     `;
                 }).join('') || '<div class="col-span-2 text-center py-6 text-xs text-slate-400">กรุณาสร้างรายวิชาก่อนเพิ่มข้อสอบ</div>'}
@@ -4185,6 +4192,65 @@ function toggleCourseStatus(courseId) {
     saveDB();
     pushRecordToGoogleSheet('saveCourse', c);
     switchView('manageLessons');
+}
+
+async function deleteCourseItem(courseId) {
+    if (!hasPermission('manageCourses')) return;
+    const course = db.Courses.find(c => c.CourseID === courseId);
+    if (!course) return;
+
+    const relatedLessons = db.Lessons.filter(l => l.CourseID === courseId);
+    const relatedQuizzes = db.Quiz.filter(q => q.CourseID === courseId);
+
+    const confirmRes = await Swal.fire({
+        title: `ยืนยันการลบคอร์สเรียน?`,
+        html: `
+            <div class="text-left text-xs space-y-2">
+                <p class="font-bold text-rose-700 text-sm">"${sanitizeHTML(course.CourseName)}" (${courseId})</p>
+                <div class="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 space-y-1">
+                    <div>⚠️ การลบคอร์สนี้จะลบข้อมูลที่เกี่ยวข้องทั้งหมดออกจากระบบและซิงก์ข้ามทุกอุปกรณ์:</div>
+                    <div>• บทเรียนภายในคอร์ส: <strong>${relatedLessons.length} บท</strong></div>
+                    <div>• ข้อสอบทั้งหมดในคอร์ส: <strong>${relatedQuizzes.length} ข้อ</strong></div>
+                    <div>• ประวัติการเรียนและผลสอบของคอร์สนี้</div>
+                </div>
+            </div>
+        `,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: '<i class="fa-solid fa-trash mr-1"></i> ลบคอร์สและข้อมูลทั้งหมด',
+        cancelButtonText: 'ยกเลิก',
+        confirmButtonColor: '#e11d48'
+    });
+
+    if (!confirmRes.isConfirmed) return;
+
+    registerDeletedEntity('Courses', courseId);
+    relatedLessons.forEach(l => registerDeletedEntity('Lessons', l.LessonID));
+    relatedQuizzes.forEach(q => registerDeletedEntity('Quiz', q.QuizID));
+
+    db.Courses = db.Courses.filter(c => c.CourseID !== courseId);
+    db.Lessons = db.Lessons.filter(l => l.CourseID !== courseId);
+    db.Quiz = db.Quiz.filter(q => q.CourseID !== courseId);
+    db.Progress = db.Progress.filter(p => p.CourseID !== courseId);
+    db.Scores = db.Scores.filter(s => s.CourseID !== courseId);
+    if (db.CourseCertDesigns) delete db.CourseCertDesigns[courseId];
+    if (db.SavedLearningStates) {
+        Object.keys(db.SavedLearningStates).forEach(uid => {
+            if (db.SavedLearningStates[uid]?.courseId === courseId) {
+                delete db.SavedLearningStates[uid];
+            }
+        });
+    }
+    saveDB();
+    renderManageLessonsView(document.getElementById('mainViewContent'));
+    showNonBlockingToast(`ลบคอร์ส "${course.CourseName}" เรียบร้อย กำลังซิงก์ข้ามเครื่อง...`, 'success');
+
+    const deleteTasks = [
+        pushRecordToGoogleSheet('deleteRecord', { sheetName: 'Courses', primaryKey: 'CourseID', id: courseId }),
+        ...relatedLessons.map(l => pushRecordToGoogleSheet('deleteRecord', { sheetName: 'Lessons', primaryKey: 'LessonID', id: l.LessonID })),
+        ...relatedQuizzes.map(q => pushRecordToGoogleSheet('deleteRecord', { sheetName: 'Quiz', primaryKey: 'QuizID', id: q.QuizID }))
+    ];
+    await Promise.allSettled(deleteTasks);
 }
 
 function openLessonModal(lessonId = null) {
@@ -4345,14 +4411,47 @@ document.getElementById('quizFormModal').addEventListener('submit', (e) => {
 
 function deleteQuizItem(quizId) {
     if (!hasPermission('manageQuiz')) return;
-    Swal.fire({ title: 'ยืนยันการลบข้อสอบนี้?', icon: 'warning', showCancelButton: true, confirmButtonText: 'ลบเลย', cancelButtonText: 'ยกเลิก', confirmButtonColor: '#e11d48' }).then(res => {
+    Swal.fire({ title: 'ยืนยันการลบข้อสอบนี้?', text: 'ข้อสอบจะถูกลบออกจากทุกอุปกรณ์และมือถือทันที', icon: 'warning', showCancelButton: true, confirmButtonText: 'ลบเลย', cancelButtonText: 'ยกเลิก', confirmButtonColor: '#e11d48' }).then(res => {
         if (res.isConfirmed) {
+            registerDeletedEntity('Quiz', quizId);
             db.Quiz = db.Quiz.filter(q => q.QuizID !== quizId);
             saveDB();
             pushRecordToGoogleSheet('deleteRecord', { sheetName: 'Quiz', primaryKey: 'QuizID', id: quizId });
             renderManageLessonsView(document.getElementById('mainViewContent'));
+            showNonBlockingToast('ลบข้อสอบและซิงก์ข้อมูลเรียบร้อยแล้ว', 'success');
         }
     });
+}
+
+async function deleteAllQuizzesInCourse(courseId) {
+    if (!hasPermission('manageQuiz')) return;
+    const course = db.Courses.find(c => c.CourseID === courseId);
+    const targetQuizzes = db.Quiz.filter(q => q.CourseID === courseId);
+    if (!targetQuizzes.length) {
+        showNonBlockingToast('ไม่มีข้อสอบในรายวิชานี้', 'warning');
+        return;
+    }
+
+    const res = await Swal.fire({
+        title: `ลบข้อสอบทั้งหมด (${targetQuizzes.length} ข้อ)?`,
+        text: `ต้องการลบข้อสอบทั้งหมดในรายวิชา "${course ? course.CourseName : courseId}" ใช่หรือไม่?`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'ลบทั้งหมดทันที',
+        cancelButtonText: 'ยกเลิก',
+        confirmButtonColor: '#e11d48'
+    });
+    if (!res.isConfirmed) return;
+
+    targetQuizzes.forEach(q => registerDeletedEntity('Quiz', q.QuizID));
+    db.Quiz = db.Quiz.filter(q => q.CourseID !== courseId);
+    saveDB();
+    renderManageLessonsView(document.getElementById('mainViewContent'));
+    showNonBlockingToast(`ลบข้อสอบทั้งหมด ${targetQuizzes.length} ข้อเรียบร้อยแล้ว`, 'success');
+
+    await Promise.allSettled(
+        targetQuizzes.map(q => pushRecordToGoogleSheet('deleteRecord', { sheetName: 'Quiz', primaryKey: 'QuizID', id: q.QuizID }))
+    );
 }
 
 // ==================== BULK ALL-IN-ONE QUIZ EDITOR BY COURSE/LESSON ====================
@@ -4552,6 +4651,7 @@ function renderBulkQuizEditorView(stageFilter = 'ALL') {
             const newIds = new Set(bulkQuizDraftList.map(q => q.QuizID));
             oldIds.forEach(oid => {
                 if (!newIds.has(oid)) {
+                    registerDeletedEntity('Quiz', oid);
                     pushRecordToGoogleSheet('deleteRecord', { sheetName: 'Quiz', primaryKey: 'QuizID', id: oid });
                 }
             });
@@ -4621,8 +4721,13 @@ function addBulkQuizRow(defaultStage, stageFilter) {
 
 function removeBulkQuizRow(idx, stageFilter) {
     syncBulkQuizInputsFromDOM();
+    const target = bulkQuizDraftList[idx];
+    if (target && target.QuizID) {
+        registerDeletedEntity('Quiz', target.QuizID);
+    }
     bulkQuizDraftList.splice(idx, 1);
     renderBulkQuizEditorView(stageFilter);
+    showNonBlockingToast('นำข้อสอบออกแล้ว (กดปุ่มบันทึกเพื่อยืนยันข้ามเครื่อง)', 'info');
 }
 
 document.getElementById('lessonForm').addEventListener('submit', (e) => {
@@ -4675,12 +4780,23 @@ function toggleLessonStatus(lessonId) {
 }
 
 function deleteLessonItem(lessonId) {
-    Swal.fire({ title: 'ยืนยันการลบบทเรียนนี้?', icon: 'warning', showCancelButton: true, confirmButtonText: 'ลบเลย', cancelButtonText: 'ยกเลิก', confirmButtonColor: '#e11d48' }).then(res => {
+    Swal.fire({
+        title: 'ยืนยันการลบบทเรียนนี้?',
+        text: 'บทเรียนจะถูกลบออกจากทุกอุปกรณ์และมือถือทันที',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'ลบเลย',
+        cancelButtonText: 'ยกเลิก',
+        confirmButtonColor: '#e11d48'
+    }).then(res => {
         if (res.isConfirmed) {
+            registerDeletedEntity('Lessons', lessonId);
             db.Lessons = db.Lessons.filter(l => l.LessonID !== lessonId);
+            db.Progress = db.Progress.filter(p => p.LessonID !== lessonId);
             saveDB();
+            renderManageLessonsView(document.getElementById('mainViewContent'));
+            showNonBlockingToast('ลบบทเรียนและซิงก์ข้อมูลเรียบร้อยแล้ว', 'success');
             pushRecordToGoogleSheet('deleteRecord', { sheetName: 'Lessons', primaryKey: 'LessonID', id: lessonId });
-            switchView('manageLessons');
         }
     });
 }
@@ -6302,6 +6418,9 @@ function deleteAdminDbRow(tableName, rowIdx) {
             rows.splice(rowIdx, 1);
             saveDB();
             if (meta && row && row[meta.primaryKey] !== undefined) {
+                if (tableName === 'Courses') registerDeletedEntity('Courses', row[meta.primaryKey]);
+                if (tableName === 'Lessons') registerDeletedEntity('Lessons', row[meta.primaryKey]);
+                if (tableName === 'Quiz') registerDeletedEntity('Quiz', row[meta.primaryKey]);
                 pushRecordToGoogleSheet('deleteRecord', {
                     sheetName: tableName,
                     primaryKey: meta.primaryKey,
@@ -6381,6 +6500,155 @@ function toggleDarkMode() {
 }
 function toggleMobileSidebar() { document.getElementById('sidebarPanel').classList.toggle('-translate-x-full'); }
 function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+// ==================== REAL-TIME CROSS-DEVICE & MOBILE SYNC ENGINE ====================
+let realtimeSyncTimer = null;
+let isSyncingNow = false;
+let deletedRegistry = JSON.parse(localStorage.getItem('edulearn_deleted_registry') || '{"Courses":[],"Lessons":[],"Quiz":[]}');
+
+function saveDeletedRegistry() {
+    try {
+        localStorage.setItem('edulearn_deleted_registry', JSON.stringify(deletedRegistry));
+    } catch (e) {}
+}
+
+function registerDeletedEntity(type, id) {
+    if (!id) return;
+    if (!deletedRegistry[type]) deletedRegistry[type] = [];
+    if (!deletedRegistry[type].includes(id)) {
+        deletedRegistry[type].push(id);
+        if (deletedRegistry[type].length > 500) deletedRegistry[type].shift();
+        saveDeletedRegistry();
+    }
+}
+
+function applyDeletedRegistryFilter() {
+    if (deletedRegistry.Courses?.length) {
+        const delSet = new Set(deletedRegistry.Courses);
+        db.Courses = db.Courses.filter(c => !delSet.has(c.CourseID));
+        db.Lessons = db.Lessons.filter(l => !delSet.has(l.CourseID));
+        db.Quiz = db.Quiz.filter(q => !delSet.has(q.CourseID));
+    }
+    if (deletedRegistry.Lessons?.length) {
+        const delSet = new Set(deletedRegistry.Lessons);
+        db.Lessons = db.Lessons.filter(l => !delSet.has(l.LessonID));
+    }
+    if (deletedRegistry.Quiz?.length) {
+        const delSet = new Set(deletedRegistry.Quiz);
+        db.Quiz = db.Quiz.filter(q => !delSet.has(q.QuizID));
+    }
+}
+
+function startRealtimeSyncEngine() {
+    if (realtimeSyncTimer) clearInterval(realtimeSyncTimer);
+
+    realtimeSyncTimer = setInterval(() => {
+        if (document.visibilityState === 'visible' && !isSyncingNow && !Swal.isVisible()) {
+            const modalOpen = ['courseModal', 'lessonModal', 'quizModal'].some(id => {
+                const el = document.getElementById(id);
+                return el && !el.classList.contains('hidden');
+            });
+            if (!modalOpen) {
+                silentRealtimePullFromCloud();
+            }
+        }
+    }, 8000);
+
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+            silentRealtimePullFromCloud();
+        }
+    });
+    window.addEventListener('focus', () => {
+        silentRealtimePullFromCloud();
+    });
+
+    window.addEventListener('storage', (e) => {
+        if (e.key === 'edulearn_hospital_db_v4' && e.newValue) {
+            try {
+                const latest = JSON.parse(e.newValue);
+                db = latest;
+                applyDeletedRegistryFilter();
+                if (currentUser) {
+                    renderNotifications();
+                    if (!Swal.isVisible()) switchView(currentView);
+                }
+            } catch (err) {}
+        }
+    });
+}
+
+async function silentRealtimePullFromCloud() {
+    const url = getGasUrl();
+    if (!url || !url.startsWith('http') || isSyncingNow) return;
+    isSyncingNow = true;
+    try {
+        const prevSignature = JSON.stringify({
+            c: db.Courses.map(x => x.CourseID + x.CourseName + x.Status),
+            l: db.Lessons.map(x => x.LessonID + x.Title + x.Status),
+            q: db.Quiz.map(x => x.QuizID + x.Question),
+            u: db.Users.length,
+            s: db.Scores.length,
+            cert: db.Certificates.length
+        });
+
+        const res = await fetch(url, {
+            method: 'POST',
+            body: JSON.stringify({ action: 'syncAllData', payload: {} })
+        });
+        const json = await res.json();
+        if (json.status === 'success' && json.data) {
+            const remote = json.data;
+            if (Array.isArray(remote.Users) && remote.Users.length > 0) db.Users = remote.Users;
+            if (Array.isArray(remote.Courses)) {
+                db.Courses = remote.Courses.map(c => ({
+                    ...c,
+                    Professions: typeof c.Professions === 'string' ? c.Professions.split(',').map(s => s.trim()).filter(Boolean) : (c.Professions || ['ALL'])
+                }));
+            }
+            if (Array.isArray(remote.Lessons)) {
+                db.Lessons = remote.Lessons.map(l => ({
+                    ...l,
+                    Professions: typeof l.Professions === 'string' ? l.Professions.split(',').map(s => s.trim()).filter(Boolean) : (l.Professions || ['ALL']),
+                    StrictVideo: l.StrictVideo === true || String(l.StrictVideo).toUpperCase() === 'TRUE'
+                }));
+            }
+            if (Array.isArray(remote.Progress)) db.Progress = remote.Progress;
+            if (Array.isArray(remote.Quiz)) db.Quiz = remote.Quiz;
+            if (Array.isArray(remote.Scores)) db.Scores = remote.Scores;
+            if (Array.isArray(remote.Certificates)) db.Certificates = remote.Certificates;
+            if (Array.isArray(remote.Notifications) && remote.Notifications.length > 0) db.Notifications = remote.Notifications;
+
+            applyDeletedRegistryFilter();
+            saveDB();
+
+            const nextSignature = JSON.stringify({
+                c: db.Courses.map(x => x.CourseID + x.CourseName + x.Status),
+                l: db.Lessons.map(x => x.LessonID + x.Title + x.Status),
+                q: db.Quiz.map(x => x.QuizID + x.Question),
+                u: db.Users.length,
+                s: db.Scores.length,
+                cert: db.Certificates.length
+            });
+
+            updateSyncStatusUI('ซิงก์เรียลไทม์แล้ว', 'emerald');
+
+            if (prevSignature !== nextSignature && currentUser) {
+                const updatedMe = db.Users.find(u => u.UserID === currentUser.UserID);
+                if (updatedMe) currentUser = updatedMe;
+                renderNotifications();
+                if (!Swal.isVisible()) {
+                    switchView(currentView);
+                }
+            }
+        }
+    } catch (e) {
+    } finally {
+        isSyncingNow = false;
+    }
+}
+
+startRealtimeSyncEngine();
 </script>
 </body>
 </html>
