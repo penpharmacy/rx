@@ -581,7 +581,7 @@
  * E-LEARNING PHARMACY - FULL ENTERPRISE SPA CONTROLLER + GOOGLE SHEETS SYNC
  * ============================================================================
  */
-const DEFAULT_GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbznikPdqe_621kdlsztkl2Lf0YlgRbBQafOJWIiSckJXVKod0HjGQjqhC4pMyKkgfwhPg/exec";
+const DEFAULT_GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzh45VAghZdA_a-gzYH81iZM8VymH4JeM0f8bhsMfpm2gJd3ZKIICe2SuXN8eZmlyhf6Q/exec";
 
 function getGasUrl() {
     return (db && db.SiteThemeSettings && db.SiteThemeSettings.gasWebAppUrl) || DEFAULT_GAS_WEB_APP_URL;
@@ -859,8 +859,22 @@ async function syncAllDataWithGoogleSheet(showToast = false) {
             if (Array.isArray(remote.Scores)) db.Scores = remote.Scores;
             if (Array.isArray(remote.Certificates)) db.Certificates = remote.Certificates;
             if (Array.isArray(remote.Notifications) && remote.Notifications.length > 0) db.Notifications = remote.Notifications;
+            if (remote.SiteThemeSettings && typeof remote.SiteThemeSettings === 'object') {
+                db.SiteThemeSettings = { ...db.SiteThemeSettings, ...remote.SiteThemeSettings };
+            }
+            if (remote.CertSettings && typeof remote.CertSettings === 'object') {
+                if (remote.CertSettings.__SITE_THEME_SETTINGS__) {
+                    db.SiteThemeSettings = { ...db.SiteThemeSettings, ...remote.CertSettings.__SITE_THEME_SETTINGS__ };
+                }
+                const cleanDesigns = { ...remote.CertSettings };
+                delete cleanDesigns.__SITE_THEME_SETTINGS__;
+                if (Object.keys(cleanDesigns).length > 0) {
+                    db.CourseCertDesigns = { ...db.CourseCertDesigns, ...cleanDesigns };
+                }
+            }
             applyDeletedRegistryFilter();
             saveDB();
+            applyGlobalSiteTheme();
             if (currentUser) {
                 const updatedMe = db.Users.find(u => u.UserID === currentUser.UserID);
                 if (updatedMe) currentUser = updatedMe;
@@ -5730,7 +5744,10 @@ function saveCourseCertDesign() {
 
     saveDB();
     renderSavedCertTemplatesList();
-    pushRecordToGoogleSheet('saveCertSettings', db.CourseCertDesigns);
+    pushRecordToGoogleSheet('saveCertSettings', {
+        ...db.CourseCertDesigns,
+        __SITE_THEME_SETTINGS__: db.SiteThemeSettings
+    });
     const nextBtn = document.getElementById('btnCertNextToCourses');
     if (nextBtn) nextBtn.classList.remove('hidden');
     Swal.fire({
@@ -6210,7 +6227,12 @@ function saveGlobalThemeForm() {
     t.telegramChatId = document.getElementById('thTgChatId').value.trim();
     saveDB();
     applyGlobalSiteTheme();
-    Swal.fire({ icon: 'success', title: 'บันทึกการตั้งค่าระบบ Google Sheets และ Telegram เรียบร้อย', timer: 1300, showConfirmButton: false });
+    pushRecordToGoogleSheet('saveSiteSettings', t);
+    pushRecordToGoogleSheet('saveCertSettings', {
+        ...db.CourseCertDesigns,
+        __SITE_THEME_SETTINGS__: t
+    });
+    Swal.fire({ icon: 'success', title: 'บันทึกและซิงก์การตั้งค่าระบบไปทุกเครื่องเรียบร้อย', timer: 1300, showConfirmButton: false });
 }
 
 // ==================== VIEW 12: ADMIN BACKEND DATABASE VIEWER ====================
@@ -6618,9 +6640,23 @@ async function silentRealtimePullFromCloud() {
             if (Array.isArray(remote.Scores)) db.Scores = remote.Scores;
             if (Array.isArray(remote.Certificates)) db.Certificates = remote.Certificates;
             if (Array.isArray(remote.Notifications) && remote.Notifications.length > 0) db.Notifications = remote.Notifications;
+            if (remote.SiteThemeSettings && typeof remote.SiteThemeSettings === 'object') {
+                db.SiteThemeSettings = { ...db.SiteThemeSettings, ...remote.SiteThemeSettings };
+            }
+            if (remote.CertSettings && typeof remote.CertSettings === 'object') {
+                if (remote.CertSettings.__SITE_THEME_SETTINGS__) {
+                    db.SiteThemeSettings = { ...db.SiteThemeSettings, ...remote.CertSettings.__SITE_THEME_SETTINGS__ };
+                }
+                const cleanDesigns = { ...remote.CertSettings };
+                delete cleanDesigns.__SITE_THEME_SETTINGS__;
+                if (Object.keys(cleanDesigns).length > 0) {
+                    db.CourseCertDesigns = { ...db.CourseCertDesigns, ...cleanDesigns };
+                }
+            }
 
             applyDeletedRegistryFilter();
             saveDB();
+            applyGlobalSiteTheme();
 
             const nextSignature = JSON.stringify({
                 c: db.Courses.map(x => x.CourseID + x.CourseName + x.Status),
@@ -6628,7 +6664,8 @@ async function silentRealtimePullFromCloud() {
                 q: db.Quiz.map(x => x.QuizID + x.Question),
                 u: db.Users.length,
                 s: db.Scores.length,
-                cert: db.Certificates.length
+                cert: db.Certificates.length,
+                theme: db.SiteThemeSettings
             });
 
             updateSyncStatusUI('ซิงก์เรียลไทม์แล้ว', 'emerald');
@@ -6652,3 +6689,4 @@ startRealtimeSyncEngine();
 </script>
 </body>
 </html>
+
