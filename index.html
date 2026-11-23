@@ -591,7 +591,7 @@
  * E-LEARNING PHARMACY - FULL ENTERPRISE SPA CONTROLLER + GOOGLE SHEETS SYNC
  * ============================================================================
  */
-const DEFAULT_GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbybunliiGxjQcg-tB49mirU069Q88_imvdHJ_qoIk2N3jUcmGgrc6QozbaeAoSFIEQ-sA/exec";
+const DEFAULT_GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzh45VAghZdA_a-gzYH81iZM8VymH4JeM0f8bhsMfpm2gJd3ZKIICe2SuXN8eZmlyhf6Q/exec";
 
 function getGasUrl() {
     return (db && db.SiteThemeSettings && db.SiteThemeSettings.gasWebAppUrl) || DEFAULT_GAS_WEB_APP_URL;
@@ -1938,38 +1938,72 @@ async function fetchTelegramBotUsername(botToken) {
 async function checkAndBindTelegramUser(userId, botToken) {
     const u = db.Users.find(x => x.UserID === userId);
     if (!u || !botToken) return '';
-    const expectedTag = `/start LINK_${userId.toUpperCase()}`;
+    const expectedTag = `/START LINK_${userId.toUpperCase()}`;
+    const userEmailLower = String(u.Email || '').trim().toLowerCase();
     let foundChatId = '';
 
     try {
-        const res = await fetch(`https://api.telegram.org/bot${encodeURIComponent(botToken)}/getUpdates?limit=50`);
+        await fetch(`https://api.telegram.org/bot${encodeURIComponent(botToken)}/deleteWebhook`).catch(() => {});
+        const res = await fetch(`https://api.telegram.org/bot${encodeURIComponent(botToken)}/getUpdates?limit=100`);
         const json = await res.json();
         if (json && json.ok && Array.isArray(json.result)) {
+            const privateChats = [];
             for (let i = json.result.length - 1; i >= 0; i--) {
-                const msg = json.result[i].message || json.result[i].edited_message;
-                if (msg && msg.text && msg.chat && String(msg.text).trim().toUpperCase() === expectedTag) {
-                    foundChatId = String(msg.chat.id);
+                const msg = json.result[i].message || json.result[i].edited_message || json.result[i].my_chat_member;
+                if (!msg || !msg.chat || msg.chat.type !== 'private') continue;
+                const cidStr = String(msg.chat.id);
+                if (!privateChats.some(c => c.id === cidStr)) {
+                    privateChats.push({
+                        id: cidStr,
+                        name: [msg.chat.first_name, msg.chat.last_name].filter(Boolean).join(' ') || msg.chat.username || cidStr,
+                        username: msg.chat.username ? `@${msg.chat.username}` : ''
+                    });
+                }
+                const txt = String(msg.text || '').trim().toUpperCase();
+                if (
+                    txt === expectedTag ||
+                    txt.includes(userId.toUpperCase()) ||
+                    (userEmailLower && txt.toLowerCase().includes(userEmailLower))
+                ) {
+                    foundChatId = cidStr;
                     break;
                 }
             }
+            window._recentTelegramPrivateChats = privateChats;
         }
     } catch (e) {}
 
     if (!foundChatId) {
-        const gasRes = await pushRecordToGoogleSheet('resolveTelegramAutoLink', { botToken, userId });
+        const gasRes = await pushRecordToGoogleSheet('resolveTelegramAutoLink', { botToken, userId, email: u.Email || '' });
         if (gasRes && gasRes.chatId) foundChatId = String(gasRes.chatId);
     }
 
     if (foundChatId) {
-        u.TelegramChatId = foundChatId;
-        if (currentUser && currentUser.UserID === u.UserID) {
-            currentUser.TelegramChatId = foundChatId;
-            sessionStorage.setItem('edulearn_hospital_session', JSON.stringify(currentUser));
-        }
-        saveDB();
-        pushRecordToGoogleSheet('saveUser', u);
+        bindTelegramChatIdToUser(userId, foundChatId, botToken);
     }
     return foundChatId;
+}
+
+function bindTelegramChatIdToUser(userId, chatId, botToken) {
+    const u = db.Users.find(x => x.UserID === userId);
+    if (!u || !chatId) return;
+    u.TelegramChatId = String(chatId).trim();
+    if (currentUser && currentUser.UserID === u.UserID) {
+        currentUser.TelegramChatId = u.TelegramChatId;
+        sessionStorage.setItem('edulearn_hospital_session', JSON.stringify(currentUser));
+    }
+    saveDB();
+    pushRecordToGoogleSheet('saveUser', u);
+    if (botToken) {
+        fetch(`https://api.telegram.org/bot${encodeURIComponent(botToken)}/sendMessage`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                chat_id: u.TelegramChatId,
+                text: `✅ เชื่อมต่อบัญชี E-Learning Pharmacy (${u.FullName} - ${u.UserID}) กับ @PPHPharmacyLearningBot สำเร็จแล้ว!`
+            })
+        }).catch(() => {});
+    }
 }
 
 async function startOneClickTelegramLink(userId, onLinkedCallback = null) {
@@ -1978,6 +2012,8 @@ async function startOneClickTelegramLink(userId, onLinkedCallback = null) {
 
     const botUsername = await fetchTelegramBotUsername(botToken);
     const deepLink = `https://t.me/${botUsername}?start=LINK_${encodeURIComponent(userId)}`;
+    await checkAndBindTelegramUser(userId, botToken);
+    const recentChats = window._recentTelegramPrivateChats || [];
     let pollTimer = null;
 
     Swal.fire({
@@ -1991,15 +2027,27 @@ async function startOneClickTelegramLink(userId, onLinkedCallback = null) {
                     </a>
                 </div>
                 <div class="p-3 rounded-xl bg-emerald-50 border border-emerald-200 space-y-1">
-                    <div><b>ขั้นตอนที่ 2:</b> กดปุ่ม <b>Start (เริ่มต้น)</b> ในมือถือ/คอมของตัวเองเพียงครั้งเดียว บอทจะจำบัญชีของคุณและส่งเกียรติบัตร PDF เข้าแชทส่วนตัวได้ตลอดไป</div>
+                    <div><b>ขั้นตอนที่ 2:</b> กดปุ่ม <b>Start (หรือ Restart)</b> ในห้องแชท หรือพิมพ์คำว่า <code>${sanitizeHTML(userId)}</code> ส่งในแชทบอท ระบบจะจับคู่บัญชีให้อัตโนมัติ</div>
                     <div class="text-[11px] text-emerald-700 flex items-center gap-1.5 pt-1">
-                        <i class="fa-solid fa-spinner fa-spin"></i> ระบบกำลังรอรับการกด Start จาก Telegram ของคุณโดยอัตโนมัติ...
+                        <i class="fa-solid fa-spinner fa-spin"></i> ระบบกำลังรอรับสัญญาณจาก Telegram ของคุณโดยอัตโนมัติ...
                     </div>
                 </div>
+                ${recentChats.length ? `
+                <div class="p-3 rounded-xl bg-amber-50 border border-amber-200 space-y-1.5">
+                    <div class="font-bold text-amber-900">หรือเลือกบัญชี Telegram ของคุณที่ทักบอทเข้ามาล่าสุด:</div>
+                    <div class="space-y-1 max-h-28 overflow-y-auto">
+                        ${recentChats.map(ch => `
+                            <button type="button" onclick="bindTelegramChatIdToUser('${userId}', '${ch.id}', '${botToken}'); Swal.close(); showNonBlockingToast('เชื่อมต่อบัญชี ${sanitizeHTML(ch.name)} สำเร็จ!', 'success');" class="w-full text-left px-3 py-1.5 rounded-lg bg-white hover:bg-blue-50 border flex justify-between items-center font-semibold">
+                                <span><i class="fa-brands fa-telegram text-sky-600 mr-1"></i> ${sanitizeHTML(ch.name)} ${sanitizeHTML(ch.username)}</span>
+                                <span class="text-[10px] text-blue-600 font-bold">เลือกบัญชีนี้ ➔</span>
+                            </button>
+                        `).join('')}
+                    </div>
+                </div>` : ''}
             </div>
         `,
         showCancelButton: true,
-        confirmButtonText: 'ฉันกด Start แล้ว (ตรวจสอบทันที)',
+        confirmButtonText: 'ฉันกด Start / ส่งข้อความแล้ว (ตรวจสอบทันที)',
         cancelButtonText: 'ปิด',
         confirmButtonColor: '#059669',
         didOpen: () => {
@@ -2023,7 +2071,7 @@ async function startOneClickTelegramLink(userId, onLinkedCallback = null) {
                 showNonBlockingToast('เชื่อมต่อ Telegram ส่วนตัวสำเร็จแล้ว!', 'success');
                 if (typeof onLinkedCallback === 'function') onLinkedCallback(cid);
             } else {
-                Swal.fire('ยังไม่พบการกด Start', 'กรุณากดปุ่ม "เปิดแอป Telegram (@PPHPharmacyLearningBot)" แล้วกดปุ่ม Start ในห้องแชทอีกครั้งครับ', 'info');
+                Swal.fire('ยังไม่พบการเชื่อมต่อ', `กรุณาเปิดแชท @${botUsername} แล้วกด Start/Restart หรือพิมพ์รหัส "${userId}" ส่งในแชทบอท 1 ครั้งครับ`, 'info');
             }
         }
     });
