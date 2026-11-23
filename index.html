@@ -116,9 +116,8 @@
             <form id="registerForm" class="space-y-3 text-xs">
                 <div class="grid grid-cols-2 gap-2">
                     <div>
-                        <label class="font-semibold block mb-1">รหัสพนักงาน / ชื่อผู้ใช้ (ID) *</label>
-                        <input type="text" id="regUserId" required oninput="checkRegisterDuplicateRealtime()" placeholder="เช่น EMP105" class="w-full px-3 py-2 rounded-xl border dark:border-slate-700 dark:bg-slate-900">
-                        <div id="regUserIdDupHint" class="hidden text-[11px] text-rose-600 font-bold mt-1"><i class="fa-solid fa-circle-exclamation mr-1"></i>ชื่อผู้ใช้นี้ถูกใช้งานแล้ว กรุณาเปลี่ยนชื่อผู้ใช้</div>
+                        <label class="font-semibold block mb-1">รหัสพนักงาน / ID *</label>
+                        <input type="text" id="regUserId" required placeholder="เช่น EMP105" class="w-full px-3 py-2 rounded-xl border dark:border-slate-700 dark:bg-slate-900">
                     </div>
                     <div>
                         <label class="font-semibold block mb-1">รหัสผ่าน *</label>
@@ -131,8 +130,7 @@
                 </div>
                 <div>
                     <label class="font-semibold block mb-1">อีเมล (สำหรับกู้คืนรหัสผ่านและรับเกียรติบัตร) *</label>
-                    <input type="email" id="regEmail" required oninput="checkRegisterDuplicateRealtime()" placeholder="name@hospital.go.th" class="w-full px-3 py-2 rounded-xl border dark:border-slate-700 dark:bg-slate-900">
-                    <div id="regEmailDupHint" class="hidden text-[11px] text-rose-600 font-bold mt-1"><i class="fa-solid fa-circle-exclamation mr-1"></i>อีเมลนี้ถูกลงทะเบียนไว้แล้ว กรุณาใช้อีเมลอื่น</div>
+                    <input type="email" id="regEmail" required placeholder="name@hospital.go.th" class="w-full px-3 py-2 rounded-xl border dark:border-slate-700 dark:bg-slate-900">
                 </div>
                 <div>
                     <label class="font-semibold block mb-1">แผนกในโรงพยาบาล *</label>
@@ -152,7 +150,7 @@
                     </select>
                     <input type="text" id="regSecAnswer" required placeholder="พิมพ์คำตอบความปลอดภัยของคุณ" class="w-full px-3 py-2 rounded-xl border dark:border-slate-700 dark:bg-slate-900">
                 </div>
-                <button type="submit" id="btnRegisterSubmit" class="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow">
+                <button type="submit" class="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow">
                     <i class="fa-solid fa-check-circle mr-1"></i> ยืนยันการลงทะเบียน
                 </button>
             </form>
@@ -224,8 +222,8 @@
                     <div id="navUserName" class="text-xs font-bold leading-none">ชื่อผู้ใช้</div>
                     <span id="navUserRole" class="text-[10px] px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 font-semibold inline-block mt-1">Role</span>
                 </div>
-                <button onclick="openMyProfileSettingsModal()" class="p-2 text-sky-600 hover:bg-sky-50 dark:hover:bg-sky-950/40 rounded-xl transition" title="เชื่อมต่อ @PPHPharmacyLearningBot & Email รับเกียรติบัตร">
-                    <i class="fa-brands fa-telegram text-base"></i>
+                <button onclick="openMyProfileSettingsModal()" class="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/40 rounded-xl transition" title="ตั้งค่า Email สำหรับรับเกียรติบัตร">
+                    <i class="fa-solid fa-envelope-circle-check text-base"></i>
                 </button>
                 <button onclick="logoutSystem()" class="p-2 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-xl transition" title="ออกจากระบบ">
                     <i class="fa-solid fa-power-off"></i>
@@ -240,10 +238,10 @@
             <div class="space-y-1 mt-12 lg:mt-0" id="sidebarMenuContainer"></div>
             <div id="sidebarFooterBanner" class="mt-6 p-3.5 rounded-2xl bg-gradient-to-br from-blue-900 to-blue-700 text-white text-xs space-y-1.5">
                 <div class="flex items-center justify-between">
-                    <span id="sidebarFooterTitle" class="font-bold"><i class="fa-brands fa-telegram text-sky-300 mr-1"></i> Telegram & Sheets</span>
+                    <span id="sidebarFooterTitle" class="font-bold"><i class="fa-solid fa-envelope-circle-check text-sky-300 mr-1"></i> Email & Sheets</span>
                     <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
                 </div>
-                <p id="sidebarFooterDesc" class="text-blue-100 text-[11px]">เชื่อมต่อ Google Sheets และส่งเกียรติบัตร PDF เข้า Telegram อัตโนมัติ</p>
+                <p id="sidebarFooterDesc" class="text-blue-100 text-[11px]">เชื่อมต่อ Google Sheets และส่งเกียรติบัตร PDF เข้าอีเมลผู้เรียนอัตโนมัติ</p>
             </div>
         </aside>
 
@@ -580,8 +578,8 @@
             <button onclick="downloadCertAsPNG()" class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm flex items-center gap-2 shadow">
                 <i class="fa-solid fa-image"></i> บันทึกรูปภาพ (PNG)
             </button>
-            <button onclick="shareCertToTelegramAndEmail()" class="px-5 py-2.5 rounded-xl bg-[#229ED9] hover:bg-[#1d8ec4] text-white font-semibold text-sm flex items-center gap-2 shadow">
-                <i class="fa-brands fa-telegram text-lg"></i> ส่งเข้า Email & Telegram
+            <button onclick="sendCertToRegisteredEmail()" class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm flex items-center gap-2 shadow">
+                <i class="fa-solid fa-envelope-circle-check text-lg"></i> ส่งเกียรติบัตรเข้า Email ผู้ลงทะเบียน
             </button>
         </div>
     </div>
@@ -589,11 +587,11 @@
 
 <script>
 /**
- * ============================================================================
- * E-LEARNING PHARMACY - FULL ENTERPRISE SPA CONTROLLER + GOOGLE SHEETS SYNC
- * ============================================================================
+- ============================================================================
+- E-LEARNING PHARMACY - FULL ENTERPRISE SPA CONTROLLER + GOOGLE SHEETS SYNC
+- ============================================================================
  */
-const DEFAULT_GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxg5NZtg1UOzC6q3owsMsoB6grRdUMPrf5oAL-LfZdZ3-HJRhH9iZLDroAlmkKiGd9l/exec";
+const DEFAULT_GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbybunliiGxjQcg-tB49mirU069Q88_imvdHJ_qoIk2N3jUcmGgrc6QozbaeAoSFIEQ-sA/exec";
 
 function getGasUrl() {
     return (db && db.SiteThemeSettings && db.SiteThemeSettings.gasWebAppUrl) || DEFAULT_GAS_WEB_APP_URL;
@@ -663,8 +661,8 @@ const initialDatabase = {
         primaryActionColor: "#2563eb",
         sidebarFromColor: "#1e3a8a",
         sidebarToColor: "#2563eb",
-        sidebarFooterTitle: "Telegram & Sheets",
-        sidebarFooterDesc: "เชื่อมต่อ Google Sheets และส่งเกียรติบัตร PDF เข้า Telegram อัตโนมัติ",
+        sidebarFooterTitle: "Email & Sheets",
+        sidebarFooterDesc: "เชื่อมต่อ Google Sheets และส่งเกียรติบัตร PDF เข้าอีเมลผู้เรียนอัตโนมัติ",
         menuLabels: {
             dashboard: "แดชบอร์ด & สถิติ",
             classroom: "ห้องเรียนออนไลน์ (Learn)",
@@ -711,9 +709,7 @@ const initialDatabase = {
         permissionsSubtitle: "Admin สามารถกำหนดสิทธิ์พื้นฐานตามกลุ่มตำแหน่ง (Role) หรือกำหนดสิทธิ์พิเศษเจาะจงรายบุคคลได้",
         adminDbTitle: "🗄️ ฐานข้อมูลเบื้องหลัง (Admin DB Viewer)",
         adminDbSubtitle: "แสดง แก้ไข และลบข้อมูลทุกตารางในระบบแบบเรียลไทม์ (เชื่อมต่อกับ Google Sheets)",
-        gasWebAppUrl: DEFAULT_GAS_WEB_APP_URL,
-        telegramBotToken: "9280509192:AAE6Ux-E2cQ3yHvoHvBoyJLMxL_wbFW28TE",
-        telegramChatId: "8801241740"
+        gasWebAppUrl: DEFAULT_GAS_WEB_APP_URL
     },
     ClassroomLayoutConfig: {
         layoutMode: "grid",
@@ -790,8 +786,6 @@ if (!db.HospitalDepartments) db.HospitalDepartments = [...initialDatabase.Hospit
 if (!db.Professions) db.Professions = [...initialDatabase.Professions];
 if (!db.SiteThemeSettings) db.SiteThemeSettings = { ...initialDatabase.SiteThemeSettings };
 if (!db.SiteThemeSettings.gasWebAppUrl) db.SiteThemeSettings.gasWebAppUrl = DEFAULT_GAS_WEB_APP_URL;
-if (!db.SiteThemeSettings.telegramBotToken) db.SiteThemeSettings.telegramBotToken = "9280509192:AAE6Ux-E2cQ3yHvoHvBoyJLMxL_wbFW28TE";
-if (!db.SiteThemeSettings.telegramChatId) db.SiteThemeSettings.telegramChatId = "127792770";
 if (!db.ClassroomLayoutConfig) db.ClassroomLayoutConfig = JSON.parse(JSON.stringify(initialDatabase.ClassroomLayoutConfig));
 if (!db.ProfessionStatsConfig) db.ProfessionStatsConfig = JSON.parse(JSON.stringify(initialDatabase.ProfessionStatsConfig));
 if (!db.SavedLearningStates) db.SavedLearningStates = {};
@@ -1002,7 +996,6 @@ function getLocalStorageUsedKB() {
 }
 
 function compactDatabaseForLocalStorage() {
-    // 1. ลบรายการ __SYS_CONFIG__ ที่ซ้ำซ้อนออกจาก Notifications ในเครื่อง (เก็บไว้เฉพาะการแจ้งเตือนจริง)
     if (Array.isArray(db.Notifications)) {
         const seenChunkIds = new Set();
         db.Notifications = db.Notifications.filter(n => {
@@ -1018,7 +1011,6 @@ function compactDatabaseForLocalStorage() {
             db.Notifications = [...normalItems, ...sysItems];
         }
     }
-    // 2. จำกัดจำนวนแม่แบบและโลโก้ที่แคชในเบราว์เซอร์ไม่ให้เกิน 5 รายการล่าสุดเพื่อป้องกัน localStorage เต็ม
     if (Array.isArray(db.SavedCertTemplates) && db.SavedCertTemplates.length > 5) {
         db.SavedCertTemplates = db.SavedCertTemplates.slice(0, 5);
     }
@@ -1032,7 +1024,6 @@ function saveDB() {
         compactDatabaseForLocalStorage();
         localStorage.setItem('edulearn_hospital_db_v4', JSON.stringify(db));
     } catch (err) {
-        // กรณีพื้นที่เต็ม ให้ล้างแคชสำรองอัตโนมัติแล้วลองบันทึกอีกครั้ง
         try {
             db.Notifications = (db.Notifications || []).filter(n => n.Type !== '__SYS_CONFIG__' && n.UserID !== '__SYS_CONFIG__').slice(0, 30);
             if (Array.isArray(db.SavedCertTemplates) && db.SavedCertTemplates.length > 2) {
@@ -1393,11 +1384,11 @@ function applyGlobalSiteTheme() {
     setText('txtRegisterLinkLabel', t.txtRegisterLinkLabel || 'ลงทะเบียนสมาชิกใหม่');
     setText('navBrandTitle', t.navBrandTitle);
     setText('navBrandSub', t.navBrandSub);
-    setText('sidebarFooterDesc', t.sidebarFooterDesc || 'เชื่อมต่อ Google Sheets และส่งเกียรติบัตร PDF เข้า Telegram อัตโนมัติ');
+    setText('sidebarFooterDesc', t.sidebarFooterDesc || 'เชื่อมต่อ Google Sheets และส่งเกียรติบัตร PDF เข้าอีเมลผู้เรียนอัตโนมัติ');
 
     const sbFooterTitle = document.getElementById('sidebarFooterTitle');
     if (sbFooterTitle) {
-        sbFooterTitle.innerHTML = `<i class="fa-brands fa-telegram text-sky-300 mr-1"></i> ${sanitizeHTML(t.sidebarFooterTitle || 'Telegram & Sheets')}`;
+        sbFooterTitle.innerHTML = `<i class="fa-solid fa-envelope-circle-check text-sky-300 mr-1"></i> ${sanitizeHTML(t.sidebarFooterTitle || 'Email & Sheets')}`;
     }
 
     const accentColor = t.authBtnColor || '#1e40af';
@@ -1467,33 +1458,7 @@ function populateRegisterDropdowns() {
 function switchAuthView(view) {
     document.getElementById('authLoginView').classList.toggle('hidden', view !== 'login');
     document.getElementById('authRegisterView').classList.toggle('hidden', view !== 'register');
-    if (view === 'register') {
-        populateRegisterDropdowns();
-        syncAllDataWithGoogleSheet(false);
-    }
-}
-
-function checkRegisterDuplicateRealtime() {
-    const uidVal = (document.getElementById('regUserId')?.value || '').trim().toLowerCase();
-    const emailVal = (document.getElementById('regEmail')?.value || '').trim().toLowerCase();
-
-    const isUidDup = !!uidVal && (db.Users || []).some(u => String(u.UserID || '').trim().toLowerCase() === uidVal);
-    const isEmailDup = !!emailVal && (db.Users || []).some(u => String(u.Email || '').trim().toLowerCase() === emailVal);
-
-    const uidHint = document.getElementById('regUserIdDupHint');
-    const emailHint = document.getElementById('regEmailDupHint');
-    const submitBtn = document.getElementById('btnRegisterSubmit');
-
-    if (uidHint) uidHint.classList.toggle('hidden', !isUidDup);
-    if (emailHint) emailHint.classList.toggle('hidden', !isEmailDup);
-
-    const hasAnyDup = isUidDup || isEmailDup;
-    if (submitBtn) {
-        submitBtn.disabled = hasAnyDup;
-        submitBtn.classList.toggle('opacity-50', hasAnyDup);
-        submitBtn.classList.toggle('cursor-not-allowed', hasAnyDup);
-    }
-    return { isUidDup, isEmailDup };
+    if (view === 'register') populateRegisterDropdowns();
 }
 
 function togglePasswordVisibility() {
@@ -1551,9 +1516,38 @@ function handleLoginSubmit(e) {
         launchPlatform();
     }
 }
-document.getElementById('registerForm').addEventListener('submit', async (e) => {
+
+document.getElementById('loginForm')?.addEventListener('submit', handleLoginSubmit);
+
+function promptOneTimeProfessionSelect() {
+    Swal.fire({
+        title: 'เลือกสายวิชาชีพของคุณ (เลือกได้เพียงครั้งเดียว)',
+        html: `
+            <p class="text-xs text-slate-500 mb-3">ระบบจะคัดกรองเนื้อหาบทเรียนและข้อสอบให้ตรงกับสายวิชาชีพของคุณ<br><span class="text-rose-600 font-bold">* เมื่อยืนยันแล้วจะไม่สามารถเปลี่ยนเองได้ หากต้องการแก้ไขภายหลังต้องส่งคำขอถึง Admin</span></p>
+            <select id="swalOneTimeProf" class="w-full px-3 py-2.5 rounded-xl border text-sm">
+                ${(db.Professions || []).map(p => `<option value="${sanitizeHTML(p)}">${sanitizeHTML(p)}</option>`).join('')}
+            </select>
+        `,
+        allowOutsideClick: false,
+        confirmButtonText: 'ยืนยันสายวิชาชีพ',
+        confirmButtonColor: '#2563eb'
+    }).then(res => {
+        if (res.isConfirmed) {
+            const chosen = document.getElementById('swalOneTimeProf').value;
+            currentUser.Profession = chosen;
+            const idx = db.Users.findIndex(u => u.UserID === currentUser.UserID);
+            if (idx > -1) db.Users[idx].Profession = chosen;
+            saveDB();
+            pushRecordToGoogleSheet('saveUser', currentUser);
+            sessionStorage.setItem('edulearn_hospital_session', JSON.stringify(currentUser));
+            launchPlatform();
+        }
+    });
+}
+
+document.getElementById('registerForm').addEventListener('submit', (e) => {
     e.preventDefault();
-    const rawUid = document.getElementById('regUserId').value.trim();
+    const uid = document.getElementById('regUserId').value.trim().toUpperCase();
     const pass = document.getElementById('regPass').value.trim();
     const name = document.getElementById('regFullName').value.trim();
     const email = document.getElementById('regEmail').value.trim();
@@ -1562,36 +1556,15 @@ document.getElementById('registerForm').addEventListener('submit', async (e) => 
     const q = document.getElementById('regSecQuestion').value;
     const ans = document.getElementById('regSecAnswer').value.trim();
 
-    if (!rawUid || !pass || !name || !email) {
-        Swal.fire('ข้อมูลไม่ครบถ้วน', 'กรุณากรอกข้อมูลที่มีเครื่องหมาย * ให้ครบถ้วน', 'warning');
-        return;
-    }
-
-    await syncAllDataWithGoogleSheet(false);
-
-    const dupUserById = (db.Users || []).find(u => String(u.UserID || '').trim().toLowerCase() === rawUid.toLowerCase());
-    const dupUserByEmail = (db.Users || []).find(u => String(u.Email || '').trim().toLowerCase() === email.toLowerCase());
-
-    if (dupUserById || dupUserByEmail) {
-        checkRegisterDuplicateRealtime();
-        const dupReasons = [];
-        if (dupUserById) dupReasons.push(`• ชื่อผู้ใช้ / รหัสพนักงาน "<b>${sanitizeHTML(rawUid)}</b>" มีผู้ใช้งานแล้ว`);
-        if (dupUserByEmail) dupReasons.push(`• อีเมล "<b>${sanitizeHTML(email)}</b>" ถูกลงทะเบียนไว้แล้ว`);
-        Swal.fire({
-            icon: 'warning',
-            title: 'ข้อมูลซ้ำในระบบ กรุณาแก้ไขข้อมูล',
-            html: `<div class="text-left text-xs space-y-1.5 text-slate-700">${dupReasons.join('<br>')}<div class="pt-2 text-blue-700 font-semibold">กรุณาเปลี่ยนชื่อผู้ใช้หรืออีเมลใหม่ แล้วลองลงทะเบียนอีกครั้งครับ</div></div>`,
-            confirmButtonText: 'แก้ไขข้อมูล',
-            confirmButtonColor: '#2563eb'
-        });
+    if (db.Users.some(u => u.UserID.toUpperCase() === uid || u.Email.toLowerCase() === email.toLowerCase())) {
+        Swal.fire('ข้อมูลซ้ำในระบบ', 'รหัสพนักงานหรืออีเมลนี้ถูกลงทะเบียนไว้แล้ว', 'error');
         return;
     }
 
     const newUser = {
-        UserID: rawUid,
+        UserID: uid,
         FullName: name,
         Email: email,
-        TelegramChatId: '',
         Role: 'Student',
         Password: pass,
         Department: dept,
@@ -1603,20 +1576,9 @@ document.getElementById('registerForm').addEventListener('submit', async (e) => 
         LastLogin: getNowThai()
     };
 
-    const serverRes = await pushRecordToGoogleSheet('registerUser', newUser);
-    if (serverRes && serverRes.status === 'error') {
-        Swal.fire({
-            icon: 'warning',
-            title: 'ข้อมูลซ้ำในระบบ กรุณาแก้ไขข้อมูล',
-            text: serverRes.message || 'ชื่อผู้ใช้หรืออีเมลซ้ำในระบบ กรุณาแก้ไขข้อมูลใหม่',
-            confirmButtonText: 'แก้ไขข้อมูล',
-            confirmButtonColor: '#2563eb'
-        });
-        return;
-    }
-
     db.Users.push(newUser);
     saveDB();
+    pushRecordToGoogleSheet('saveUser', newUser);
 
     Swal.fire({
         icon: 'success',
@@ -1624,8 +1586,7 @@ document.getElementById('registerForm').addEventListener('submit', async (e) => 
         text: `ยินดีต้อนรับคุณ ${name} (${prof}) บันทึกลง Google Sheets เรียบร้อย สามารถเข้าสู่ระบบได้ทันที`,
         confirmButtonColor: '#059669'
     }).then(() => {
-        document.getElementById('registerForm').reset();
-        document.getElementById('loginIdentity').value = rawUid;
+        document.getElementById('loginIdentity').value = email;
         switchAuthView('login');
     });
 });
@@ -1655,7 +1616,6 @@ function openForgotPasswordModal() {
                     </button>
                 </div>
 
-                <!-- วิธีที่ 1: ส่งลิงก์/รหัสตั้งรหัสผ่านใหม่ไปยังอีเมล -->
                 <div id="fpSectionEmail" class="space-y-2.5 pt-1">
                     <p class="text-slate-500">กรอกอีเมลที่ลงทะเบียนไว้ ระบบจะส่งลิงก์และรหัสยืนยันสำหรับตั้งรหัสผ่านใหม่ไปยังอีเมลของคุณ</p>
                     <div>
@@ -1664,7 +1624,6 @@ function openForgotPasswordModal() {
                     </div>
                 </div>
 
-                <!-- วิธีที่ 2: ตอบคำถามความปลอดภัย เพื่อดูรหัสผ่านที่เคยบันทึกไว้ -->
                 <div id="fpSectionSecurity" class="hidden space-y-2.5 pt-1">
                     <p class="text-slate-500">ระบุรหัสพนักงานหรืออีเมล และตอบคำถามความปลอดภัยที่จำได้ ระบบจะแจ้งรหัสผ่านที่เคยบันทึกไว้ให้ทราบทันที</p>
                     <div>
@@ -1909,9 +1868,8 @@ function launchPlatform() {
 function openMyProfileSettingsModal() {
     if (!currentUser) return;
     const u = db.Users.find(x => x.UserID === currentUser.UserID) || currentUser;
-    const isLinked = !!String(u.TelegramChatId || '').trim();
     Swal.fire({
-        title: 'เชื่อมต่อรับเกียรติบัตรทาง Email & Telegram',
+        title: 'ตั้งค่า Email สำหรับรับเกียรติบัตร (E-Certificate)',
         html: `
             <div class="text-left text-xs space-y-3">
                 <p class="text-slate-500">บัญชีผู้ใช้: <strong>${sanitizeHTML(u.FullName)}</strong> (${sanitizeHTML(u.UserID)})</p>
@@ -1919,17 +1877,8 @@ function openMyProfileSettingsModal() {
                     <label class="font-bold block mb-1">อีเมลที่ลงทะเบียนไว้ (รับไฟล์ PDF เกียรติบัตรโดยตรง) *</label>
                     <input id="mpEmail" type="email" value="${sanitizeHTML(u.Email || '')}" class="w-full px-3 py-2 rounded-xl border">
                 </div>
-                <div class="p-3.5 rounded-2xl border ${isLinked ? 'bg-emerald-50 border-emerald-200 text-emerald-900' : 'bg-sky-50 border-sky-200 text-sky-900'} space-y-2">
-                    <div class="font-bold flex items-center justify-between">
-                        <span><i class="fa-brands fa-telegram text-sky-600 mr-1"></i> สถานะ Telegram ส่วนตัว (@PPHPharmacyLearningBot)</span>
-                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${isLinked ? 'bg-emerald-600 text-white' : 'bg-amber-500 text-white'}">
-                            ${isLinked ? '✓ เชื่อมต่อแล้ว' : 'ยังไม่เชื่อมต่อ'}
-                        </span>
-                    </div>
-                    <p class="text-[11px] opacity-85">เพียงกดปุ่มด้านล่างเพื่อเปิดแอป Telegram (@PPHPharmacyLearningBot) แล้วกดปุ่ม <b>Start (เริ่มต้น)</b> เพียงครั้งเดียว บอทจะจำบัญชีของคุณและส่งเกียรติบัตร PDF เข้าแชทส่วนตัวได้ตลอดไป</p>
-                    <button type="button" onclick="startOneClickTelegramLink('${u.UserID}')" class="w-full py-2.5 rounded-xl bg-[#229ED9] hover:bg-[#1d8ec4] text-white font-bold text-xs shadow transition flex items-center justify-center gap-1.5">
-                        <i class="fa-brands fa-telegram text-base"></i> เปิดแอป Telegram (@PPHPharmacyLearningBot)
-                    </button>
+                <div class="p-3 rounded-2xl bg-blue-50 border border-blue-200 text-blue-900 text-[11px]">
+                    <i class="fa-solid fa-circle-info mr-1"></i> เมื่อท่านเรียนจบและสอบผ่านเกณฑ์ ระบบจะจัดส่งไฟล์เกียรติบัตร PDF ไปยังอีเมลที่ระบุไว้ข้างต้นโดยตรง
                 </div>
             </div>
         `,
@@ -1950,163 +1899,6 @@ function openMyProfileSettingsModal() {
             saveDB();
             pushRecordToGoogleSheet('saveUser', u);
             showNonBlockingToast('บันทึกอีเมลเรียบร้อยแล้ว', 'success');
-        }
-    });
-}
-
-async function fetchTelegramBotUsername(botToken) {
-    try {
-        const res = await fetch(`https://api.telegram.org/bot${encodeURIComponent(botToken)}/getMe`);
-        const json = await res.json();
-        if (json && json.ok && json.result?.username) {
-            return json.result.username;
-        }
-    } catch (e) {}
-    return 'PPHPharmacyLearningBot';
-}
-
-async function checkAndBindTelegramUser(userId, botToken) {
-    const u = db.Users.find(x => String(x.UserID || '').trim().toLowerCase() === String(userId || '').trim().toLowerCase());
-    if (!u || !botToken) return '';
-    const cleanUidUpper = String(u.UserID || '').trim().toUpperCase();
-    const expectedTag = `/START LINK_${cleanUidUpper}`;
-    const userEmailLower = String(u.Email || '').trim().toLowerCase();
-    let foundChatId = '';
-
-    try {
-        await fetch(`https://api.telegram.org/bot${encodeURIComponent(botToken)}/deleteWebhook`).catch(() => {});
-        const res = await fetch(`https://api.telegram.org/bot${encodeURIComponent(botToken)}/getUpdates?limit=100`);
-        const json = await res.json();
-        if (json && json.ok && Array.isArray(json.result)) {
-            const privateChats = [];
-            for (let i = json.result.length - 1; i >= 0; i--) {
-                const msg = json.result[i].message || json.result[i].edited_message || json.result[i].my_chat_member;
-                if (!msg || !msg.chat || msg.chat.type !== 'private') continue;
-                const cidStr = String(msg.chat.id);
-                if (!privateChats.some(c => c.id === cidStr)) {
-                    privateChats.push({
-                        id: cidStr,
-                        name: [msg.chat.first_name, msg.chat.last_name].filter(Boolean).join(' ') || msg.chat.username || cidStr,
-                        username: msg.chat.username ? `@${msg.chat.username}` : ''
-                    });
-                }
-                const rawTxt = String(msg.text || '').trim();
-                const txtUpper = rawTxt.toUpperCase();
-                const txtLower = rawTxt.toLowerCase();
-                // ตรวจสอบแบบตรงตัว (Exact Match) เพื่อไม่ให้รหัสสั้นๆ เช่น "pen" ไปตรงกับอีเมลคนอื่น
-                if (
-                    txtUpper === expectedTag ||
-                    txtUpper === cleanUidUpper ||
-                    (userEmailLower && txtLower === userEmailLower)
-                ) {
-                    foundChatId = cidStr;
-                    break;
-                }
-            }
-            window._recentTelegramPrivateChats = privateChats;
-        }
-    } catch (e) {}
-
-    if (!foundChatId) {
-        const gasRes = await pushRecordToGoogleSheet('resolveTelegramAutoLink', { botToken, userId: u.UserID, email: u.Email || '' });
-        if (gasRes && gasRes.chatId) foundChatId = String(gasRes.chatId);
-    }
-
-    if (foundChatId) {
-        bindTelegramChatIdToUser(u.UserID, foundChatId, botToken);
-    }
-    return foundChatId;
-}
-
-function bindTelegramChatIdToUser(userId, chatId, botToken) {
-    const u = db.Users.find(x => x.UserID === userId);
-    if (!u || !chatId) return;
-    u.TelegramChatId = String(chatId).trim();
-    if (currentUser && currentUser.UserID === u.UserID) {
-        currentUser.TelegramChatId = u.TelegramChatId;
-        sessionStorage.setItem('edulearn_hospital_session', JSON.stringify(currentUser));
-    }
-    saveDB();
-    pushRecordToGoogleSheet('saveUser', u);
-    if (botToken) {
-        fetch(`https://api.telegram.org/bot${encodeURIComponent(botToken)}/sendMessage`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                chat_id: u.TelegramChatId,
-                text: `✅ เชื่อมต่อบัญชี E-Learning Pharmacy (${u.FullName} - ${u.UserID}) กับ @PPHPharmacyLearningBot สำเร็จแล้ว!`
-            })
-        }).catch(() => {});
-    }
-}
-
-async function startOneClickTelegramLink(userId, onLinkedCallback = null) {
-    const botToken = (db.SiteThemeSettings.telegramBotToken || '9280509192:AAE6Ux-E2cQ3yHvoHvBoyJLMxL_wbFW28TE').trim();
-    Swal.fire({ title: 'กำลังเตรียมลิงก์เชื่อมต่อ @PPHPharmacyLearningBot...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
-
-    const botUsername = await fetchTelegramBotUsername(botToken);
-    const deepLink = `https://t.me/${botUsername}?start=LINK_${encodeURIComponent(userId)}`;
-    await checkAndBindTelegramUser(userId, botToken);
-    const recentChats = window._recentTelegramPrivateChats || [];
-    let pollTimer = null;
-
-    Swal.fire({
-        title: 'เชื่อมต่อ Telegram ส่วนตัวใน 2 ขั้นตอน',
-        html: `
-            <div class="text-left text-xs space-y-3">
-                <div class="p-3 rounded-xl bg-sky-50 border border-sky-200 space-y-2">
-                    <div><b>ขั้นตอนที่ 1:</b> กดปุ่มสีฟ้าด้านล่างเพื่อเปิดบอทในแอป Telegram</div>
-                    <a href="${deepLink}" target="_blank" rel="noopener noreferrer" class="w-full py-2.5 px-4 rounded-xl bg-[#229ED9] hover:bg-[#1d8ec4] text-white font-bold text-xs shadow flex items-center justify-center gap-2">
-                        <i class="fa-brands fa-telegram text-lg"></i> เปิดแอป Telegram (@${sanitizeHTML(botUsername)})
-                    </a>
-                </div>
-                <div class="p-3 rounded-xl bg-emerald-50 border border-emerald-200 space-y-1">
-                    <div><b>ขั้นตอนที่ 2:</b> กดปุ่ม <b>Start (หรือ Restart)</b> ในห้องแชท หรือพิมพ์คำว่า <code>${sanitizeHTML(userId)}</code> ส่งในแชทบอท ระบบจะจับคู่บัญชีให้อัตโนมัติ</div>
-                    <div class="text-[11px] text-emerald-700 flex items-center gap-1.5 pt-1">
-                        <i class="fa-solid fa-spinner fa-spin"></i> ระบบกำลังรอรับสัญญาณจาก Telegram ของคุณโดยอัตโนมัติ...
-                    </div>
-                </div>
-                ${recentChats.length ? `
-                <div class="p-3 rounded-xl bg-amber-50 border border-amber-200 space-y-1.5">
-                    <div class="font-bold text-amber-900">หรือเลือกบัญชี Telegram ของคุณที่ทักบอทเข้ามาล่าสุด:</div>
-                    <div class="space-y-1 max-h-28 overflow-y-auto">
-                        ${recentChats.map(ch => `
-                            <button type="button" onclick="bindTelegramChatIdToUser('${userId}', '${ch.id}', '${botToken}'); Swal.close(); showNonBlockingToast('เชื่อมต่อบัญชี ${sanitizeHTML(ch.name)} สำเร็จ!', 'success');" class="w-full text-left px-3 py-1.5 rounded-lg bg-white hover:bg-blue-50 border flex justify-between items-center font-semibold">
-                                <span><i class="fa-brands fa-telegram text-sky-600 mr-1"></i> ${sanitizeHTML(ch.name)} ${sanitizeHTML(ch.username)}</span>
-                                <span class="text-[10px] text-blue-600 font-bold">เลือกบัญชีนี้ ➔</span>
-                            </button>
-                        `).join('')}
-                    </div>
-                </div>` : ''}
-            </div>
-        `,
-        showCancelButton: true,
-        confirmButtonText: 'ฉันกด Start / ส่งข้อความแล้ว (ตรวจสอบทันที)',
-        cancelButtonText: 'ปิด',
-        confirmButtonColor: '#059669',
-        didOpen: () => {
-            pollTimer = setInterval(async () => {
-                const cid = await checkAndBindTelegramUser(userId, botToken);
-                if (cid) {
-                    clearInterval(pollTimer);
-                    Swal.close();
-                    showNonBlockingToast('เชื่อมต่อ Telegram ส่วนตัวสำเร็จแล้ว!', 'success');
-                    if (typeof onLinkedCallback === 'function') onLinkedCallback(cid);
-                }
-            }, 2500);
-        },
-        willClose: () => {
-            if (pollTimer) clearInterval(pollTimer);
-        }
-    }).then(async (res) => {
-        if (res.isConfirmed) {
-            const cid = await checkAndBindTelegramUser(userId, botToken);
-            if (cid) {
-                showNonBlockingToast('เชื่อมต่อ Telegram ส่วนตัวสำเร็จแล้ว!', 'success');
-                if (typeof onLinkedCallback === 'function') onLinkedCallback(cid);
-            } else {
-                Swal.fire('ยังไม่พบการเชื่อมต่อ', `กรุณาเปิดแชท @${botUsername} แล้วกด Start/Restart หรือพิมพ์รหัส "${userId}" ส่งในแชทบอท 1 ครั้งครับ`, 'info');
-            }
         }
     });
 }
@@ -3721,7 +3513,7 @@ function renderCertificatesView(container) {
             <div class="flex flex-wrap justify-between items-center gap-3">
                 <div>
                     <h2 class="text-2xl font-bold text-blue-900 dark:text-white"><i class="fa-solid fa-award text-amber-500 mr-2"></i>คลังเกียรติบัตรอิเล็กทรอนิกส์ของฉัน</h2>
-                    <p class="text-xs text-slate-500">ดาวน์โหลดเกียรติบัตร PDF/PNG หรือส่งเข้าอีเมลและ Telegram</p>
+                    <p class="text-xs text-slate-500">ดาวน์โหลดเกียรติบัตร PDF/PNG หรือส่งเข้าอีเมลที่ลงทะเบียนไว้</p>
                 </div>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -4378,33 +4170,27 @@ function downloadCertAsPDF() {
         pdf.save(`${currentCertId}.pdf`);
     });
 }
-async function shareCertToTelegramAndEmail() {
+
+async function sendCertToRegisteredEmail() {
     const cert = db.Certificates.find(c => c.CertificateID === currentCertId);
     if (!cert) return;
-    // ค้นหาข้อมูลผู้เรียนเจ้าของเกียรติบัตรโดยตรง (ตรงกับ UserID หรือ FullName ในระบบ)
-    const stu = db.Users.find(u => String(u.UserID || '').trim().toLowerCase() === String(cert.StudentID || '').trim().toLowerCase())
-        || db.Users.find(u => String(u.FullName || '').trim() === String(cert.FullName || '').trim())
-        || (currentUser && String(currentUser.UserID || '').trim().toLowerCase() === String(cert.StudentID || '').trim().toLowerCase() ? currentUser : null);
+    const stu = db.Users.find(u => u.UserID === cert.StudentID) || currentUser || {};
+    const targetEmail = (stu.Email || currentUser?.Email || '').trim();
+    const gasUrl = getGasUrl();
 
-    if (!stu) {
-        Swal.fire('ไม่พบข้อมูลผู้ลงทะเบียน', `ไม่พบบัญชีผู้ใช้ของ "${cert.FullName}" (${cert.StudentID}) ในฐานข้อมูล`, 'error');
+    if (!targetEmail || !targetEmail.includes('@')) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'ไม่พบอีเมลที่ลงทะเบียนไว้',
+            text: 'กรุณาระบุอีเมลที่ถูกต้องในข้อมูลบัญชีผู้ใช้ก่อนส่งเกียรติบัตร',
+            confirmButtonColor: '#2563eb'
+        });
         return;
     }
 
-    const targetEmail = String(stu.Email || '').trim();
-    const botToken = (db.SiteThemeSettings.telegramBotToken || '9280509192:AAE6Ux-E2cQ3yHvoHvBoyJLMxL_wbFW28TE').trim();
-
-    if (!stu.TelegramChatId && stu.UserID) {
-        await checkAndBindTelegramUser(stu.UserID, botToken);
-    }
-    // ใช้เฉพาะ TelegramChatId ที่ผูกกับบัญชีผู้เรียนเจ้าของเกียรติบัตรคนนี้เท่านั้น
-    const personalChatId = String(stu.TelegramChatId || '').trim();
-    const targetChatId = personalChatId;
-    const gasUrl = getGasUrl();
-
     Swal.fire({
-        title: 'กำลังสร้างไฟล์เกียรติบัตร PDF และส่งจริง...',
-        text: `กำลังส่งไปยัง Email (${targetEmail || '-'}) และ Telegram ของ ${stu.FullName}`,
+        title: 'กำลังสร้างไฟล์เกียรติบัตร PDF และส่งเข้าอีเมล...',
+        text: `กำลังส่งไปยังอีเมลที่ลงทะเบียนไว้: ${targetEmail}`,
         allowOutsideClick: false,
         didOpen: () => Swal.showLoading()
     });
@@ -4427,74 +4213,10 @@ async function shareCertToTelegramAndEmail() {
             reader.readAsDataURL(pdfBlob);
         });
 
-        let telegramSentOk = false;
-        let telegramErrorMsg = '';
         let emailSentOk = false;
         let emailErrorMsg = '';
 
-        // 1. ส่งเข้า Telegram ส่วนตัวของผู้เรียนโดยตรง
-        if (botToken && targetChatId) {
-            const captionText =
-                `🎓 เกียรติบัตรอิเล็กทรอนิกส์ (E-Certificate)\n` +
-                `👤 ผู้ได้รับ: ${cert.FullName}\n` +
-                `📧 อีเมลผู้ลงทะเบียน: ${targetEmail || '-'}\n` +
-                `📚 หลักสูตร: ${cert.CourseName}\n` +
-                `🏆 คะแนนประเมิน: ${cert.Score}%\n` +
-                `🆔 เลขที่เกียรติบัตร: ${cert.CertificateID}\n` +
-                `📅 วันที่ออก: ${cert.IssueDate}`;
-
-            try {
-                const fd = new FormData();
-                fd.append('chat_id', targetChatId);
-                fd.append('caption', captionText);
-                fd.append('document', pdfBlob, `${cert.CertificateID}.pdf`);
-
-                const tgRes = await fetch(`https://api.telegram.org/bot${encodeURIComponent(botToken)}/sendDocument`, {
-                    method: 'POST',
-                    body: fd
-                });
-                const tgJson = await tgRes.json();
-                if (tgJson && tgJson.ok) {
-                    telegramSentOk = true;
-                } else {
-                    telegramErrorMsg = tgJson?.description || 'Telegram API error';
-                }
-            } catch (tgDirectErr) {
-                telegramErrorMsg = tgDirectErr.message;
-            }
-
-            if (!telegramSentOk && gasUrl && gasUrl.startsWith('http')) {
-                try {
-                    const gasTgRes = await fetch(gasUrl, {
-                        method: 'POST',
-                        body: JSON.stringify({
-                            action: 'sendTelegramCert',
-                            payload: {
-                                botToken,
-                                chatId: targetChatId,
-                                email: targetEmail,
-                                fullName: cert.FullName,
-                                courseName: cert.CourseName,
-                                score: cert.Score,
-                                certId: cert.CertificateID,
-                                verifyUrl: cert.VerifyURL,
-                                base64Pdf: pureBase64Pdf
-                            }
-                        })
-                    });
-                    const gasTgJson = await gasTgRes.json();
-                    if (gasTgJson && gasTgJson.status === 'success') {
-                        telegramSentOk = true;
-                        telegramErrorMsg = '';
-                    }
-                } catch (e2) {}
-            }
-        } else {
-            telegramErrorMsg = `ผู้เรียน (${cert.FullName}) ยังไม่ได้กด Start เชื่อมต่อ @PPHPharmacyLearningBot`;
-        }
-
-        // 2. ส่งเข้า Email ที่ผู้เรียนลงทะเบียนไว้โดยตรง
-        if (targetEmail && targetEmail.includes('@') && gasUrl && gasUrl.startsWith('http')) {
+        if (gasUrl && gasUrl.startsWith('http')) {
             try {
                 const emRes = await fetch(gasUrl, {
                     method: 'POST',
@@ -4521,27 +4243,23 @@ async function shareCertToTelegramAndEmail() {
             } catch (emErr) {
                 emailErrorMsg = emErr.message;
             }
-        } else if (!targetEmail || !targetEmail.includes('@')) {
-            emailErrorMsg = 'บัญชีผู้เรียนนี้ยังไม่ได้ระบุอีเมลที่ถูกต้อง';
+        } else {
+            emailErrorMsg = 'ยังไม่ได้ตั้งค่า Google Apps Script Web App URL';
         }
 
-        const isAnyOk = telegramSentOk || emailSentOk;
-        const linkOwnTgBtnHtml = (!personalChatId && stu.UserID)
-            ? `<div class="mt-2"><button type="button" onclick="Swal.close(); startOneClickTelegramLink('${stu.UserID}', () => shareCertToTelegramAndEmail())" class="w-full py-2 px-3 rounded-xl bg-[#229ED9] hover:bg-[#1d8ec4] text-white font-bold text-[11px] shadow flex items-center justify-center gap-1.5"><i class="fa-brands fa-telegram text-base"></i> เชื่อมต่อ Telegram (@PPHPharmacyLearningBot) ทันที</button></div>`
-            : '';
         Swal.fire({
-            icon: isAnyOk ? 'success' : 'warning',
-            title: isAnyOk ? 'ดำเนินการส่งเกียรติบัตรเรียบร้อย!' : 'แจ้งผลการส่งเกียรติบัตร',
+            icon: emailSentOk ? 'success' : 'warning',
+            title: emailSentOk ? 'ส่งเกียรติบัตรเข้าอีเมลเรียบร้อย!' : 'แจ้งผลการส่งเกียรติบัตรทางอีเมล',
             html: `<div class="text-left text-xs text-slate-600 space-y-2">
-                <div class="p-2.5 rounded-xl ${emailSentOk ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-amber-50 text-amber-800 border border-amber-200'}">
-                    📧 <b>Email ผู้ลงทะเบียน (${sanitizeHTML(targetEmail || '-')}):</b> ${emailSentOk ? 'ส่งไฟล์ PDF เกียรติบัตรไปยังอีเมลที่ลงทะเบียนไว้สำเร็จแล้ว!' : `ส่งไม่สำเร็จ (${sanitizeHTML(emailErrorMsg || 'กรุณาอัปเดต Code.gs และ Deploy ใหม่')})`}
-                </div>
-                <div class="p-2.5 rounded-xl ${telegramSentOk ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-amber-50 text-amber-800 border border-amber-200'}">
-                    ✈️ <b>Telegram ส่วนตัวของ ${sanitizeHTML(cert.FullName)}:</b> ${telegramSentOk ? 'ส่งไฟล์ PDF เกียรติบัตรเข้า Telegram ผู้เรียนสำเร็จแล้ว!' : `${sanitizeHTML(telegramErrorMsg)}`}
-                    ${linkOwnTgBtnHtml}
+                <div class="p-3 rounded-xl ${emailSentOk ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-amber-50 text-amber-800 border border-amber-200'}">
+                    📧 <b>อีเมลที่ลงทะเบียนไว้ (${sanitizeHTML(targetEmail)}):</b><br>
+                    ${emailSentOk
+                        ? 'ระบบได้จัดส่งไฟล์เกียรติบัตร PDF ฉบับจริงไปยังอีเมลที่ผู้เรียนลงทะเบียนไว้โดยตรงเรียบร้อยแล้ว!'
+                        : `ส่งไม่สำเร็จ: ${sanitizeHTML(emailErrorMsg)}`
+                    }
                 </div>
             </div>`,
-            confirmButtonColor: '#229ED9'
+            confirmButtonColor: '#2563eb'
         });
     } catch (err) {
         Swal.fire('เกิดข้อผิดพลาด', 'ไม่สามารถสร้างหรือส่งไฟล์ PDF ได้: ' + err.message, 'error');
@@ -6391,8 +6109,7 @@ function renderManageUsersView(container) {
                     <tr>
                         <th class="p-3.5">รหัส</th>
                         <th class="p-3.5">ชื่อ-นามสกุล</th>
-                        <th class="p-3.5">อีเมล</th>
-                        <th class="p-3.5">Telegram ID</th>
+                        <th class="p-3.5">อีเมล (รับเกียรติบัตร)</th>
                         <th class="p-3.5">แผนก</th>
                         <th class="p-3.5">สายวิชาชีพ</th>
                         <th class="p-3.5">สิทธิ์ (Role)</th>
@@ -6405,7 +6122,6 @@ function renderManageUsersView(container) {
                             <td class="p-3.5 font-mono font-bold">${u.UserID}</td>
                             <td class="p-3.5 font-bold">${sanitizeHTML(u.FullName)}</td>
                             <td class="p-3.5">${sanitizeHTML(u.Email)}</td>
-                            <td class="p-3.5 font-mono text-sky-700 dark:text-sky-300">${sanitizeHTML(u.TelegramChatId || '-')}</td>
                             <td class="p-3.5">${sanitizeHTML(u.Department || '-')}</td>
                             <td class="p-3.5"><span class="px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 font-semibold">${sanitizeHTML(u.Profession || 'ยังไม่ระบุ')}</span></td>
                             <td class="p-3.5"><span class="px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800 font-bold">${u.Role}</span></td>
@@ -6432,10 +6148,7 @@ function openEditUserModal(userId) {
         html: `
             <div class="text-left text-xs space-y-2.5">
                 <div><label class="font-bold block mb-1">ชื่อ-นามสกุล</label><input id="euFullName" value="${sanitizeHTML(u.FullName)}" class="w-full px-3 py-2 rounded-xl border"></div>
-                <div class="grid grid-cols-2 gap-2">
-                    <div><label class="font-bold block mb-1">อีเมล</label><input id="euEmail" value="${sanitizeHTML(u.Email)}" class="w-full px-3 py-2 rounded-xl border"></div>
-                    <div><label class="font-bold block mb-1 text-sky-700">Telegram Chat ID</label><input id="euTelegramChatId" value="${sanitizeHTML(u.TelegramChatId || '')}" placeholder="เช่น 8801241740" class="w-full px-3 py-2 rounded-xl border font-mono"></div>
-                </div>
+                <div><label class="font-bold block mb-1">อีเมล (สำหรับส่งเกียรติบัตร)</label><input id="euEmail" value="${sanitizeHTML(u.Email)}" class="w-full px-3 py-2 rounded-xl border"></div>
                 <div><label class="font-bold block mb-1">รหัสผ่าน (Password)</label><input id="euPass" value="${sanitizeHTML(u.Password)}" class="w-full px-3 py-2 rounded-xl border"></div>
                 <div><label class="font-bold block mb-1">แผนกในโรงพยาบาล</label>
                     <select id="euDept" class="w-full px-3 py-2 rounded-xl border">
@@ -6475,7 +6188,6 @@ function openEditUserModal(userId) {
         if (res.isConfirmed) {
             u.FullName = document.getElementById('euFullName').value.trim();
             u.Email = document.getElementById('euEmail').value.trim();
-            u.TelegramChatId = document.getElementById('euTelegramChatId').value.trim();
             u.Password = document.getElementById('euPass').value.trim();
             u.Department = document.getElementById('euDept').value;
             u.Profession = document.getElementById('euProf').value;
@@ -6655,7 +6367,7 @@ function resetDefaultPermissions() {
     Swal.fire({ icon: 'success', title: 'คืนค่าสิทธิ์มาตรฐานเรียบร้อย', timer: 1100, showConfirmButton: false });
 }
 
-// ==================== VIEW 11: GLOBAL BRANDING, COLORS, ICONS, SHEETS & TELEGRAM ====================
+// ==================== VIEW 11: GLOBAL BRANDING, COLORS, ICONS & SHEETS ====================
 function renderAdminThemeSettingsView(container) {
     if (!hasPermission('manageTheme')) return;
     const t = { ...initialDatabase.SiteThemeSettings, ...db.SiteThemeSettings };
@@ -6909,21 +6621,6 @@ function renderAdminThemeSettingsView(container) {
                     <input id="thGasUrl" type="text" value="${sanitizeHTML(t.gasWebAppUrl || DEFAULT_GAS_WEB_APP_URL)}" placeholder="https://script.google.com/macros/s/.../exec" class="w-full px-3 py-2 rounded-xl border dark:bg-slate-900 font-mono">
                 </div>
             </div>
-
-            <!-- 4. ตั้งค่า Telegram -->
-            <div class="md:col-span-2 custom-card bg-white dark:bg-slate-800 p-6 shadow-sm border border-sky-200 dark:border-slate-700 space-y-3">
-                <h3 class="font-bold text-sm text-sky-700 dark:text-sky-400"><i class="fa-brands fa-telegram mr-1.5 text-lg"></i> 4. ตั้งค่าการส่งเกียรติบัตร (PDF + ข้อความ) เข้า Telegram Bot อัตโนมัติ</h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <div>
-                        <label class="font-semibold block mb-1">Telegram Bot Token *</label>
-                        <input id="thTgToken" type="text" value="${sanitizeHTML(t.telegramBotToken || '')}" class="w-full px-3 py-2 rounded-xl border dark:bg-slate-900 font-mono">
-                    </div>
-                    <div>
-                        <label class="font-semibold block mb-1">Telegram Chat ID (กลุ่มหรือผู้ใช้) *</label>
-                        <input id="thTgChatId" type="text" value="${sanitizeHTML(t.telegramChatId || '')}" class="w-full px-3 py-2 rounded-xl border dark:bg-slate-900 font-mono">
-                    </div>
-                </div>
-            </div>
         </div>
     `;
 }
@@ -6932,9 +6629,7 @@ function resetGlobalThemeDefaults() {
     if (!hasPermission('manageTheme')) return;
     db.SiteThemeSettings = {
         ...JSON.parse(JSON.stringify(initialDatabase.SiteThemeSettings)),
-        gasWebAppUrl: db.SiteThemeSettings.gasWebAppUrl || DEFAULT_GAS_WEB_APP_URL,
-        telegramBotToken: db.SiteThemeSettings.telegramBotToken || "9280509192:AAE6Ux-E2cQ3yHvoHvBoyJLMxL_wbFW28TE",
-        telegramChatId: db.SiteThemeSettings.telegramChatId || "127792770"
+        gasWebAppUrl: db.SiteThemeSettings.gasWebAppUrl || DEFAULT_GAS_WEB_APP_URL
     };
     saveDB();
     applyGlobalSiteTheme();
@@ -7003,8 +6698,6 @@ function saveGlobalThemeForm() {
     });
 
     t.gasWebAppUrl = document.getElementById('thGasUrl').value.trim();
-    t.telegramBotToken = document.getElementById('thTgToken').value.trim();
-    t.telegramChatId = document.getElementById('thTgChatId').value.trim();
     saveDB();
     applyGlobalSiteTheme();
     renderSidebarMenu();
