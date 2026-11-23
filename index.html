@@ -116,8 +116,9 @@
             <form id="registerForm" class="space-y-3 text-xs">
                 <div class="grid grid-cols-2 gap-2">
                     <div>
-                        <label class="font-semibold block mb-1">รหัสพนักงาน / ID *</label>
-                        <input type="text" id="regUserId" required placeholder="เช่น EMP105" class="w-full px-3 py-2 rounded-xl border dark:border-slate-700 dark:bg-slate-900">
+                        <label class="font-semibold block mb-1">รหัสพนักงาน / ชื่อผู้ใช้ (ID) *</label>
+                        <input type="text" id="regUserId" required oninput="checkRegisterDuplicateRealtime()" placeholder="เช่น EMP105" class="w-full px-3 py-2 rounded-xl border dark:border-slate-700 dark:bg-slate-900">
+                        <div id="regUserIdDupHint" class="hidden text-[11px] text-rose-600 font-bold mt-1"><i class="fa-solid fa-circle-exclamation mr-1"></i>ชื่อผู้ใช้นี้ถูกใช้งานแล้ว กรุณาเปลี่ยนชื่อผู้ใช้</div>
                     </div>
                     <div>
                         <label class="font-semibold block mb-1">รหัสผ่าน *</label>
@@ -130,7 +131,8 @@
                 </div>
                 <div>
                     <label class="font-semibold block mb-1">อีเมล (สำหรับกู้คืนรหัสผ่านและรับเกียรติบัตร) *</label>
-                    <input type="email" id="regEmail" required placeholder="name@hospital.go.th" class="w-full px-3 py-2 rounded-xl border dark:border-slate-700 dark:bg-slate-900">
+                    <input type="email" id="regEmail" required oninput="checkRegisterDuplicateRealtime()" placeholder="name@hospital.go.th" class="w-full px-3 py-2 rounded-xl border dark:border-slate-700 dark:bg-slate-900">
+                    <div id="regEmailDupHint" class="hidden text-[11px] text-rose-600 font-bold mt-1"><i class="fa-solid fa-circle-exclamation mr-1"></i>อีเมลนี้ถูกลงทะเบียนไว้แล้ว กรุณาใช้อีเมลอื่น</div>
                 </div>
                 <div>
                     <label class="font-semibold block mb-1">แผนกในโรงพยาบาล *</label>
@@ -150,7 +152,7 @@
                     </select>
                     <input type="text" id="regSecAnswer" required placeholder="พิมพ์คำตอบความปลอดภัยของคุณ" class="w-full px-3 py-2 rounded-xl border dark:border-slate-700 dark:bg-slate-900">
                 </div>
-                <button type="submit" class="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow">
+                <button type="submit" id="btnRegisterSubmit" class="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow">
                     <i class="fa-solid fa-check-circle mr-1"></i> ยืนยันการลงทะเบียน
                 </button>
             </form>
@@ -591,7 +593,7 @@
  * E-LEARNING PHARMACY - FULL ENTERPRISE SPA CONTROLLER + GOOGLE SHEETS SYNC
  * ============================================================================
  */
-const DEFAULT_GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyKA3YfNUsOgSgdgbEtZuRvH7bjjUv-UmCTuITKTsNLoDrHXwh2g-nfNO72PEnclfH63g/exec";
+const DEFAULT_GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxg5NZtg1UOzC6q3owsMsoB6grRdUMPrf5oAL-LfZdZ3-HJRhH9iZLDroAlmkKiGd9l/exec";
 
 function getGasUrl() {
     return (db && db.SiteThemeSettings && db.SiteThemeSettings.gasWebAppUrl) || DEFAULT_GAS_WEB_APP_URL;
@@ -1465,7 +1467,33 @@ function populateRegisterDropdowns() {
 function switchAuthView(view) {
     document.getElementById('authLoginView').classList.toggle('hidden', view !== 'login');
     document.getElementById('authRegisterView').classList.toggle('hidden', view !== 'register');
-    if (view === 'register') populateRegisterDropdowns();
+    if (view === 'register') {
+        populateRegisterDropdowns();
+        syncAllDataWithGoogleSheet(false);
+    }
+}
+
+function checkRegisterDuplicateRealtime() {
+    const uidVal = (document.getElementById('regUserId')?.value || '').trim().toLowerCase();
+    const emailVal = (document.getElementById('regEmail')?.value || '').trim().toLowerCase();
+
+    const isUidDup = !!uidVal && (db.Users || []).some(u => String(u.UserID || '').trim().toLowerCase() === uidVal);
+    const isEmailDup = !!emailVal && (db.Users || []).some(u => String(u.Email || '').trim().toLowerCase() === emailVal);
+
+    const uidHint = document.getElementById('regUserIdDupHint');
+    const emailHint = document.getElementById('regEmailDupHint');
+    const submitBtn = document.getElementById('btnRegisterSubmit');
+
+    if (uidHint) uidHint.classList.toggle('hidden', !isUidDup);
+    if (emailHint) emailHint.classList.toggle('hidden', !isEmailDup);
+
+    const hasAnyDup = isUidDup || isEmailDup;
+    if (submitBtn) {
+        submitBtn.disabled = hasAnyDup;
+        submitBtn.classList.toggle('opacity-50', hasAnyDup);
+        submitBtn.classList.toggle('cursor-not-allowed', hasAnyDup);
+    }
+    return { isUidDup, isEmailDup };
 }
 
 function togglePasswordVisibility() {
@@ -1523,54 +1551,44 @@ function handleLoginSubmit(e) {
         launchPlatform();
     }
 }
-
-document.getElementById('loginForm')?.addEventListener('submit', handleLoginSubmit);
-
-function promptOneTimeProfessionSelect() {
-    Swal.fire({
-        title: 'เลือกสายวิชาชีพของคุณ (เลือกได้เพียงครั้งเดียว)',
-        html: `
-            <p class="text-xs text-slate-500 mb-3">ระบบจะคัดกรองเนื้อหาบทเรียนและข้อสอบให้ตรงกับสายวิชาชีพของคุณ<br><span class="text-rose-600 font-bold">* เมื่อยืนยันแล้วจะไม่สามารถเปลี่ยนเองได้ หากต้องการแก้ไขภายหลังต้องส่งคำขอถึง Admin</span></p>
-            <select id="swalOneTimeProf" class="w-full px-3 py-2.5 rounded-xl border text-sm">
-                ${(db.Professions || []).map(p => `<option value="${sanitizeHTML(p)}">${sanitizeHTML(p)}</option>`).join('')}
-            </select>
-        `,
-        allowOutsideClick: false,
-        confirmButtonText: 'ยืนยันสายวิชาชีพ',
-        confirmButtonColor: '#2563eb'
-    }).then(res => {
-        if (res.isConfirmed) {
-            const chosen = document.getElementById('swalOneTimeProf').value;
-            currentUser.Profession = chosen;
-            const idx = db.Users.findIndex(u => u.UserID === currentUser.UserID);
-            if (idx > -1) db.Users[idx].Profession = chosen;
-            saveDB();
-            pushRecordToGoogleSheet('saveUser', currentUser);
-            sessionStorage.setItem('edulearn_hospital_session', JSON.stringify(currentUser));
-            launchPlatform();
-        }
-    });
-}
-
-document.getElementById('registerForm').addEventListener('submit', (e) => {
+document.getElementById('registerForm').addEventListener('submit', async (e) => {
     e.preventDefault();
-    const uid = document.getElementById('regUserId').value.trim().toUpperCase();
+    const rawUid = document.getElementById('regUserId').value.trim();
     const pass = document.getElementById('regPass').value.trim();
     const name = document.getElementById('regFullName').value.trim();
     const email = document.getElementById('regEmail').value.trim();
-    const tgChatId = (document.getElementById('regTelegramChatId')?.value || '').trim();
     const dept = document.getElementById('regDepartment').value;
     const prof = document.getElementById('regProfession').value;
     const q = document.getElementById('regSecQuestion').value;
     const ans = document.getElementById('regSecAnswer').value.trim();
 
-    if (db.Users.some(u => u.UserID.toUpperCase() === uid || u.Email.toLowerCase() === email.toLowerCase())) {
-        Swal.fire('ข้อมูลซ้ำในระบบ', 'รหัสพนักงานหรืออีเมลนี้ถูกลงทะเบียนไว้แล้ว', 'error');
+    if (!rawUid || !pass || !name || !email) {
+        Swal.fire('ข้อมูลไม่ครบถ้วน', 'กรุณากรอกข้อมูลที่มีเครื่องหมาย * ให้ครบถ้วน', 'warning');
+        return;
+    }
+
+    await syncAllDataWithGoogleSheet(false);
+
+    const dupUserById = (db.Users || []).find(u => String(u.UserID || '').trim().toLowerCase() === rawUid.toLowerCase());
+    const dupUserByEmail = (db.Users || []).find(u => String(u.Email || '').trim().toLowerCase() === email.toLowerCase());
+
+    if (dupUserById || dupUserByEmail) {
+        checkRegisterDuplicateRealtime();
+        const dupReasons = [];
+        if (dupUserById) dupReasons.push(`• ชื่อผู้ใช้ / รหัสพนักงาน "<b>${sanitizeHTML(rawUid)}</b>" มีผู้ใช้งานแล้ว`);
+        if (dupUserByEmail) dupReasons.push(`• อีเมล "<b>${sanitizeHTML(email)}</b>" ถูกลงทะเบียนไว้แล้ว`);
+        Swal.fire({
+            icon: 'warning',
+            title: 'ข้อมูลซ้ำในระบบ กรุณาแก้ไขข้อมูล',
+            html: `<div class="text-left text-xs space-y-1.5 text-slate-700">${dupReasons.join('<br>')}<div class="pt-2 text-blue-700 font-semibold">กรุณาเปลี่ยนชื่อผู้ใช้หรืออีเมลใหม่ แล้วลองลงทะเบียนอีกครั้งครับ</div></div>`,
+            confirmButtonText: 'แก้ไขข้อมูล',
+            confirmButtonColor: '#2563eb'
+        });
         return;
     }
 
     const newUser = {
-        UserID: uid,
+        UserID: rawUid,
         FullName: name,
         Email: email,
         TelegramChatId: '',
@@ -1585,9 +1603,20 @@ document.getElementById('registerForm').addEventListener('submit', (e) => {
         LastLogin: getNowThai()
     };
 
+    const serverRes = await pushRecordToGoogleSheet('registerUser', newUser);
+    if (serverRes && serverRes.status === 'error') {
+        Swal.fire({
+            icon: 'warning',
+            title: 'ข้อมูลซ้ำในระบบ กรุณาแก้ไขข้อมูล',
+            text: serverRes.message || 'ชื่อผู้ใช้หรืออีเมลซ้ำในระบบ กรุณาแก้ไขข้อมูลใหม่',
+            confirmButtonText: 'แก้ไขข้อมูล',
+            confirmButtonColor: '#2563eb'
+        });
+        return;
+    }
+
     db.Users.push(newUser);
     saveDB();
-    pushRecordToGoogleSheet('saveUser', newUser);
 
     Swal.fire({
         icon: 'success',
@@ -1595,7 +1624,8 @@ document.getElementById('registerForm').addEventListener('submit', (e) => {
         text: `ยินดีต้อนรับคุณ ${name} (${prof}) บันทึกลง Google Sheets เรียบร้อย สามารถเข้าสู่ระบบได้ทันที`,
         confirmButtonColor: '#059669'
     }).then(() => {
-        document.getElementById('loginIdentity').value = email;
+        document.getElementById('registerForm').reset();
+        document.getElementById('loginIdentity').value = rawUid;
         switchAuthView('login');
     });
 });
