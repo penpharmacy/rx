@@ -37,6 +37,7 @@
             --app-font: 'Noto Sans Thai', sans-serif;
             --app-font-scale: 100%;
             --app-card-radius: 1.5rem;
+            --app-primary-btn: #2563eb;
         }
         body {
             font-family: var(--app-font);
@@ -45,7 +46,7 @@
         }
         .sidebar-link { transition: all 0.2s ease; }
         .sidebar-link.active {
-            background: linear-gradient(90deg, #1e3a8a 0%, #2563eb 100%);
+            background: linear-gradient(90deg, var(--app-sidebar-from, #1e3a8a) 0%, var(--app-sidebar-to, #2563eb) 100%);
             color: #ffffff !important;
             box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
         }
@@ -56,15 +57,16 @@
         .dark ::-webkit-scrollbar-thumb { background: #475569; }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800 dark:bg-slate-900 dark:text-slate-100 min-h-screen flex flex-col">
+<body id="appBodyRoot" class="bg-slate-50 text-slate-800 dark:bg-slate-900 dark:text-slate-100 min-h-screen flex flex-col">
 
 <!-- ==================== 1. หน้าเข้าสู่ระบบ / ลงทะเบียน ==================== -->
-<div id="authScreen" class="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-blue-600 via-blue-500 to-indigo-600 transition-all">
+<div id="authScreen" class="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-blue-600 via-blue-500 to-indigo-600 transition-all bg-cover bg-center">
     <div id="authCard" class="max-w-md w-full bg-white dark:bg-slate-800 rounded-3xl shadow-2xl p-6 sm:p-8 animate__animated animate__fadeInUp">
         <!-- Logo & Title -->
         <div class="text-center mb-6">
-            <div class="w-16 h-16 rounded-2xl bg-blue-50 dark:bg-slate-700 text-blue-600 flex items-center justify-center mx-auto mb-3 shadow-inner">
+            <div id="authLogoBox" class="w-16 h-16 rounded-2xl bg-blue-50 dark:bg-slate-700 text-blue-600 flex items-center justify-center mx-auto mb-3 shadow-inner overflow-hidden">
                 <i id="authLogoIcon" class="fa-solid fa-capsules text-3xl"></i>
+                <img id="authLogoImg" src="" class="hidden w-full h-full object-cover" alt="Logo">
             </div>
             <h1 id="authMainTitle" class="text-2xl font-extrabold text-blue-600 dark:text-blue-400">E-Learning Pharmacy</h1>
             <p id="authSubTitle" class="text-xs text-slate-500 dark:text-slate-400 mt-1">เข้าสู่ระบบเพื่อเริ่มการเรียนรู้</p>
@@ -90,15 +92,15 @@
                     </div>
                 </div>
                 <button type="submit" id="btnLoginSubmit" class="w-full py-3 rounded-xl bg-blue-800 hover:bg-blue-900 text-white font-bold text-sm shadow-lg shadow-blue-800/25 transition flex items-center justify-center gap-2">
-                    <i class="fa-solid fa-right-to-bracket"></i> <span id="txtBtnLogin">เข้าสู่ระบบ</span>
+                    <i id="btnLoginIcon" class="fa-solid fa-right-to-bracket"></i> <span id="txtBtnLogin">เข้าสู่ระบบ</span>
                 </button>
             </form>
 
             <div class="pt-4 border-t border-slate-100 dark:border-slate-700 text-center">
                 <div class="text-xs text-slate-500">
-                    ยังไม่มีบัญชีผู้ใช้งาน? 
+                    <span id="txtNoAccountPrompt">ยังไม่มีบัญชีผู้ใช้งาน?</span>
                     <button type="button" id="btnRegisterSwitchLink" onclick="switchAuthView('register')" class="text-blue-600 font-bold hover:underline ml-1">
-                        <i class="fa-solid fa-user-plus"></i> ลงทะเบียนสมาชิกใหม่
+                        <i class="fa-solid fa-user-plus"></i> <span id="txtRegisterLinkLabel">ลงทะเบียนสมาชิกใหม่</span>
                     </button>
                 </div>
             </div>
@@ -163,8 +165,9 @@
             <button onclick="toggleMobileSidebar()" class="lg:hidden p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700">
                 <i class="fa-solid fa-bars text-lg"></i>
             </button>
-            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-900 to-blue-500 text-white flex items-center justify-center shadow">
-                <i class="fa-solid fa-capsules"></i>
+            <div id="navBrandLogoBox" class="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-900 to-blue-500 text-white flex items-center justify-center shadow overflow-hidden">
+                <i id="navBrandLogoIcon" class="fa-solid fa-capsules"></i>
+                <img id="navBrandLogoImg" src="" class="hidden w-full h-full object-cover" alt="Brand">
             </div>
             <div>
                 <div id="navBrandTitle" class="font-bold text-blue-900 dark:text-white leading-tight">E-Learning Pharmacy</div>
@@ -229,12 +232,12 @@
     <div class="flex-1 flex overflow-hidden">
         <aside id="sidebarPanel" class="fixed lg:static inset-y-0 left-0 z-20 w-64 bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 p-4 flex flex-col justify-between transform -translate-x-full lg:translate-x-0 transition-transform duration-300 overflow-y-auto">
             <div class="space-y-1 mt-12 lg:mt-0" id="sidebarMenuContainer"></div>
-            <div class="mt-6 p-3.5 rounded-2xl bg-gradient-to-br from-blue-900 to-blue-700 text-white text-xs space-y-1.5">
+            <div id="sidebarFooterBanner" class="mt-6 p-3.5 rounded-2xl bg-gradient-to-br from-blue-900 to-blue-700 text-white text-xs space-y-1.5">
                 <div class="flex items-center justify-between">
-                    <span class="font-bold"><i class="fa-brands fa-telegram text-sky-300 mr-1"></i> Telegram & Sheets</span>
+                    <span id="sidebarFooterTitle" class="font-bold"><i class="fa-brands fa-telegram text-sky-300 mr-1"></i> Telegram & Sheets</span>
                     <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
                 </div>
-                <p class="text-blue-100 text-[11px]">เชื่อมต่อ Google Sheets และส่งเกียรติบัตร PDF เข้า Telegram อัตโนมัติ</p>
+                <p id="sidebarFooterDesc" class="text-blue-100 text-[11px]">เชื่อมต่อ Google Sheets และส่งเกียรติบัตร PDF เข้า Telegram อัตโนมัติ</p>
             </div>
         </aside>
 
@@ -283,16 +286,19 @@
                 </div>
             </div>
             <div>
-                <label class="font-semibold block mb-1 text-xs">รูปปกคอร์สเรียน (ใส่ URL หรืออัปโหลดไฟล์)</label>
+                <label class="font-semibold block mb-1 text-xs">รูปปกคอร์สเรียน (ใส่ URL หรืออัปโหลดไฟล์ — อัปเดตทุกเครื่องอัตโนมัติ)</label>
                 <div class="flex gap-2">
-                    <input type="text" id="fmCourseCover" placeholder="https://..." class="flex-1 px-3 py-2 rounded-xl border dark:border-slate-700 dark:bg-slate-900 text-xs">
-                    <label class="px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-700 text-xs font-semibold cursor-pointer hover:bg-slate-200">
+                    <input type="text" id="fmCourseCover" oninput="updateImgPreview('fmCourseCover', 'fmCourseCoverPreview')" placeholder="https://..." class="flex-1 px-3 py-2 rounded-xl border dark:border-slate-700 dark:bg-slate-900 text-xs">
+                    <label class="px-3 py-2 rounded-xl bg-blue-50 text-blue-700 dark:bg-slate-700 dark:text-blue-300 text-xs font-semibold cursor-pointer hover:bg-blue-100 shrink-0">
                         <i class="fa-solid fa-upload"></i> อัปโหลด
-                        <input type="file" accept="image/*" class="hidden" onchange="importFileToInput(this, 'fmCourseCover')">
+                        <input type="file" accept="image/*" class="hidden" onchange="importCourseCoverFile(this)">
                     </label>
-                    <button type="button" onclick="clearInputField('fmCourseCover')" class="px-2.5 py-2 rounded-xl bg-rose-50 text-rose-600 text-xs font-semibold hover:bg-rose-100" title="ลบรูปปก">
+                    <button type="button" onclick="clearInputField('fmCourseCover', 'fmCourseCoverPreview')" class="px-2.5 py-2 rounded-xl bg-rose-50 text-rose-600 text-xs font-semibold hover:bg-rose-100 shrink-0" title="ลบรูปปก">
                         <i class="fa-solid fa-trash-can"></i>
                     </button>
+                </div>
+                <div class="mt-2">
+                    <img id="fmCourseCoverPreview" src="" class="hidden w-full h-32 object-cover rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm" alt="ตัวอย่างรูปปกคอร์ส">
                 </div>
             </div>
             <div class="flex justify-end gap-2 pt-3">
@@ -574,13 +580,14 @@
         </div>
     </div>
 </div>
-  <script>
+
+<script>
 /**
  * ============================================================================
  * E-LEARNING PHARMACY - FULL ENTERPRISE SPA CONTROLLER + GOOGLE SHEETS SYNC
  * ============================================================================
  */
-const DEFAULT_GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw5iwnqDqcXE_K3J9GtD7EVZ6FCZSp4fB3iHtzYUVOj6yo8qzGGsPKniG3P9rsmqoZJ-g/exec";
+const DEFAULT_GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzh45VAghZdA_a-gzYH81iZM8VymH4JeM0f8bhsMfpm2gJd3ZKIICe2SuXN8eZmlyhf6Q/exec";
 
 function getGasUrl() {
     return (db && db.SiteThemeSettings && db.SiteThemeSettings.gasWebAppUrl) || DEFAULT_GAS_WEB_APP_URL;
@@ -628,18 +635,41 @@ const initialDatabase = {
         lblLoginIdentity: "ชื่อผู้ใช้ หรือ อีเมล",
         lblLoginPassword: "รหัสผ่าน",
         txtBtnLogin: "เข้าสู่ระบบ",
+        txtNoAccountPrompt: "ยังไม่มีบัญชีผู้ใช้งาน?",
+        txtRegisterLinkLabel: "ลงทะเบียนสมาชิกใหม่",
         authBgFrom: "#2563eb",
         authBgVia: "#3b82f6",
         authBgTo: "#4f46e5",
+        authBgImage: "",
         authBtnColor: "#1e40af",
+        authLogoIcon: "fa-capsules",
+        authLogoImage: "",
         navBrandTitle: "E-Learning Pharmacy",
         navBrandSub: "Hospital Digital Training Platform",
+        navBrandLogoIcon: "fa-capsules",
+        navBrandLogoImage: "",
+        appBgColor: "#f8fafc",
+        appBgImage: "",
+        cardBgColor: "#ffffff",
+        navbarBgColor: "#ffffff",
+        sidebarBgColor: "#ffffff",
+        primaryActionColor: "#2563eb",
+        sidebarFromColor: "#1e3a8a",
+        sidebarToColor: "#2563eb",
+        sidebarFooterTitle: "Telegram & Sheets",
+        sidebarFooterDesc: "เชื่อมต่อ Google Sheets และส่งเกียรติบัตร PDF เข้า Telegram อัตโนมัติ",
         classroomTitle: "คอร์สเรียนและบทเรียนออนไลน์",
         classroomSubtitle: "เลือกคอร์สตามสายวิชาชีพเพื่อศึกษาเนื้อหา วิดีโอ และทำแบบทดสอบ",
         classroomBgColor: "#f8fafc",
         classroomBgImage: "",
         classroomTextColor: "#1e293b",
         classroomTextAlign: "left",
+        certPageTitle: "คลังเกียรติบัตรอิเล็กทรอนิกส์ & ระบบตรวจสอบผลการเรียน/การสอบ",
+        certPageSubtitle: "ตรวจสอบจำนวนผู้สมัคร ผู้เข้าเรียน ผู้สอบผ่าน-ไม่ผ่าน เปรียบเทียบเป้าหมายแยกตามสายวิชาชีพ",
+        leaderboardTitle: "จัดอันดับผู้ทำคะแนนสูงสุด (Leaderboard)",
+        leaderboardSubtitle: "แสดงคะแนนสูงสุดเพียง 1 รายการต่อผู้เรียนในแต่ละรายวิชา พร้อมสรุปจำนวนครั้งที่ทำข้อสอบ",
+        manageCoursesTitle: "ระบบจัดการคอร์สเรียน บทเรียน & ข้อสอบ",
+        manageCoursesSubtitle: "กำหนดสายวิชาชีพได้หลายวิชาชีพต่อคอร์ส/บทเรียน ตั้งค่าห้ามเลื่อนวิดีโอ ออกแบบเกียรติบัตร และสร้างข้อสอบ",
         gasWebAppUrl: DEFAULT_GAS_WEB_APP_URL,
         telegramBotToken: "9280509192:AAE6Ux-E2cQ3yHvoHvBoyJLMxL_wbFW28TE",
         telegramChatId: "127792770"
@@ -732,7 +762,8 @@ if (!db.SavedCertTemplates) db.SavedCertTemplates = [];
 if (!db.SavedCertLogos) db.SavedCertLogos = [];
 if (!db.RolePermissions) db.RolePermissions = JSON.parse(JSON.stringify(initialDatabase.RolePermissions));
 if (!db.UserPermissions) db.UserPermissions = {};
-if (!db.UIOverrides) db.UIOverrides = { style: {}, texts: {}, icons: {}, images: {} };
+if (!db.CourseCoverRegistry) db.CourseCoverRegistry = {};
+
 const initAdminAccount = (db.Users || []).find(u => u.UserID === 'admin' || u.Role === 'Admin');
 if (initAdminAccount && (!initAdminAccount.Email || initAdminAccount.Email === 'penpharmacy@gmail.com')) {
     initAdminAccount.Email = 'penpharmacypp@gmail.com';
@@ -812,6 +843,21 @@ let activeQuizTimer = null;
 let dashboardChartInstances = [];
 let profAuditChartInstance = null;
 
+function resolveCourseCoverImage(course) {
+    if (!course) return 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=600&q=80';
+    const regCover = db.CourseCoverRegistry && db.CourseCoverRegistry[course.CourseID];
+    return regCover || course.CoverImage || 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=600&q=80';
+}
+
+function applyCourseCoverRegistryToCourses() {
+    if (!db.CourseCoverRegistry || !Array.isArray(db.Courses)) return;
+    db.Courses.forEach(c => {
+        if (db.CourseCoverRegistry[c.CourseID]) {
+            c.CoverImage = db.CourseCoverRegistry[c.CourseID];
+        }
+    });
+}
+
 // ==================== GOOGLE SHEETS REAL-TIME SYNC ENGINE ====================
 async function pushRecordToGoogleSheet(actionName, payloadObj) {
     const url = getGasUrl();
@@ -859,6 +905,7 @@ async function syncAllDataWithGoogleSheet(showToast = false) {
             if (Array.isArray(remote.Certificates)) db.Certificates = remote.Certificates;
             if (Array.isArray(remote.Notifications) && remote.Notifications.length > 0) db.Notifications = remote.Notifications;
             applyRemoteGlobalSettings(remote);
+            applyCourseCoverRegistryToCourses();
             applyDeletedRegistryFilter();
             saveDB();
             applyGlobalSiteTheme();
@@ -970,40 +1017,6 @@ function compressImageDataUrl(rawDataUrl, maxWidth = 850, quality = 0.8) {
     });
 }
 
-async function compressImageToMaxChars(dataUrl, maxChars = 40000) {
-    if (!dataUrl || !dataUrl.startsWith('data:image') || dataUrl.length <= maxChars) return dataUrl;
-    let w = 640, q = 0.7, out = dataUrl;
-    for (let i = 0; i < 8; i++) {
-        out = await new Promise(res => {
-            const img = new Image();
-            img.onload = () => {
-                const sc = Math.min(1, w / img.width);
-                const c = document.createElement('canvas');
-                c.width = Math.round(img.width * sc); c.height = Math.round(img.height * sc);
-                const x = c.getContext('2d');
-                x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height);
-                x.drawImage(img, 0, 0, c.width, c.height);
-                res(c.toDataURL('image/jpeg', q));
-            };
-            img.onerror = () => res(dataUrl);
-            img.src = dataUrl;
-        });
-        if (out.length <= maxChars) return out;
-        w = Math.round(w * 0.8); q = Math.max(0.4, q - 0.08);
-    }
-    return out;
-}
-function importCourseCover(inp) {
-    const f = inp.files[0]; if (!f) return;
-    const r = new FileReader();
-    r.onload = async () => {
-        document.getElementById('fmCourseCover').value = await compressImageToMaxChars(r.result, 40000);
-        inp.value = '';
-        showNonBlockingToast('นำเข้ารูปปกสำเร็จ', 'success');
-    };
-    r.readAsDataURL(f);
-}
-    
 function clearInputField(targetInputId, previewImgId = null) {
     const el = document.getElementById(targetInputId);
     if (el) {
@@ -1093,6 +1106,23 @@ function importFileToInput(fileInput, targetInputId) {
         }
         fileInput.value = '';
         showNonBlockingToast(`นำเข้าไฟล์ "${file.name}" สำเร็จ`, 'success');
+    };
+    reader.readAsDataURL(file);
+}
+
+function importCourseCoverFile(fileInput) {
+    const file = fileInput.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async () => {
+        const compressed = await compressImageDataUrl(reader.result, 700, 0.78);
+        const inp = document.getElementById('fmCourseCover');
+        if (inp) {
+            inp.value = compressed;
+            updateImgPreview('fmCourseCover', 'fmCourseCoverPreview');
+        }
+        fileInput.value = '';
+        showNonBlockingToast(`อัปโหลดรูปปก "${file.name}" สำเร็จ พร้อมซิงก์ทุกเครื่อง`, 'success');
     };
     reader.readAsDataURL(file);
 }
@@ -1194,20 +1224,65 @@ function applyGlobalSiteTheme() {
     document.documentElement.style.setProperty('--app-font', t.fontFamily);
     document.documentElement.style.setProperty('--app-font-scale', t.fontScale);
     document.documentElement.style.setProperty('--app-card-radius', t.cardRadius);
+    document.documentElement.style.setProperty('--app-sidebar-from', t.sidebarFromColor || '#1e3a8a');
+    document.documentElement.style.setProperty('--app-sidebar-to', t.sidebarToColor || '#2563eb');
+
+    const bodyRoot = document.getElementById('appBodyRoot');
+    if (bodyRoot && !document.documentElement.classList.contains('dark')) {
+        if (t.appBgImage) {
+            bodyRoot.style.backgroundImage = `url('${t.appBgImage}')`;
+            bodyRoot.style.backgroundSize = 'cover';
+            bodyRoot.style.backgroundAttachment = 'fixed';
+        } else {
+            bodyRoot.style.backgroundImage = '';
+            bodyRoot.style.backgroundColor = t.appBgColor || '#f8fafc';
+        }
+    }
+
+    const topNavbar = document.getElementById('topNavbar');
+    if (topNavbar && !document.documentElement.classList.contains('dark') && t.navbarBgColor) {
+        topNavbar.style.backgroundColor = t.navbarBgColor;
+    }
+    const sidebarPanel = document.getElementById('sidebarPanel');
+    if (sidebarPanel && !document.documentElement.classList.contains('dark') && t.sidebarBgColor) {
+        sidebarPanel.style.backgroundColor = t.sidebarBgColor;
+    }
+
+    let dynamicThemeTag = document.getElementById('dynamicAdminThemeStyles');
+    if (!dynamicThemeTag) {
+        dynamicThemeTag = document.createElement('style');
+        dynamicThemeTag.id = 'dynamicAdminThemeStyles';
+        document.head.appendChild(dynamicThemeTag);
+    }
+    dynamicThemeTag.textContent = `
+        html:not(.dark) .custom-card { background-color: ${t.cardBgColor || '#ffffff'} !important; }
+    `;
 
     const authScreen = document.getElementById('authScreen');
     if (authScreen) {
-        const bgTo = t.authBgTo || t.authBgVia || t.authBgFrom;
-        authScreen.style.background = `linear-gradient(135deg, ${t.authBgFrom}, ${t.authBgVia}, ${bgTo})`;
+        if (t.authBgImage) {
+            authScreen.style.background = `linear-gradient(135deg, ${t.authBgFrom}cc, ${t.authBgVia}cc), url('${t.authBgImage}') center/cover no-repeat`;
+        } else {
+            const bgTo = t.authBgTo || t.authBgVia || t.authBgFrom;
+            authScreen.style.background = `linear-gradient(135deg, ${t.authBgFrom}, ${t.authBgVia}, ${bgTo})`;
+        }
     }
-    const setText = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+    const setText = (id, val) => { const el = document.getElementById(id); if (el && val !== undefined) el.textContent = val; };
     setText('authMainTitle', t.authMainTitle);
     setText('authSubTitle', t.authSubTitle);
     setText('lblLoginIdentity', t.lblLoginIdentity);
     setText('lblLoginPassword', t.lblLoginPassword);
     setText('txtBtnLogin', t.txtBtnLogin);
+    setText('txtNoAccountPrompt', t.txtNoAccountPrompt || 'ยังไม่มีบัญชีผู้ใช้งาน?');
+    setText('txtRegisterLinkLabel', t.txtRegisterLinkLabel || 'ลงทะเบียนสมาชิกใหม่');
     setText('navBrandTitle', t.navBrandTitle);
     setText('navBrandSub', t.navBrandSub);
+    setText('sidebarFooterDesc', t.sidebarFooterDesc || 'เชื่อมต่อ Google Sheets และส่งเกียรติบัตร PDF เข้า Telegram อัตโนมัติ');
+
+    const sbFooterTitle = document.getElementById('sidebarFooterTitle');
+    if (sbFooterTitle) {
+        sbFooterTitle.innerHTML = `<i class="fa-brands fa-telegram text-sky-300 mr-1"></i> ${sanitizeHTML(t.sidebarFooterTitle || 'Telegram & Sheets')}`;
+    }
 
     const accentColor = t.authBtnColor || '#1e40af';
     const btnLogin = document.getElementById('btnLoginSubmit');
@@ -1217,16 +1292,49 @@ function applyGlobalSiteTheme() {
     }
     const authTitle = document.getElementById('authMainTitle');
     if (authTitle) authTitle.style.color = accentColor;
+
     const authLogoIcon = document.getElementById('authLogoIcon');
-    if (authLogoIcon) {
-        authLogoIcon.style.color = accentColor;
-        if (authLogoIcon.parentElement) authLogoIcon.parentElement.style.backgroundColor = `${accentColor}15`;
+    const authLogoImg = document.getElementById('authLogoImg');
+    if (authLogoIcon && authLogoImg) {
+        if (t.authLogoImage) {
+            authLogoImg.src = t.authLogoImage;
+            authLogoImg.classList.remove('hidden');
+            authLogoIcon.classList.add('hidden');
+        } else {
+            authLogoImg.classList.add('hidden');
+            authLogoIcon.classList.remove('hidden');
+            authLogoIcon.className = `fa-solid ${t.authLogoIcon || 'fa-capsules'} text-3xl`;
+            authLogoIcon.style.color = accentColor;
+            if (authLogoIcon.parentElement) authLogoIcon.parentElement.style.backgroundColor = `${accentColor}15`;
+        }
     }
+
+    const navLogoIcon = document.getElementById('navBrandLogoIcon');
+    const navLogoImg = document.getElementById('navBrandLogoImg');
+    const navLogoBox = document.getElementById('navBrandLogoBox');
+    if (navLogoIcon && navLogoImg) {
+        if (t.navBrandLogoImage) {
+            navLogoImg.src = t.navBrandLogoImage;
+            navLogoImg.classList.remove('hidden');
+            navLogoIcon.classList.add('hidden');
+        } else {
+            navLogoImg.classList.add('hidden');
+            navLogoIcon.classList.remove('hidden');
+            navLogoIcon.className = `fa-solid ${t.navBrandLogoIcon || 'fa-capsules'}`;
+        }
+    }
+    if (navLogoBox) {
+        navLogoBox.style.background = `linear-gradient(135deg, ${t.sidebarFromColor || '#1e3a8a'}, ${t.sidebarToColor || '#2563eb'})`;
+    }
+    const sbFooterBanner = document.getElementById('sidebarFooterBanner');
+    if (sbFooterBanner) {
+        sbFooterBanner.style.background = `linear-gradient(135deg, ${t.sidebarFromColor || '#1e3a8a'}, ${t.sidebarToColor || '#2563eb'})`;
+    }
+
     const forgotLink = document.getElementById('btnForgotPassLink');
     if (forgotLink) forgotLink.style.color = accentColor;
     const regLink = document.getElementById('btnRegisterSwitchLink');
     if (regLink) regLink.style.color = accentColor;
-    applyUIOverrides();
 }
 
 function populateRegisterDropdowns() {
@@ -1406,7 +1514,7 @@ function openForgotPasswordModal() {
                     <p class="text-slate-500">กรอกอีเมลที่ลงทะเบียนไว้ ระบบจะส่งลิงก์และรหัสยืนยันสำหรับตั้งรหัสผ่านใหม่ไปยังอีเมลของคุณ</p>
                     <div>
                         <label class="font-bold block mb-1">อีเมลที่ลงทะเบียนไว้ *</label>
-                        <input id="fpEmailOnly" type="email" class="w-full px-3 py-2 rounded-xl border" placeholder="เช่น penpharmacypp@gmail.com">
+                        <input id="fpEmailOnly" type="email" class="w-full px-3 py-2 rounded-xl border" placeholder="เช่น you@example.com">
                     </div>
                 </div>
 
@@ -1415,7 +1523,7 @@ function openForgotPasswordModal() {
                     <p class="text-slate-500">ระบุรหัสพนักงานหรืออีเมล และตอบคำถามความปลอดภัยที่จำได้ ระบบจะแจ้งรหัสผ่านที่เคยบันทึกไว้ให้ทราบทันที</p>
                     <div>
                         <label class="font-bold block mb-1">ชื่อผู้ใช้ / รหัสพนักงาน หรือ อีเมล *</label>
-                        <input id="fpIdentity" type="text" class="w-full px-3 py-2 rounded-xl border" placeholder="เช่น admin หรือ penpharmacypp@gmail.com">
+                        <input id="fpIdentity" type="text" class="w-full px-3 py-2 rounded-xl border" placeholder="เช่น admin หรือ you@example.com">
                     </div>
                     <div>
                         <label class="font-bold block mb-1">คำถามความปลอดภัยที่เคยตั้งไว้ *</label>
@@ -1696,7 +1804,7 @@ function renderSidebarMenu() {
         { id: 'adminRegConfig', icon: 'fa-hospital', label: 'จัดการแผนก & วิชาชีพ', perm: 'manageDeptProf' },
         { id: 'manageUsers', icon: 'fa-user-gear', label: 'จัดการผู้ใช้ & สิทธิ์ (Admin)', perm: 'manageUsers' },
         { id: 'adminPermissions', icon: 'fa-key', label: 'กำหนดสิทธิ์การแก้ไข/เพิ่มลด', perm: 'manageUsers' },
-        { id: 'adminThemeSettings', icon: 'fa-font', label: 'ตั้งค่าระบบ / Sheets / Telegram', perm: 'manageTheme' },
+        { id: 'adminThemeSettings', icon: 'fa-palette', label: 'ปรับแต่งเว็บแอป / สี / โลโก้ / Sheets', perm: 'manageTheme' },
         { id: 'adminDB', icon: 'fa-database', label: '🗄️ ฐานข้อมูลเบื้องหลัง (Admin)', perm: 'viewDB' },
         { id: 'systemArchitecture', icon: 'fa-code-branch', label: 'โครงสร้างระบบ (Admin Only)', perm: 'viewDB' }
     ];
@@ -2057,7 +2165,7 @@ function promptManageKpiCards() {
                         <input id="newKpiImage" placeholder="URL รูปภาพการ์ด (เว้นว่างเพื่อใช้ไอคอน)" class="flex-1 px-3 py-1.5 rounded-lg border">
                         <label class="px-3 py-1.5 rounded-lg bg-white border font-semibold cursor-pointer">
                             อัปโหลดรูป
-                            <input type="file" accept="image/*" class="hidden" onchange="importCourseCover(this)">
+                            <input type="file" accept="image/*" class="hidden" onchange="importFileToInput(this, 'newKpiImage')">
                         </label>
                     </div>
                 </div>
@@ -2481,12 +2589,13 @@ function renderClassroomView(container) {
                         const hasPre = db.Quiz.some(q => q.CourseID === course.CourseID && q.Stage === 'PRE');
                         const hasDonePre = db.Scores.some(s => s.StudentID === currentUser.UserID && s.CourseID === course.CourseID && s.Stage === 'PRE');
                         const pct = cLessons.length ? Math.round((doneCount / cLessons.length) * 100) : 0;
+                        const coverImg = resolveCourseCoverImage(course);
 
                         return `
                             <div class="custom-card text-slate-800 dark:text-slate-100 overflow-hidden shadow-sm border border-slate-100 dark:border-slate-700 flex ${clCfg.layoutMode === 'list' ? 'flex-col sm:flex-row' : 'flex-col'} justify-between hover:shadow-xl transition" style="background-color:${clCfg.cardBgColor}">
                                 <div class="${clCfg.layoutMode === 'list' ? 'flex flex-col sm:flex-row flex-1' : ''}">
                                     <div class="${clCfg.layoutMode === 'list' ? 'sm:w-56 h-40 sm:h-auto' : 'h-40'} bg-slate-200 relative shrink-0">
-                                        <img src="${course.CoverImage}" class="w-full h-full object-cover" alt="">
+                                        <img src="${sanitizeHTML(coverImg)}" class="w-full h-full object-cover" alt="">
                                         <span class="absolute top-3 right-3 px-2.5 py-1 rounded-full text-white text-[10px] font-bold ${hasPassedPost ? 'bg-emerald-600' : 'bg-blue-900/85'}">
                                             ${hasPassedPost ? '✓ จบหลักสูตรแล้ว' : `เกณฑ์ผ่าน ${course.PassScore}%`}
                                         </span>
@@ -3300,8 +3409,8 @@ function renderCertificatesView(container) {
     container.innerHTML = `
         <div class="flex flex-wrap justify-between items-center gap-3">
             <div>
-                <h2 class="text-2xl font-bold text-blue-900 dark:text-white"><i class="fa-solid fa-award text-amber-500 mr-2"></i>คลังเกียรติบัตรอิเล็กทรอนิกส์ & ระบบตรวจสอบผลการเรียน/การสอบ</h2>
-                <p class="text-xs text-slate-500">ตรวจสอบจำนวนผู้สมัคร ผู้เข้าเรียน ผู้สอบผ่าน-ไม่ผ่าน เปรียบเทียบเป้าหมายแยกตามสายวิชาชีพ</p>
+                <h2 class="text-2xl font-bold text-blue-900 dark:text-white"><i class="fa-solid fa-award text-amber-500 mr-2"></i>${sanitizeHTML(db.SiteThemeSettings?.certPageTitle || 'คลังเกียรติบัตรอิเล็กทรอนิกส์ & ระบบตรวจสอบผลการเรียน/การสอบ')}</h2>
+                <p class="text-xs text-slate-500">${sanitizeHTML(db.SiteThemeSettings?.certPageSubtitle || 'ตรวจสอบจำนวนผู้สมัคร ผู้เข้าเรียน ผู้สอบผ่าน-ไม่ผ่าน เปรียบเทียบเป้าหมายแยกตามสายวิชาชีพ')}</p>
             </div>
             ${isAdmin() ? `
             <button onclick="openProfessionStatsCustomizer()" class="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold shadow flex items-center gap-1.5">
@@ -3918,62 +4027,139 @@ async function shareCertToTelegramAndEmail() {
     const cert = db.Certificates.find(c => c.CertificateID === currentCertId);
     if (!cert) return;
     const stu = db.Users.find(u => u.UserID === cert.StudentID) || currentUser || {};
-    const targetEmail = String(stu.Email || '').trim();
-    const t = db.SiteThemeSettings || {};
-    const botToken = String(t.telegramBotToken || '').trim();
-    const chatId = String(t.telegramChatId || '').trim();
+    const targetEmail = (stu.Email || currentUser?.Email || '').trim();
+    const botToken = (db.SiteThemeSettings.telegramBotToken || '9280509192:AAE6Ux-E2cQ3yHvoHvBoyJLMxL_wbFW28TE').trim();
+    const chatId = (db.SiteThemeSettings.telegramChatId || '127792770').trim();
     const gasUrl = getGasUrl();
 
-    Swal.fire({ title: 'กำลังสร้าง PDF และส่งเกียรติบัตร...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+    Swal.fire({
+        title: 'กำลังสร้างไฟล์เกียรติบัตร PDF และส่งจริง...',
+        text: 'กรุณารอสักครู่ ระบบกำลังส่งไฟล์ไปยัง Telegram และ Email ที่ลงทะเบียนไว้',
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading()
+    });
 
-    let pdfBlob, base64Pdf;
     try {
         const target = document.getElementById('certCanvasSurface') || document.getElementById('certificateRenderBox');
-        const canvas = await html2canvas(target, { useCORS: true, scale: 1.5 });
+        const canvas = await html2canvas(target, { useCORS: true, scale: 2 });
         const { jsPDF } = window.jspdf;
         const pdf = new jsPDF('l', 'mm', 'a4');
         const w = 277, h = Math.min(190, (canvas.height / canvas.width) * w);
-        pdf.addImage(canvas.toDataURL('image/jpeg', 0.92), 'JPEG', 10, 10, w, h);
-        pdfBlob = pdf.output('blob');
-        base64Pdf = pdf.output('datauristring');
-    } catch (err) {
-        Swal.fire('สร้างไฟล์ PDF ไม่สำเร็จ', String(err.message || err), 'error');
-        return;
-    }
+        pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 10, 10, w, h);
+        const base64Pdf = pdf.output('datauristring');
+        const pdfBlob = pdf.output('blob');
 
-    const sendTelegram = async () => {
-        if (!botToken || !chatId) throw new Error('ยังไม่ได้ตั้งค่า Bot Token / Chat ID');
-        const fd = new FormData();
-        fd.append('chat_id', chatId);
-        fd.append('caption', `🎓 เกียรติบัตร ${cert.CertificateID}\nผู้รับ: ${cert.FullName}\nหลักสูตร: ${cert.CourseName}\nคะแนน: ${cert.Score}%\nตรวจสอบ: ${cert.VerifyURL}`);
-        fd.append('document', pdfBlob, `${cert.CertificateID}.pdf`);
-        const r = await fetch(`https://api.telegram.org/bot${botToken}/sendDocument`, { method: 'POST', body: fd });
-        const j = await r.json();
-        if (!j.ok) throw new Error(j.description || 'Telegram ปฏิเสธการส่ง');
-    };
-    const sendMail = async () => {
-        if (!targetEmail.includes('@')) throw new Error('ผู้ใช้ยังไม่มีอีเมลที่ลงทะเบียนไว้');
-        const r = await fetch(gasUrl, {
-            method: 'POST',
-            body: JSON.stringify({ action: 'sendCertEmail', payload: {
-                email: targetEmail, fullName: cert.FullName, courseName: cert.CourseName,
-                certId: cert.CertificateID, verifyUrl: cert.VerifyURL, base64Pdf } })
+        let telegramSentOk = false;
+        let telegramErrorMsg = '';
+        let emailSentOk = false;
+        let emailErrorMsg = '';
+
+        // 1. ส่งเข้า Telegram จริง (ยิงตรงเข้า Telegram Bot API พร้อมแนบไฟล์ PDF จริง + fallback ผ่าน Apps Script)
+        if (botToken && chatId) {
+            const captionText =
+                `🎓 เกียรติบัตรอิเล็กทรอนิกส์ (E-Certificate)\n` +
+                `👤 ผู้ได้รับ: ${cert.FullName}\n` +
+                `📚 หลักสูตร: ${cert.CourseName}\n` +
+                `🏆 คะแนนประเมิน: ${cert.Score}%\n` +
+                `🆔 เลขที่เกียรติบัตร: ${cert.CertificateID}\n` +
+                `📅 วันที่ออก: ${cert.IssueDate}`;
+
+            try {
+                const fd = new FormData();
+                fd.append('chat_id', chatId);
+                fd.append('caption', captionText);
+                fd.append('document', pdfBlob, `${cert.CertificateID}.pdf`);
+
+                const tgRes = await fetch(`https://api.telegram.org/bot${encodeURIComponent(botToken)}/sendDocument`, {
+                    method: 'POST',
+                    body: fd
+                });
+                const tgJson = await tgRes.json();
+                if (tgJson && tgJson.ok) {
+                    telegramSentOk = true;
+                } else {
+                    telegramErrorMsg = tgJson?.description || 'Telegram API error';
+                }
+            } catch (tgDirectErr) {
+                telegramErrorMsg = tgDirectErr.message;
+            }
+
+            if (!telegramSentOk && gasUrl && gasUrl.startsWith('http')) {
+                try {
+                    const gasTgRes = await fetch(gasUrl, {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            action: 'sendTelegramCert',
+                            payload: {
+                                botToken,
+                                chatId,
+                                fullName: cert.FullName,
+                                courseName: cert.CourseName,
+                                score: cert.Score,
+                                certId: cert.CertificateID,
+                                verifyUrl: cert.VerifyURL,
+                                base64Pdf
+                            }
+                        })
+                    });
+                    const gasTgJson = await gasTgRes.json();
+                    if (gasTgJson && gasTgJson.status === 'success') {
+                        telegramSentOk = true;
+                        telegramErrorMsg = '';
+                    }
+                } catch (e2) {}
+            }
+        }
+
+        // 2. ส่งเข้า Email ที่ลงทะเบียนไว้จริง (ผ่าน Google Apps Script MailApp พร้อมแนบไฟล์ PDF)
+        if (targetEmail && targetEmail.includes('@') && gasUrl && gasUrl.startsWith('http')) {
+            try {
+                const emRes = await fetch(gasUrl, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        action: 'sendCertEmail',
+                        payload: {
+                            email: targetEmail,
+                            fullName: cert.FullName,
+                            courseName: cert.CourseName,
+                            score: cert.Score,
+                            certId: cert.CertificateID,
+                            issueDate: cert.IssueDate,
+                            verifyUrl: cert.VerifyURL,
+                            base64Pdf
+                        }
+                    })
+                });
+                const emJson = await emRes.json();
+                if (emJson && emJson.status === 'success') {
+                    emailSentOk = true;
+                } else {
+                    emailErrorMsg = emJson?.message || 'ไม่สามารถส่งอีเมลได้';
+                }
+            } catch (emErr) {
+                emailErrorMsg = emErr.message;
+            }
+        } else if (!targetEmail || !targetEmail.includes('@')) {
+            emailErrorMsg = 'บัญชีผู้ใช้นี้ยังไม่ได้ระบุอีเมลที่ถูกต้อง';
+        }
+
+        const isAnyOk = telegramSentOk || emailSentOk;
+        Swal.fire({
+            icon: isAnyOk ? 'success' : 'warning',
+            title: isAnyOk ? 'ดำเนินการส่งเกียรติบัตรเรียบร้อย!' : 'แจ้งผลการส่งเกียรติบัตร',
+            html: `<div class="text-left text-xs text-slate-600 space-y-2">
+                <div class="p-2.5 rounded-xl ${telegramSentOk ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-amber-50 text-amber-800 border border-amber-200'}">
+                    ✈️ <b>Telegram (${sanitizeHTML(chatId)}):</b> ${telegramSentOk ? 'ส่งไฟล์ PDF เกียรติบัตรเข้า Telegram สำเร็จแล้ว!' : `ส่งไม่สำเร็จ (${sanitizeHTML(telegramErrorMsg || 'ตรวจสอบ Bot Token / Chat ID')})`}
+                </div>
+                <div class="p-2.5 rounded-xl ${emailSentOk ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-amber-50 text-amber-800 border border-amber-200'}">
+                    📧 <b>Email (${sanitizeHTML(targetEmail || '-')}):</b> ${emailSentOk ? 'ส่งไฟล์ PDF เกียรติบัตรไปยังอีเมลที่ลงทะเบียนไว้สำเร็จแล้ว!' : `สถานะ: ${sanitizeHTML(emailErrorMsg || 'กรุณาตรวจสอบการ Deploy Code.gs')}`}
+                </div>
+            </div>`,
+            confirmButtonColor: '#229ED9'
         });
-        const j = await r.json();
-        if (j.status !== 'success') throw new Error(j.message || 'Google Apps Script ส่งอีเมลไม่สำเร็จ (ตรวจสอบว่าเพิ่ม sendCertEmail แล้ว)');
-    };
-
-    const [tg, ml] = await Promise.allSettled([sendTelegram(), sendMail()]);
-    const line = (icon, name, r) => r.status === 'fulfilled'
-        ? `<div>✅ <b>${name}:</b> ส่งสำเร็จ</div>`
-        : `<div class="text-rose-600">❌ <b>${name}:</b> ${sanitizeHTML(r.reason && r.reason.message ? r.reason.message : String(r.reason))}</div>`;
-    const allOk = tg.status === 'fulfilled' && ml.status === 'fulfilled';
-    Swal.fire({
-        icon: allOk ? 'success' : ((tg.status === 'fulfilled' || ml.status === 'fulfilled') ? 'warning' : 'error'),
-        title: allOk ? 'ส่งเกียรติบัตรสำเร็จ' : 'ผลการส่งเกียรติบัตร',
-        html: `<div class="text-xs text-left space-y-1">${line('✈️', 'Telegram', tg)}${line('📧', `Email (${sanitizeHTML(targetEmail || '-')})`, ml)}</div>`,
-        confirmButtonColor: '#229ED9'
-    });
+    } catch (err) {
+        Swal.fire('เกิดข้อผิดพลาด', 'ไม่สามารถสร้างหรือส่งไฟล์ PDF ได้: ' + err.message, 'error');
+    }
 }
 
 // ==================== VIEW 5: LEADERBOARD ====================
@@ -3982,8 +4168,8 @@ function renderLeaderboardView(container) {
     const ranked = getBestPostScoresPerUserCourse();
     container.innerHTML = `
         <div>
-            <h2 class="text-2xl font-bold text-blue-900 dark:text-white"><i class="fa-solid fa-trophy text-amber-400 mr-2"></i>จัดอันดับผู้ทำคะแนนสูงสุด (Leaderboard)</h2>
-            <p class="text-xs text-slate-500">แสดงคะแนนสูงสุดเพียง 1 รายการต่อผู้เรียนในแต่ละรายวิชา พร้อมสรุปจำนวนครั้งที่ทำข้อสอบ</p>
+            <h2 class="text-2xl font-bold text-blue-900 dark:text-white"><i class="fa-solid fa-trophy text-amber-400 mr-2"></i>${sanitizeHTML(db.SiteThemeSettings?.leaderboardTitle || 'จัดอันดับผู้ทำคะแนนสูงสุด (Leaderboard)')}</h2>
+            <p class="text-xs text-slate-500">${sanitizeHTML(db.SiteThemeSettings?.leaderboardSubtitle || 'แสดงคะแนนสูงสุดเพียง 1 รายการต่อผู้เรียนในแต่ละรายวิชา พร้อมสรุปจำนวนครั้งที่ทำข้อสอบ')}</p>
         </div>
         <div class="custom-card bg-white dark:bg-slate-800 overflow-hidden shadow-sm border border-slate-100 dark:border-slate-700">
             <table class="w-full text-left text-xs sm:text-sm">
@@ -4026,8 +4212,8 @@ function renderManageLessonsView(container) {
     container.innerHTML = `
         <div class="flex flex-wrap justify-between items-center gap-3">
             <div>
-                <h2 class="text-2xl font-bold text-blue-900 dark:text-white"><i class="fa-solid fa-folder-plus mr-2 text-blue-600"></i>ระบบจัดการคอร์สเรียน บทเรียน & ข้อสอบ</h2>
-                <p class="text-xs text-slate-500">กำหนดสายวิชาชีพได้หลายวิชาชีพต่อคอร์ส/บทเรียน ตั้งค่าห้ามเลื่อนวิดีโอ ออกแบบเกียรติบัตร และสร้างข้อสอบ</p>
+                <h2 class="text-2xl font-bold text-blue-900 dark:text-white"><i class="fa-solid fa-folder-plus mr-2 text-blue-600"></i>${sanitizeHTML(db.SiteThemeSettings?.manageCoursesTitle || 'ระบบจัดการคอร์สเรียน บทเรียน & ข้อสอบ')}</h2>
+                <p class="text-xs text-slate-500">${sanitizeHTML(db.SiteThemeSettings?.manageCoursesSubtitle || 'กำหนดสายวิชาชีพได้หลายวิชาชีพต่อคอร์ส/บทเรียน ตั้งค่าห้ามเลื่อนวิดีโอ ออกแบบเกียรติบัตร และสร้างข้อสอบ')}</p>
             </div>
             <div class="flex flex-wrap gap-2">
                 <button onclick="openCourseModal()" class="px-4 py-2.5 rounded-xl bg-blue-800 hover:bg-blue-900 text-white text-xs font-semibold">
@@ -4049,6 +4235,7 @@ function renderManageLessonsView(container) {
                 <table class="w-full text-left text-xs">
                     <thead class="bg-slate-100 dark:bg-slate-700">
                         <tr>
+                            <th class="p-3">รูปปก</th>
                             <th class="p-3">รหัส</th>
                             <th class="p-3">ชื่อรายวิชา</th>
                             <th class="p-3">สายวิชาชีพเป้าหมาย</th>
@@ -4060,6 +4247,7 @@ function renderManageLessonsView(container) {
                     <tbody class="divide-y divide-slate-100 dark:divide-slate-700">
                         ${db.Courses.map(c => `
                             <tr>
+                                <td class="p-3"><img src="${sanitizeHTML(resolveCourseCoverImage(c))}" class="w-14 h-10 object-cover rounded-lg border" alt=""></td>
                                 <td class="p-3 font-mono font-bold">${c.CourseID}</td>
                                 <td class="p-3 font-semibold">${sanitizeHTML(c.CourseName)}</td>
                                 <td class="p-3">
@@ -4080,7 +4268,7 @@ function renderManageLessonsView(container) {
                                     <button onclick="openCourseModal('${c.CourseID}')" class="px-2.5 py-1.5 rounded-lg bg-blue-50 text-blue-600"><i class="fa-solid fa-pen"></i></button>
                                 </td>
                             </tr>
-                        `).join('') || '<tr><td colspan="6" class="p-6 text-center text-slate-400">ยังไม่มีรายวิชา กดปุ่ม "+ สร้างคอร์สใหม่" ด้านบนเพื่อเริ่มต้น</td></tr>'}
+                        `).join('') || '<tr><td colspan="7" class="p-6 text-center text-slate-400">ยังไม่มีรายวิชา กดปุ่ม "+ สร้างคอร์สใหม่" ด้านบนเพื่อเริ่มต้น</td></tr>'}
                     </tbody>
                 </table>
             </div>
@@ -4185,6 +4373,7 @@ function renderProfessionCheckboxes(containerId, selectedList = ['ALL'], chkClas
 function openCourseModal(courseId = null) {
     document.getElementById('courseForm').reset();
     document.getElementById('fmCourseId').value = '';
+    clearInputField('fmCourseCover', 'fmCourseCoverPreview');
     let selectedProfs = ['ALL'];
     if (courseId) {
         const c = db.Courses.find(x => x.CourseID === courseId);
@@ -4195,7 +4384,8 @@ function openCourseModal(courseId = null) {
             document.getElementById('fmCoursePass').value = c.PassScore;
             document.getElementById('fmCourseTotalLessons').value = c.TotalLessons;
             document.getElementById('fmCourseStatus').value = c.Status;
-            document.getElementById('fmCourseCover').value = c.CoverImage;
+            document.getElementById('fmCourseCover').value = resolveCourseCoverImage(c);
+            updateImgPreview('fmCourseCover', 'fmCourseCoverPreview');
             selectedProfs = c.Professions || ['ALL'];
         }
     }
@@ -4203,38 +4393,48 @@ function openCourseModal(courseId = null) {
     document.getElementById('courseModal').classList.remove('hidden');
 }
 
-document.getElementById('courseForm').addEventListener('submit', async (e) => {
+document.getElementById('courseForm').addEventListener('submit', (e) => {
     e.preventDefault();
     const id = document.getElementById('fmCourseId').value;
     const pickedProfs = [...document.querySelectorAll('.courseProfChk:checked')].map(x => x.value);
-    let cover = document.getElementById('fmCourseCover').value.trim();
-    if (cover.startsWith('data:image')) cover = await compressImageToMaxChars(cover, 40000);
+    const finalProfs = pickedProfs.length ? pickedProfs : ['ALL'];
+    const courseIdFinal = id || ('CRS' + String(Date.now()).slice(-4));
+    const finalCoverUrl = document.getElementById('fmCourseCover').value.trim() || 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=600&q=80';
 
     const payload = {
-        CourseID: id || ('CRS' + String(Date.now()).slice(-4)),
+        CourseID: courseIdFinal,
         CourseName: document.getElementById('fmCourseName').value.trim(),
-        Professions: pickedProfs.length ? pickedProfs : ['ALL'],
+        Professions: finalProfs,
         Description: document.getElementById('fmCourseDesc').value.trim(),
         Teacher: currentUser.FullName,
-        CoverImage: cover || 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=600&q=80',
+        CoverImage: finalCoverUrl,
         PassScore: Number(document.getElementById('fmCoursePass').value) || 70,
         TotalLessons: Number(document.getElementById('fmCourseTotalLessons').value) || 2,
         CreateDate: getNowThai().split(' ')[0],
         Status: document.getElementById('fmCourseStatus').value
     };
-    if (id) { const idx = db.Courses.findIndex(x => x.CourseID === id); if (idx > -1) db.Courses[idx] = payload; }
-    else db.Courses.push(payload);
+
+    if (!db.CourseCoverRegistry) db.CourseCoverRegistry = {};
+    db.CourseCoverRegistry[courseIdFinal] = finalCoverUrl;
+
+    if (id) {
+        const idx = db.Courses.findIndex(x => x.CourseID === id);
+        if (idx > -1) db.Courses[idx] = payload;
+    } else {
+        db.Courses.push(payload);
+    }
+
     saveDB();
+    pushRecordToGoogleSheet('saveCourse', payload);
+    syncCourseCoverToCloud(courseIdFinal, finalCoverUrl);
     closeModal('courseModal');
-
-    const r = await pushRecordToGoogleSheet('saveCourse', payload);
-    if (!r || r.status === 'error') showNonBlockingToast('บันทึกขึ้น Google Sheets ไม่สำเร็จ เครื่องอื่นอาจยังไม่เห็นรูปใหม่', 'error');
-    else showNonBlockingToast('บันทึกคอร์สและซิงก์ทุกเครื่องแล้ว', 'success');
-
     promptAdminCustomNotification(`📚 อัปเดตรายวิชา "${payload.CourseName}" โดย ${payload.Teacher}`, 'ALL', () => {
-        saveDB(); renderNotifications(); switchView('manageLessons');
+        saveDB();
+        renderNotifications();
+        switchView('manageLessons');
     });
 });
+
 function toggleCourseStatus(courseId) {
     const c = db.Courses.find(x => x.CourseID === courseId);
     if (!c) return;
@@ -6063,24 +6263,40 @@ function resetDefaultPermissions() {
     Swal.fire({ icon: 'success', title: 'คืนค่าสิทธิ์มาตรฐานเรียบร้อย', timer: 1100, showConfirmButton: false });
 }
 
-// ==================== VIEW 11: GLOBAL TYPOGRAPHY, TEXT, GOOGLE SHEETS & TELEGRAM ====================
+// ==================== VIEW 11: GLOBAL BRANDING, COLORS, ICONS, SHEETS & TELEGRAM ====================
 function renderAdminThemeSettingsView(container) {
     if (!hasPermission('manageTheme')) return;
-    const t = db.SiteThemeSettings;
+    const t = { ...initialDatabase.SiteThemeSettings, ...db.SiteThemeSettings };
+    const iconOptions = [
+        { val: 'fa-capsules', label: 'แคปซูลยา (fa-capsules)' },
+        { val: 'fa-hospital', label: 'โรงพยาบาล (fa-hospital)' },
+        { val: 'fa-user-doctor', label: 'แพทย์/บุคลากร (fa-user-doctor)' },
+        { val: 'fa-prescription-bottle-medical', label: 'ขวดยา (fa-prescription-bottle-medical)' },
+        { val: 'fa-heart-pulse', label: 'ชีพจรสุขภาพ (fa-heart-pulse)' },
+        { val: 'fa-graduation-cap', label: 'การศึกษา (fa-graduation-cap)' },
+        { val: 'fa-shield-virus', label: 'ป้องกันโรค (fa-shield-virus)' }
+    ];
+
     container.innerHTML = `
-        <div class="flex justify-between items-center">
+        <div class="flex flex-wrap justify-between items-center gap-3">
             <div>
-                <h2 class="text-2xl font-bold text-blue-900 dark:text-white"><i class="fa-solid fa-font mr-2 text-blue-600"></i>ตั้งค่าระบบ / Google Sheets / Telegram / ฟอนต์</h2>
-                <p class="text-xs text-slate-500">ปรับเปลี่ยนลิงก์เชื่อมต่อ Google Apps Script, Telegram Bot, ชนิดฟอนต์ และข้อความทุกหน้าต่างได้ทันที</p>
+                <h2 class="text-2xl font-bold text-blue-900 dark:text-white"><i class="fa-solid fa-palette mr-2 text-blue-600"></i>ปรับแต่งเว็บแอป / สี / ข้อความ / โลโก้ / Sheets / Telegram</h2>
+                <p class="text-xs text-slate-500">Admin สามารถแก้ไขสี ข้อความ สีปุ่ม พื้นหลัง รูปภาพ โลโก้ และไอคอนต่างๆ ในเว็บแอปทุกหน้า พร้อมอัปเดตทุกเครื่องอัตโนมัติ</p>
             </div>
-            <button onclick="saveGlobalThemeForm()" class="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow">
-                <i class="fa-solid fa-floppy-disk mr-1"></i> บันทึกการตั้งค่าทั้งหมด
-            </button>
+            <div class="flex gap-2">
+                <button onclick="resetGlobalThemeDefaults()" class="px-4 py-2.5 rounded-xl bg-slate-200 dark:bg-slate-700 text-xs font-semibold">
+                    <i class="fa-solid fa-rotate-left mr-1"></i> คืนค่าธีมเริ่มต้น
+                </button>
+                <button onclick="saveGlobalThemeForm()" class="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow">
+                    <i class="fa-solid fa-floppy-disk mr-1"></i> บันทึกและอัปเดตทุกเครื่องทันที
+                </button>
+            </div>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs">
+            <!-- 1. หน้าเข้าสู่ระบบ (Login Page) -->
             <div class="custom-card bg-white dark:bg-slate-800 p-6 shadow-sm border space-y-3">
-                <h3 class="font-bold text-sm text-blue-900 dark:text-blue-300">1. ฟอนต์หลักและหน้าเข้าสู่ระบบ (Login Page)</h3>
+                <h3 class="font-bold text-sm text-blue-900 dark:text-blue-300">1. หน้าเข้าสู่ระบบ (Login Page — สี ข้อความ พื้นหลัง โลโก้ ไอคอน)</h3>
                 <div class="grid grid-cols-2 gap-2">
                     <div><label class="font-semibold block mb-1">ฟอนต์หลักของเว็บแอป</label>
                         <select id="thFont" class="w-full px-3 py-2 rounded-xl border dark:bg-slate-900">
@@ -6099,27 +6315,135 @@ function renderAdminThemeSettingsView(container) {
                         </select>
                     </div>
                 </div>
-                <div><label class="font-semibold block mb-1">ชื่อระบบหน้า Login</label><input id="thAuthTitle" value="${sanitizeHTML(t.authMainTitle)}" class="w-full px-3 py-2 rounded-xl border dark:bg-slate-900"></div>
-                <div><label class="font-semibold block mb-1">คำบรรยายหน้า Login</label><input id="thAuthSub" value="${sanitizeHTML(t.authSubTitle)}" class="w-full px-3 py-2 rounded-xl border dark:bg-slate-900"></div>
-                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                    <div><label class="block mb-1">สีพื้นหลัง Login 1</label><input type="color" id="thAuthFrom" value="${t.authBgFrom}" class="w-full h-8 cursor-pointer"></div>
-                    <div><label class="block mb-1">สีพื้นหลัง Login 2</label><input type="color" id="thAuthVia" value="${t.authBgVia}" class="w-full h-8 cursor-pointer"></div>
-                    <div><label class="block mb-1">สีพื้นหลัง Login 3</label><input type="color" id="thAuthTo" value="${t.authBgTo || t.authBgVia}" class="w-full h-8 cursor-pointer"></div>
-                    <div><label class="block mb-1">สีปุ่ม & ธีมหน้า Login</label><input type="color" id="thAuthBtn" value="${t.authBtnColor}" class="w-full h-8 cursor-pointer"></div>
-                </div>
-            </div>
-
-            <div class="custom-card bg-white dark:bg-slate-800 p-6 shadow-sm border space-y-3">
-                <h3 class="font-bold text-sm text-blue-900 dark:text-blue-300">2. แถบเมนูและหน้าห้องเรียน (Classroom)</h3>
-                <div><label class="font-semibold block mb-1">ชื่อระบบบน Navbar</label><input id="thNavTitle" value="${sanitizeHTML(t.navBrandTitle)}" class="w-full px-3 py-2 rounded-xl border dark:bg-slate-900"></div>
-                <div><label class="font-semibold block mb-1">หัวข้อหน้าห้องเรียน</label><input id="thClassTitle" value="${sanitizeHTML(t.classroomTitle)}" class="w-full px-3 py-2 rounded-xl border dark:bg-slate-900"></div>
-                <div><label class="font-semibold block mb-1">คำอธิบายหน้าห้องเรียน</label><input id="thClassSub" value="${sanitizeHTML(t.classroomSubtitle)}" class="w-full px-3 py-2 rounded-xl border dark:bg-slate-900"></div>
                 <div class="grid grid-cols-2 gap-2">
-                    <div><label class="block mb-1">สีพื้นหลังห้องเรียน</label><input type="color" id="thClassBg" value="${t.classroomBgColor}" class="w-full h-8"></div>
-                    <div><label class="block mb-1">สีตัวอักษรห้องเรียน</label><input type="color" id="thClassTxt" value="${t.classroomTextColor}" class="w-full h-8"></div>
+                    <div><label class="font-semibold block mb-1">ชื่อระบบหน้า Login</label><input id="thAuthTitle" value="${sanitizeHTML(t.authMainTitle)}" class="w-full px-3 py-2 rounded-xl border dark:bg-slate-900"></div>
+                    <div><label class="font-semibold block mb-1">คำบรรยายหน้า Login</label><input id="thAuthSub" value="${sanitizeHTML(t.authSubTitle)}" class="w-full px-3 py-2 rounded-xl border dark:bg-slate-900"></div>
+                </div>
+                <div class="grid grid-cols-3 gap-2">
+                    <div><label class="font-semibold block mb-1">ป้ายชื่อผู้ใช้</label><input id="thLblId" value="${sanitizeHTML(t.lblLoginIdentity)}" class="w-full px-2.5 py-1.5 rounded-xl border dark:bg-slate-900"></div>
+                    <div><label class="font-semibold block mb-1">ป้ายรหัสผ่าน</label><input id="thLblPass" value="${sanitizeHTML(t.lblLoginPassword)}" class="w-full px-2.5 py-1.5 rounded-xl border dark:bg-slate-900"></div>
+                    <div><label class="font-semibold block mb-1">ข้อความปุ่ม Login</label><input id="thBtnLoginTxt" value="${sanitizeHTML(t.txtBtnLogin)}" class="w-full px-2.5 py-1.5 rounded-xl border dark:bg-slate-900"></div>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div><label class="font-semibold block mb-1">ข้อความชวนสมัครสมาชิก</label><input id="thNoAccTxt" value="${sanitizeHTML(t.txtNoAccountPrompt || 'ยังไม่มีบัญชีผู้ใช้งาน?')}" class="w-full px-2.5 py-1.5 rounded-xl border dark:bg-slate-900"></div>
+                    <div><label class="font-semibold block mb-1">ข้อความปุ่มลงทะเบียน</label><input id="thRegLinkTxt" value="${sanitizeHTML(t.txtRegisterLinkLabel || 'ลงทะเบียนสมาชิกใหม่')}" class="w-full px-2.5 py-1.5 rounded-xl border dark:bg-slate-900"></div>
+                </div>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    <div><label class="block mb-1">สีพื้นหลัง Login 1</label><input type="color" id="thAuthFrom" value="${t.authBgFrom}" class="w-full h-8 cursor-pointer rounded"></div>
+                    <div><label class="block mb-1">สีพื้นหลัง Login 2</label><input type="color" id="thAuthVia" value="${t.authBgVia}" class="w-full h-8 cursor-pointer rounded"></div>
+                    <div><label class="block mb-1">สีพื้นหลัง Login 3</label><input type="color" id="thAuthTo" value="${t.authBgTo || t.authBgVia}" class="w-full h-8 cursor-pointer rounded"></div>
+                    <div><label class="block mb-1">สีปุ่ม & ธีม Login</label><input type="color" id="thAuthBtn" value="${t.authBtnColor}" class="w-full h-8 cursor-pointer rounded"></div>
+                </div>
+                <div>
+                    <label class="font-semibold block mb-1">ภาพพื้นหลังหน้า Login (URL หรืออัปโหลดรูปภาพ)</label>
+                    <div class="flex gap-1.5">
+                        <input id="thAuthBgImg" value="${sanitizeHTML(t.authBgImage || '')}" placeholder="วาง URL รูปภาพ หรืออัปโหลด" class="flex-1 px-3 py-1.5 rounded-xl border dark:bg-slate-900">
+                        <label class="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-700 font-semibold cursor-pointer"><i class="fa-solid fa-upload"></i><input type="file" accept="image/*" class="hidden" onchange="importFileToInput(this, 'thAuthBgImg')"></label>
+                        <button type="button" onclick="clearInputField('thAuthBgImg')" class="px-2.5 py-1.5 rounded-xl bg-rose-50 text-rose-600"><i class="fa-solid fa-trash-can"></i></button>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="font-semibold block mb-1">ไอคอนโลโก้หน้า Login</label>
+                        <select id="thAuthLogoIcon" class="w-full px-2.5 py-1.5 rounded-xl border dark:bg-slate-900">
+                            ${iconOptions.map(ic => `<option value="${ic.val}" ${t.authLogoIcon === ic.val ? 'selected' : ''}>${ic.label}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="font-semibold block mb-1">หรือรูปโลโก้หน้า Login</label>
+                        <div class="flex gap-1">
+                            <input id="thAuthLogoImg" value="${sanitizeHTML(t.authLogoImage || '')}" placeholder="URL โลโก้" class="flex-1 px-2 py-1.5 rounded-xl border dark:bg-slate-900">
+                            <label class="px-2.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-700 cursor-pointer"><i class="fa-solid fa-upload"></i><input type="file" accept="image/*" class="hidden" onchange="importFileToInput(this, 'thAuthLogoImg')"></label>
+                            <button type="button" onclick="clearInputField('thAuthLogoImg')" class="px-2 py-1.5 rounded-xl bg-rose-50 text-rose-600"><i class="fa-solid fa-trash-can"></i></button>
+                        </div>
+                    </div>
                 </div>
             </div>
 
+            <!-- 2. แถบเมนู พื้นหลังหลัก การ์ด และห้องเรียน -->
+            <div class="custom-card bg-white dark:bg-slate-800 p-6 shadow-sm border space-y-3">
+                <h3 class="font-bold text-sm text-blue-900 dark:text-blue-300">2. แถบเมนู พื้นหลังหลัก สีการ์ดทุกหน้า และหน้าห้องเรียน</h3>
+                <div class="grid grid-cols-2 gap-2">
+                    <div><label class="font-semibold block mb-1">ชื่อแบรนด์บน Navbar</label><input id="thNavTitle" value="${sanitizeHTML(t.navBrandTitle)}" class="w-full px-3 py-1.5 rounded-xl border dark:bg-slate-900"></div>
+                    <div><label class="font-semibold block mb-1">คำบรรยายใต้แบรนด์</label><input id="thNavSub" value="${sanitizeHTML(t.navBrandSub)}" class="w-full px-3 py-1.5 rounded-xl border dark:bg-slate-900"></div>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="font-semibold block mb-1">ไอคอนโลโก้บน Navbar</label>
+                        <select id="thNavLogoIcon" class="w-full px-2.5 py-1.5 rounded-xl border dark:bg-slate-900">
+                            ${iconOptions.map(ic => `<option value="${ic.val}" ${t.navBrandLogoIcon === ic.val ? 'selected' : ''}>${ic.label}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="font-semibold block mb-1">หรือรูปโลโก้บน Navbar</label>
+                        <div class="flex gap-1">
+                            <input id="thNavLogoImg" value="${sanitizeHTML(t.navBrandLogoImage || '')}" placeholder="URL โลโก้" class="flex-1 px-2 py-1.5 rounded-xl border dark:bg-slate-900">
+                            <label class="px-2.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-700 cursor-pointer"><i class="fa-solid fa-upload"></i><input type="file" accept="image/*" class="hidden" onchange="importFileToInput(this, 'thNavLogoImg')"></label>
+                            <button type="button" onclick="clearInputField('thNavLogoImg')" class="px-2 py-1.5 rounded-xl bg-rose-50 text-rose-600"><i class="fa-solid fa-trash-can"></i></button>
+                        </div>
+                    </div>
+                </div>
+                <div class="grid grid-cols-3 gap-2">
+                    <div><label class="block mb-1">สีเมนูที่เลือก (จาก)</label><input type="color" id="thSideFrom" value="${t.sidebarFromColor || '#1e3a8a'}" class="w-full h-8 cursor-pointer rounded"></div>
+                    <div><label class="block mb-1">สีเมนูที่เลือก (ถึง)</label><input type="color" id="thSideTo" value="${t.sidebarToColor || '#2563eb'}" class="w-full h-8 cursor-pointer rounded"></div>
+                    <div><label class="block mb-1">สีพื้นหลังเว็บแอป</label><input type="color" id="thAppBgCol" value="${t.appBgColor || '#f8fafc'}" class="w-full h-8 cursor-pointer rounded"></div>
+                </div>
+                <div class="grid grid-cols-3 gap-2">
+                    <div><label class="block mb-1">สีพื้นหลังการ์ดทุกหน้า</label><input type="color" id="thCardBgCol" value="${t.cardBgColor || '#ffffff'}" class="w-full h-8 cursor-pointer rounded"></div>
+                    <div><label class="block mb-1">สีแถบด้านบน (Navbar)</label><input type="color" id="thNavBgCol" value="${t.navbarBgColor || '#ffffff'}" class="w-full h-8 cursor-pointer rounded"></div>
+                    <div><label class="block mb-1">สีแถบเมนูซ้าย (Sidebar)</label><input type="color" id="thSideBgCol" value="${t.sidebarBgColor || '#ffffff'}" class="w-full h-8 cursor-pointer rounded"></div>
+                </div>
+                <div>
+                    <label class="font-semibold block mb-1">ภาพพื้นหลังเว็บแอปหลัก (URL หรืออัปโหลด)</label>
+                    <div class="flex gap-1.5">
+                        <input id="thAppBgImg" value="${sanitizeHTML(t.appBgImage || '')}" placeholder="วาง URL รูปภาพพื้นหลังเว็บ" class="flex-1 px-3 py-1.5 rounded-xl border dark:bg-slate-900">
+                        <label class="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-700 font-semibold cursor-pointer"><i class="fa-solid fa-upload"></i><input type="file" accept="image/*" class="hidden" onchange="importFileToInput(this, 'thAppBgImg')"></label>
+                        <button type="button" onclick="clearInputField('thAppBgImg')" class="px-2.5 py-1.5 rounded-xl bg-rose-50 text-rose-600"><i class="fa-solid fa-trash-can"></i></button>
+                    </div>
+                </div>
+                <div class="pt-2 border-t dark:border-slate-700 space-y-2">
+                    <div class="grid grid-cols-2 gap-2">
+                        <div><label class="font-semibold block mb-1">หัวข้อหน้าห้องเรียน</label><input id="thClassTitle" value="${sanitizeHTML(t.classroomTitle)}" class="w-full px-3 py-1.5 rounded-xl border dark:bg-slate-900"></div>
+                        <div><label class="font-semibold block mb-1">คำอธิบายหน้าห้องเรียน</label><input id="thClassSub" value="${sanitizeHTML(t.classroomSubtitle)}" class="w-full px-3 py-1.5 rounded-xl border dark:bg-slate-900"></div>
+                    </div>
+                    <div class="grid grid-cols-3 gap-2">
+                        <div><label class="block mb-1">สีพื้นหลังห้องเรียน</label><input type="color" id="thClassBg" value="${t.classroomBgColor}" class="w-full h-8 rounded"></div>
+                        <div><label class="block mb-1">สีตัวอักษรห้องเรียน</label><input type="color" id="thClassTxt" value="${t.classroomTextColor}" class="w-full h-8 rounded"></div>
+                        <div>
+                            <label class="block mb-1">ภาพพื้นหลังห้องเรียน</label>
+                            <div class="flex gap-1">
+                                <input id="thClassBgImg" value="${sanitizeHTML(t.classroomBgImage || '')}" placeholder="URL รูป" class="flex-1 px-2 py-1 rounded-lg border dark:bg-slate-900">
+                                <label class="px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-700 cursor-pointer"><i class="fa-solid fa-upload"></i><input type="file" accept="image/*" class="hidden" onchange="importFileToInput(this, 'thClassBgImg')"></label>
+                                <button type="button" onclick="clearInputField('thClassBgImg')" class="px-2 py-1 rounded-lg bg-rose-50 text-rose-600"><i class="fa-solid fa-trash-can"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2.5 ข้อความหัวข้อหน้าต่างๆ ในเว็บแอปทุกหน้า -->
+            <div class="md:col-span-2 custom-card bg-white dark:bg-slate-800 p-6 shadow-sm border space-y-3">
+                <h3 class="font-bold text-sm text-indigo-800 dark:text-indigo-300"><i class="fa-solid fa-file-pen mr-1"></i> ปรับแต่งข้อความหัวข้อและคำอธิบายหน้าต่างๆ ในเว็บแอป</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div class="p-3 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border space-y-2">
+                        <div class="font-bold text-blue-800 dark:text-blue-300">หน้าเกียรติบัตร & ตรวจสอบ</div>
+                        <div><label class="block mb-1">หัวข้อหลัก</label><input id="thCertPageTitle" value="${sanitizeHTML(t.certPageTitle || '')}" class="w-full px-2.5 py-1.5 rounded-lg border dark:bg-slate-900"></div>
+                        <div><label class="block mb-1">คำอธิบายย่อย</label><input id="thCertPageSub" value="${sanitizeHTML(t.certPageSubtitle || '')}" class="w-full px-2.5 py-1.5 rounded-lg border dark:bg-slate-900"></div>
+                    </div>
+                    <div class="p-3 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border space-y-2">
+                        <div class="font-bold text-amber-700 dark:text-amber-300">หน้าจัดอันดับคะแนน (Leaderboard)</div>
+                        <div><label class="block mb-1">หัวข้อหลัก</label><input id="thLbTitle" value="${sanitizeHTML(t.leaderboardTitle || '')}" class="w-full px-2.5 py-1.5 rounded-lg border dark:bg-slate-900"></div>
+                        <div><label class="block mb-1">คำอธิบายย่อย</label><input id="thLbSub" value="${sanitizeHTML(t.leaderboardSubtitle || '')}" class="w-full px-2.5 py-1.5 rounded-lg border dark:bg-slate-900"></div>
+                    </div>
+                    <div class="p-3 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border space-y-2">
+                        <div class="font-bold text-emerald-700 dark:text-emerald-300">หน้าจัดการคอร์ส & บทเรียน</div>
+                        <div><label class="block mb-1">หัวข้อหลัก</label><input id="thMcTitle" value="${sanitizeHTML(t.manageCoursesTitle || '')}" class="w-full px-2.5 py-1.5 rounded-lg border dark:bg-slate-900"></div>
+                        <div><label class="block mb-1">คำอธิบายย่อย</label><input id="thMcSub" value="${sanitizeHTML(t.manageCoursesSubtitle || '')}" class="w-full px-2.5 py-1.5 rounded-lg border dark:bg-slate-900"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. เชื่อมต่อ Google Sheets -->
             <div class="md:col-span-2 custom-card bg-white dark:bg-slate-800 p-6 shadow-sm border border-emerald-200 dark:border-slate-700 space-y-3">
                 <div class="flex flex-wrap justify-between items-center gap-2">
                     <h3 class="font-bold text-sm text-emerald-700 dark:text-emerald-400"><i class="fa-solid fa-table mr-1.5 text-lg"></i> 3. เชื่อมต่อฐานข้อมูล Google Sheets (Google Apps Script Web App URL)</h3>
@@ -6133,6 +6457,7 @@ function renderAdminThemeSettingsView(container) {
                 </div>
             </div>
 
+            <!-- 4. ตั้งค่า Telegram -->
             <div class="md:col-span-2 custom-card bg-white dark:bg-slate-800 p-6 shadow-sm border border-sky-200 dark:border-slate-700 space-y-3">
                 <h3 class="font-bold text-sm text-sky-700 dark:text-sky-400"><i class="fa-brands fa-telegram mr-1.5 text-lg"></i> 4. ตั้งค่าการส่งเกียรติบัตร (PDF + ข้อความ) เข้า Telegram Bot อัตโนมัติ</h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -6150,21 +6475,61 @@ function renderAdminThemeSettingsView(container) {
     `;
 }
 
+function resetGlobalThemeDefaults() {
+    if (!hasPermission('manageTheme')) return;
+    db.SiteThemeSettings = {
+        ...initialDatabase.SiteThemeSettings,
+        gasWebAppUrl: db.SiteThemeSettings.gasWebAppUrl || DEFAULT_GAS_WEB_APP_URL,
+        telegramBotToken: db.SiteThemeSettings.telegramBotToken || "9280509192:AAE6Ux-E2cQ3yHvoHvBoyJLMxL_wbFW28TE",
+        telegramChatId: db.SiteThemeSettings.telegramChatId || "127792770"
+    };
+    saveDB();
+    applyGlobalSiteTheme();
+    syncGlobalSettingsToCloud();
+    renderAdminThemeSettingsView(document.getElementById('mainViewContent'));
+    showNonBlockingToast('คืนค่าธีม สี และไอคอนเริ่มต้นเรียบร้อยแล้ว', 'success');
+}
+
 function saveGlobalThemeForm() {
     const t = db.SiteThemeSettings;
     t.fontFamily = document.getElementById('thFont').value;
     t.fontScale = document.getElementById('thScale').value;
     t.authMainTitle = document.getElementById('thAuthTitle').value;
     t.authSubTitle = document.getElementById('thAuthSub').value;
+    t.lblLoginIdentity = document.getElementById('thLblId').value;
+    t.lblLoginPassword = document.getElementById('thLblPass').value;
+    t.txtBtnLogin = document.getElementById('thBtnLoginTxt').value;
+    t.txtNoAccountPrompt = document.getElementById('thNoAccTxt').value;
+    t.txtRegisterLinkLabel = document.getElementById('thRegLinkTxt').value;
     t.authBgFrom = document.getElementById('thAuthFrom').value;
     t.authBgVia = document.getElementById('thAuthVia').value;
     t.authBgTo = document.getElementById('thAuthTo').value;
     t.authBtnColor = document.getElementById('thAuthBtn').value;
+    t.authBgImage = document.getElementById('thAuthBgImg').value.trim();
+    t.authLogoIcon = document.getElementById('thAuthLogoIcon').value;
+    t.authLogoImage = document.getElementById('thAuthLogoImg').value.trim();
     t.navBrandTitle = document.getElementById('thNavTitle').value;
+    t.navBrandSub = document.getElementById('thNavSub').value;
+    t.navBrandLogoIcon = document.getElementById('thNavLogoIcon').value;
+    t.navBrandLogoImage = document.getElementById('thNavLogoImg').value.trim();
+    t.sidebarFromColor = document.getElementById('thSideFrom').value;
+    t.sidebarToColor = document.getElementById('thSideTo').value;
+    t.appBgColor = document.getElementById('thAppBgCol').value;
+    t.cardBgColor = document.getElementById('thCardBgCol').value;
+    t.navbarBgColor = document.getElementById('thNavBgCol').value;
+    t.sidebarBgColor = document.getElementById('thSideBgCol').value;
+    t.appBgImage = document.getElementById('thAppBgImg').value.trim();
     t.classroomTitle = document.getElementById('thClassTitle').value;
     t.classroomSubtitle = document.getElementById('thClassSub').value;
     t.classroomBgColor = document.getElementById('thClassBg').value;
     t.classroomTextColor = document.getElementById('thClassTxt').value;
+    t.classroomBgImage = document.getElementById('thClassBgImg').value.trim();
+    t.certPageTitle = document.getElementById('thCertPageTitle').value;
+    t.certPageSubtitle = document.getElementById('thCertPageSub').value;
+    t.leaderboardTitle = document.getElementById('thLbTitle').value;
+    t.leaderboardSubtitle = document.getElementById('thLbSub').value;
+    t.manageCoursesTitle = document.getElementById('thMcTitle').value;
+    t.manageCoursesSubtitle = document.getElementById('thMcSub').value;
     t.gasWebAppUrl = document.getElementById('thGasUrl').value.trim();
     t.telegramBotToken = document.getElementById('thTgToken').value.trim();
     t.telegramChatId = document.getElementById('thTgChatId').value.trim();
@@ -6404,7 +6769,7 @@ function renderArchitectureGuideView(container) {
                     <li>นำไฟล์ <code>index.html</code>, <code>Code.gs</code>, <code>README.md</code> และ <code>.gitignore</code> อัปโหลดขึ้น GitHub Repository และเปิดใช้งาน GitHub Pages</li>
                     <li>สร้าง Google Sheets ใหม่ ไปที่เมนู <b>ส่วนขยาย (Extensions) &gt; Apps Script</b> แล้ววางโค้ดจากไฟล์ <code>Code.gs</code></li>
                     <li>เลือกฟังก์ชัน <code>SetupAllSheet</code> แล้วกด <b>Run (เรียกใช้)</b> 1 ครั้งเพื่อสร้างตารางและบัญชี Admin อัตโนมัติ</li>
-                    <li>กด <b>Deploy &gt; New deployment &gt; Web app</b> เลือก Execute as: <b>Me</b> และ Who has access: <b>Anyone</b> แล้วนำ Web App URL มากรอกในหน้า <b>ตั้งค่าระบบ / Sheets / Telegram</b></li>
+                    <li>กด <b>Deploy &gt; New deployment &gt; Web app</b> เลือก Execute as: <b>Me</b> และ Who has access: <b>Anyone</b> แล้วนำ Web App URL มากรอกในหน้า <b>ปรับแต่งเว็บแอป / สี / โลโก้ / Sheets</b></li>
                 </ol>
             </div>
         </div>
@@ -6460,6 +6825,25 @@ function toggleMobileSidebar() { document.getElementById('sidebarPanel').classLi
 function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
 
 // ==================== REAL-TIME CROSS-DEVICE & MOBILE SYNC ENGINE ====================
+function syncCourseCoverToCloud(courseId, coverUrl) {
+    if (!courseId) return;
+    if (!db.CourseCoverRegistry) db.CourseCoverRegistry = {};
+    db.CourseCoverRegistry[courseId] = coverUrl;
+    const sysNotif = {
+        NotificationID: `SYS_CFG_COVER_${courseId}`,
+        UserID: '__SYS_CONFIG__',
+        Message: `__SYS_CHUNK__:SingleCourseCover:${JSON.stringify({ courseId, coverUrl, _ts: Date.now() })}`,
+        Type: '__SYS_CONFIG__',
+        Status: 'Read',
+        CreateDate: getNowThai()
+    };
+    const existIdx = db.Notifications.findIndex(n => n.NotificationID === sysNotif.NotificationID);
+    if (existIdx > -1) db.Notifications[existIdx] = sysNotif;
+    else db.Notifications.push(sysNotif);
+    saveDB();
+    pushRecordToGoogleSheet('saveNotification', sysNotif);
+}
+
 function buildGlobalConfigChunks() {
     const ts = Date.now();
     const chunks = [
@@ -6471,10 +6855,16 @@ function buildGlobalConfigChunks() {
         { id: 'SYS_CFG_PERMS', key: 'PermsBundle', data: { RolePermissions: db.RolePermissions, UserPermissions: db.UserPermissions, _ts: ts } },
         { id: 'SYS_CFG_CERT_TEMPLATES', key: 'SavedCertTemplates', data: db.SavedCertTemplates || [] }
     ];
+    if (db.CourseCoverRegistry && Object.keys(db.CourseCoverRegistry).length > 0) {
+        Object.keys(db.CourseCoverRegistry).forEach(cid => {
+            chunks.push({
+                id: `SYS_CFG_COVER_${cid}`,
+                key: 'SingleCourseCover',
+                data: { courseId: cid, coverUrl: db.CourseCoverRegistry[cid], _ts: ts }
+            });
+        });
+    }
     const designs = db.CourseCertDesigns || {};
-    chunks.push({ id: 'SYS_CFG_UI', key: 'UIOverrides', data: { style: db.UIOverrides.style, texts: db.UIOverrides.texts, icons: db.UIOverrides.icons, _ts: ts } });
-Object.entries(db.UIOverrides.images || {}).forEach(([from, to]) =>
-    chunks.push({ id: 'SYS_CFG_UIIMG_' + uiHash(from), key: 'UIOverrideImg', data: { from, to } }));
     const designKeys = Object.keys(designs).filter(k => k !== '__SITE_THEME_SETTINGS__' && k !== '__GLOBAL_CONFIG_BUNDLE__');
     if (designKeys.length === 0) {
         chunks.push({ id: 'SYS_CFG_CERT_DESIGNS', key: 'CourseCertDesigns', data: {} });
@@ -6500,6 +6890,7 @@ function buildGlobalConfigSnapshot() {
         Professions: db.Professions,
         CourseCertDesigns: db.CourseCertDesigns,
         SavedCertTemplates: db.SavedCertTemplates,
+        CourseCoverRegistry: db.CourseCoverRegistry,
         RolePermissions: db.RolePermissions,
         UserPermissions: db.UserPermissions
     };
@@ -6567,16 +6958,13 @@ function applyRemoteGlobalSettings(remote) {
             if (!db.CourseCertDesigns) db.CourseCertDesigns = {};
             db.CourseCertDesigns[val.courseId] = val.design;
             applied = true;
+        } else if (key === 'SingleCourseCover' && typeof val === 'object' && val.courseId && val.coverUrl) {
+            if (!db.CourseCoverRegistry) db.CourseCoverRegistry = {};
+            db.CourseCoverRegistry[val.courseId] = val.coverUrl;
+            applied = true;
         } else if (key === 'SavedCertTemplates' && Array.isArray(val)) {
             db.SavedCertTemplates = val;
             applied = true;
-        } else if (key === 'UIOverrides' && typeof val === 'object') {
-    db.UIOverrides = { style: val.style || {}, texts: val.texts || {}, icons: val.icons || {}, images: (db.UIOverrides && db.UIOverrides.images) || {} };
-    applied = true;
-} else if (key === 'UIOverrideImg' && val && val.from !== undefined) {
-    if (!db.UIOverrides) db.UIOverrides = { style: {}, texts: {}, icons: {}, images: {} };
-    db.UIOverrides.images[val.from] = val.to || '';
-    applied = true;    
         } else if (key === 'DeletedRegistry' && typeof val === 'object') {
             ['Courses', 'Lessons', 'Quiz'].forEach(t => {
                 if (Array.isArray(val[t])) {
@@ -6634,7 +7022,6 @@ function applyRemoteGlobalSettings(remote) {
 
 let realtimeSyncTimer = null;
 let isSyncingNow = false;
-    let pendingCloudWrites = 0, lastLocalWriteAt = 0;
 let deletedRegistry = JSON.parse(localStorage.getItem('edulearn_deleted_registry') || '{"Courses":[],"Lessons":[],"Quiz":[]}');
 
 function saveDeletedRegistry() {
@@ -6670,7 +7057,6 @@ function applyDeletedRegistryFilter() {
     }
 }
 
-// ทำงานซิงก์เรียลไทม์ข้ามเครื่องและมือถืออัตโนมัติ (ทั้งหน้า Login และหลัง Login)
 function startRealtimeSyncEngine() {
     if (realtimeSyncTimer) clearInterval(realtimeSyncTimer);
 
@@ -6700,6 +7086,7 @@ function startRealtimeSyncEngine() {
             try {
                 const latest = JSON.parse(e.newValue);
                 db = latest;
+                applyCourseCoverRegistryToCourses();
                 applyDeletedRegistryFilter();
                 applyGlobalSiteTheme();
                 populateRegisterDropdowns();
@@ -6716,7 +7103,7 @@ function startRealtimeSyncEngine() {
 
 async function silentRealtimePullFromCloud() {
     const url = getGasUrl();
-   if (!url || !url.startsWith('http') || isSyncingNow || pendingCloudWrites > 0 || Date.now() - lastLocalWriteAt < 5000) return;
+    if (!url || !url.startsWith('http') || isSyncingNow) return;
     isSyncingNow = true;
     try {
         const prevSignature = JSON.stringify({
@@ -6757,6 +7144,7 @@ async function silentRealtimePullFromCloud() {
             if (Array.isArray(remote.Certificates)) db.Certificates = remote.Certificates;
             if (Array.isArray(remote.Notifications) && remote.Notifications.length > 0) db.Notifications = remote.Notifications;
             applyRemoteGlobalSettings(remote);
+            applyCourseCoverRegistryToCourses();
 
             applyDeletedRegistryFilter();
             saveDB();
@@ -6811,21 +7199,18 @@ function pushDeletedRegistryToCloud() {
     pushRecordToGoogleSheet('saveNotification', sysNotif);
 }
 
-// ดักจับการบันทึกจากทุกฟังก์ชันให้ซิงก์ขึ้น Google Sheets ทันที
 const _origPushRecordToGoogleSheet = pushRecordToGoogleSheet;
 pushRecordToGoogleSheet = async function(actionName, payloadObj) {
-    pendingCloudWrites++; lastLocalWriteAt = Date.now();
-    let res = null;
-    try { res = await _origPushRecordToGoogleSheet(actionName, payloadObj); }
-    finally { pendingCloudWrites--; lastLocalWriteAt = Date.now(); }
-    if (actionName === 'deleteRecord') pushDeletedRegistryToCloud();
+    const res = await _origPushRecordToGoogleSheet(actionName, payloadObj);
+    if (actionName === 'deleteRecord') {
+        pushDeletedRegistryToCloud();
+    }
     return res;
 };
 
 startRealtimeSyncEngine();
 
 // ==================== ENHANCED COURSE & QUIZ DELETION SYSTEM ====================
-
 async function deleteCourseItem(courseId) {
     if (!hasPermission('manageCourses')) return;
     const course = db.Courses.find(c => c.CourseID === courseId);
@@ -6866,6 +7251,7 @@ async function deleteCourseItem(courseId) {
     db.Progress = db.Progress.filter(p => p.CourseID !== courseId);
     db.Scores = db.Scores.filter(s => s.CourseID !== courseId);
     if (db.CourseCertDesigns) delete db.CourseCertDesigns[courseId];
+    if (db.CourseCoverRegistry) delete db.CourseCoverRegistry[courseId];
     if (db.SavedLearningStates) {
         Object.keys(db.SavedLearningStates).forEach(uid => {
             if (db.SavedLearningStates[uid]?.courseId === courseId) {
@@ -7011,167 +7397,8 @@ removeBulkQuizRow = function(idx, stageFilter) {
     renderBulkQuizEditorView(stageFilter);
     showNonBlockingToast('นำข้อสอบออกแล้ว (กดปุ่มบันทึกเพื่อยืนยันข้ามเครื่อง)', 'info');
 };
-      // ==================== UI CUSTOMIZER (ADMIN) ====================
-let uiEditMode = false;
-const uiOrigText = new Map();
-const FA_SKIP = ['fa-solid','fa-regular','fa-brands','fa-spin','fa-beat','fa-fw','fa-lg','fa-xl','fa-pulse'];
-function uiHash(s) { let h = 0; for (const c of String(s)) h = ((h << 5) - h + c.charCodeAt(0)) | 0; return Math.abs(h).toString(36); }
-const getFaName = i => [...i.classList].find(c => c.startsWith('fa-') && !FA_SKIP.includes(c) && !/^fa-\d/.test(c));
-function commitUiOverrides() { saveDB(); applyUIOverrides(); syncGlobalSettingsToCloud(); }
-
-function applyUIOverrides() {
-    if (!db.UIOverrides) db.UIOverrides = { style: {}, texts: {}, icons: {}, images: {} };
-    const o = db.UIOverrides, s = o.style || {}, texts = o.texts || {};
-    let st = document.getElementById('uiOverrideStyle');
-    if (!st) { st = document.createElement('style'); st.id = 'uiOverrideStyle'; document.head.appendChild(st); }
-    const R = [];
-    const add = (v, sel, prop = 'background') => { if (v) R.push(`${sel}{${prop}:${v}!important}`); };
-    add(s.pageBg, 'body'); add(s.textColor, 'body', 'color');
-    add(s.navBg, '#topNavbar'); add(s.sidebarBg, '#sidebarPanel'); add(s.cardBg, '.custom-card');
-    add(s.btnPrimary, 'button.bg-blue-600,button.bg-blue-700,button.bg-blue-800,button.bg-blue-900,.sidebar-link.active');
-    add(s.btnSuccess, 'button.bg-emerald-600,button.bg-emerald-700');
-    add(s.btnWarn, 'button.bg-amber-500,button.bg-amber-600');
-    add(s.btnDanger, 'button.bg-rose-600,button.bg-rose-700');
-    if (uiEditMode) R.push('#mainViewContent *:hover,#topNavbar *:hover,#sidebarPanel *:hover{outline:1px dashed #d946ef;cursor:crosshair}');
-    const cssText = R.join('\n');
-    if (st.textContent !== cssText) st.textContent = cssText;
-
-    // ข้อความ
-    uiOrigText.forEach((rec, node) => {
-        if (!node.isConnected) { uiOrigText.delete(node); return; }
-        const want = texts[rec.orig];
-        if (want === undefined) { node.nodeValue = node.nodeValue.replace(rec.cur, rec.orig); uiOrigText.delete(node); }
-        else if (want !== rec.cur) { node.nodeValue = node.nodeValue.replace(rec.cur, want); rec.cur = want; }
-    });
-    if (Object.keys(texts).length) {
-        const w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
-        let n;
-        while ((n = w.nextNode())) {
-            if (uiOrigText.has(n)) continue;
-            const p = n.parentElement;
-            if (!p || ['SCRIPT','STYLE','TEXTAREA','NOSCRIPT'].includes(p.tagName)) continue;
-            const raw = n.nodeValue.trim();
-            if (raw && texts[raw] !== undefined) {
-                n.nodeValue = n.nodeValue.replace(raw, texts[raw]);
-                uiOrigText.set(n, { orig: raw, cur: texts[raw] });
-            }
-        }
-    }
-    // ไอคอน
-    document.querySelectorAll('i[class*="fa-"]').forEach(i => {
-        const cur = getFaName(i); if (!cur) return;
-        const orig = i.dataset.uiOrig || cur, want = (o.icons || {})[orig];
-        if (want && want !== cur) { i.classList.remove(cur); i.classList.add(want); i.dataset.uiOrig = orig; }
-        else if (!want && i.dataset.uiOrig && i.dataset.uiOrig !== cur) { i.classList.remove(cur); i.classList.add(i.dataset.uiOrig); delete i.dataset.uiOrig; }
-    });
-    // รูปภาพ (ยกเว้นเกียรติบัตร)
-    document.querySelectorAll('img').forEach(im => {
-        if (im.closest('#certCanvasSurface')) return;
-        const cur = im.getAttribute('src') || '', orig = im.dataset.uiOrigSrc || cur, want = (o.images || {})[orig];
-        if (want && want !== cur) { im.dataset.uiOrigSrc = orig; im.setAttribute('src', want); }
-        else if (!want && im.dataset.uiOrigSrc && im.dataset.uiOrigSrc !== cur) { im.setAttribute('src', im.dataset.uiOrigSrc); delete im.dataset.uiOrigSrc; }
-    });
-    updateUiFab();
-}
-
-function updateUiFab() {
-    let b = document.getElementById('uiEditorFab');
-    const show = !!currentUser && (isAdmin() || hasPermission('manageTheme'));
-    if (!b) {
-        if (!show) return;
-        b = document.createElement('button');
-        b.id = 'uiEditorFab'; b.type = 'button';
-        b.className = 'fixed bottom-4 right-4 z-[9998] px-4 py-3 rounded-full bg-fuchsia-600 text-white text-xs font-bold shadow-xl';
-        b.onclick = () => uiEditMode ? toggleUiEditMode(false) : openUiEditorPanel();
-        document.body.appendChild(b);
-    }
-    const wantDisplay = show ? '' : 'none';
-    if (b.style.display !== wantDisplay) b.style.display = wantDisplay;
-    // ตั้งค่า innerHTML เฉพาะเมื่อโหมดเปลี่ยนจริง กันไม่ให้ MutationObserver วนซ้ำไม่รู้จบ
-    const mode = uiEditMode ? 'on' : 'off';
-    if (b.dataset.mode !== mode) {
-        b.dataset.mode = mode;
-        b.innerHTML = uiEditMode
-            ? '<i class="fa-solid fa-xmark mr-1"></i> ออกจากโหมดแก้ไข'
-            : '<i class="fa-solid fa-wand-magic-sparkles mr-1"></i> ปรับแต่งหน้าเว็บ';
-    }
-}
-
-function toggleUiEditMode(on) {
-    uiEditMode = !!on; applyUIOverrides();
-    if (on) showNonBlockingToast('คลิกที่ ข้อความ / ไอคอน / รูปภาพ ในหน้าเว็บเพื่อแก้ไขได้ทันที', 'success');
-}
-
-function openUiEditorPanel() {
-    const s = db.UIOverrides.style || {};
-    const F = [['pageBg','พื้นหลังหน้าเว็บ','#f8fafc'],['textColor','สีตัวอักษรหลัก','#1e293b'],['navBg','แถบด้านบน','#ffffff'],['sidebarBg','เมนูด้านซ้าย','#ffffff'],['cardBg','พื้นหลังการ์ด','#ffffff'],['btnPrimary','ปุ่มหลัก (น้ำเงิน)','#2563eb'],['btnSuccess','ปุ่มยืนยัน (เขียว)','#059669'],['btnWarn','ปุ่มเตือน (ส้ม)','#f59e0b'],['btnDanger','ปุ่มลบ (แดง)','#e11d48']];
-    Swal.fire({
-        title: 'ปรับแต่งหน้าเว็บทั้งระบบ', width: 560,
-        html: `<div class="text-left text-xs space-y-3">
-            <div class="grid grid-cols-3 gap-2">${F.map(([k,l,d]) => `<div><label class="block mb-1">${l}</label><input type="color" class="uiClr w-full h-8" data-k="${k}" data-def="${d}" value="${s[k] || d}"></div>`).join('')}</div>
-            <button type="button" onclick="Swal.close();toggleUiEditMode(true)" class="w-full py-2.5 rounded-xl bg-fuchsia-600 text-white font-bold">✏️ เปิดโหมดคลิกแก้ไข ข้อความ / ไอคอน / รูปภาพ</button>
-            <p class="text-slate-500">ข้อมูลที่แก้ไขจะซิงก์ไปทุกเครื่องและทุกบัญชีอัตโนมัติ</p></div>`,
-        showCancelButton: true, showDenyButton: true,
-        confirmButtonText: 'บันทึกสี', denyButtonText: 'รีเซ็ตทั้งหมด', cancelButtonText: 'ปิด',
-        preConfirm: () => { const m = { ...s }; document.querySelectorAll('.uiClr').forEach(i => { if (i.value !== i.dataset.def || m[i.dataset.k]) m[i.dataset.k] = i.value; }); return m; }
-    }).then(r => {
-        if (r.isConfirmed) { db.UIOverrides.style = r.value; commitUiOverrides(); }
-        else if (r.isDenied) {
-            const imgs = db.UIOverrides.images || {}; Object.keys(imgs).forEach(k => imgs[k] = '');
-            db.UIOverrides = { style: {}, texts: {}, icons: {}, images: imgs }; commitUiOverrides();
-        }
-    });
-}
-
-document.addEventListener('click', async (e) => {
-    if (!uiEditMode || e.target.closest('.swal2-container,#uiEditorFab')) return;
-    e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
-    const t = e.target, o = db.UIOverrides;
-    const icon = t.closest('i[class*="fa-"]');
-    if (icon && getFaName(icon)) {
-        const cur = getFaName(icon), orig = icon.dataset.uiOrig || cur;
-        const r = await Swal.fire({ title: 'เปลี่ยนไอคอน (Font Awesome)', text: 'เช่น fa-heart-pulse, fa-pills, fa-star', input: 'text', inputValue: cur, showCancelButton: true });
-        if (r.isConfirmed) {
-            let v = (r.value || '').trim(); if (v && !v.startsWith('fa-')) v = 'fa-' + v;
-            if (!v || v === orig) delete o.icons[orig]; else o.icons[orig] = v;
-            commitUiOverrides();
-        }
-        return;
-    }
-    if (t.tagName === 'IMG' && !t.closest('#certCanvasSurface')) {
-        const src = t.getAttribute('src') || '', orig = t.dataset.uiOrigSrc || src;
-        if (orig.startsWith('data:')) { showNonBlockingToast('รูปนี้ฝังในข้อมูล (เช่นรูปปกคอร์ส) ให้แก้ที่หน้าจัดการคอร์ส', 'warning'); return; }
-        const r = await Swal.fire({
-            title: 'เปลี่ยนรูปภาพ',
-            html: `<input id="uiImgUrl" class="swal2-input" placeholder="วาง URL รูปใหม่"><input id="uiImgFile" type="file" accept="image/*" class="swal2-file">`,
-            showCancelButton: true, showDenyButton: true, denyButtonText: 'คืนรูปเดิม',
-            preConfirm: async () => {
-                const f = document.getElementById('uiImgFile').files[0];
-                if (f) { const d = await new Promise(res => { const fr = new FileReader(); fr.onload = () => res(fr.result); fr.readAsDataURL(f); }); return compressImageToMaxChars(d, 40000); }
-                return document.getElementById('uiImgUrl').value.trim() || false;
-            }
-        });
-        if (r.isConfirmed && r.value) { o.images[orig] = r.value; commitUiOverrides(); }
-        else if (r.isDenied) { o.images[orig] = ''; commitUiOverrides(); }
-        return;
-    }
-    const node = [...t.childNodes].find(n => n.nodeType === 3 && n.nodeValue.trim());
-    if (!node) return;
-    const rec = uiOrigText.get(node), orig = rec ? rec.orig : node.nodeValue.trim();
-    const r = await Swal.fire({ title: 'แก้ไขข้อความ', input: 'textarea', inputValue: node.nodeValue.trim(), showCancelButton: true, showDenyButton: true, denyButtonText: 'คืนค่าเดิม' });
-    if (r.isConfirmed) {
-        const v = (r.value || '').trim();
-        if (!v || v === orig) delete o.texts[orig]; else o.texts[orig] = v;
-        commitUiOverrides();
-    } else if (r.isDenied) { delete o.texts[orig]; commitUiOverrides(); }
-}, true);
-
-let uiObsTimer;
-new MutationObserver(() => { clearTimeout(uiObsTimer); uiObsTimer = setTimeout(applyUIOverrides, 60); })
-    .observe(document.body, { childList: true, subtree: true });
 </script>
 </body>
 </html>
-
 
 
