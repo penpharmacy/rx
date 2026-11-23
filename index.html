@@ -864,6 +864,7 @@ async function syncAllDataWithGoogleSheet(showToast = false) {
             saveDB();
             applyGlobalSiteTheme();
             populateRegisterDropdowns();
+            refreshOpenCertificateModalIfAny();
             if (currentUser) {
                 const updatedMe = db.Users.find(u => u.UserID === currentUser.UserID);
                 if (updatedMe) currentUser = updatedMe;
@@ -3817,12 +3818,37 @@ function buildCertificateCanvasHTML(design, dataObj, interactive = false) {
     return `<div id="certCanvasSurface" style="position:relative; width:${design.width || 800}px; height:${design.height || 560}px; background-color:${design.bgColor || '#ffffff'}; ${getCertFrameCSS(design)} font-family:${design.fontFamily || "'Noto Sans Thai', sans-serif"}; overflow:hidden; margin:0 auto; border-radius:8px;">${bgImageLayerHtml}${backdropSvg}${elsHtml}</div>`;
 }
 
+function getEffectiveCertDesignForCourse(courseObj) {
+    const designs = db.CourseCertDesigns || {};
+    if (courseObj && designs[courseObj.CourseID]) {
+        return designs[courseObj.CourseID];
+    }
+    if (designs.__DEFAULT_GLOBAL_CERT__) {
+        return designs.__DEFAULT_GLOBAL_CERT__;
+    }
+    const keys = Object.keys(designs).filter(k => k !== '__SITE_THEME_SETTINGS__' && k !== '__GLOBAL_CONFIG_BUNDLE__' && designs[k] && typeof designs[k] === 'object' && Array.isArray(designs[k].elements));
+    if (keys.length > 0) {
+        return designs[keys[keys.length - 1]];
+    }
+    if (Array.isArray(db.SavedCertTemplates) && db.SavedCertTemplates.length > 0 && db.SavedCertTemplates[0].design) {
+        return db.SavedCertTemplates[0].design;
+    }
+    return JSON.parse(JSON.stringify(DEFAULT_CERT));
+}
+
+function refreshOpenCertificateModalIfAny() {
+    const modal = document.getElementById('certPreviewModal');
+    if (modal && !modal.classList.contains('hidden') && currentCertId) {
+        previewCertificate(currentCertId);
+    }
+}
+
 function previewCertificate(certId) {
     const cert = db.Certificates.find(c => c.CertificateID === certId);
     if (!cert) return;
     currentCertId = cert.CertificateID;
-    const course = db.Courses.find(c => c.CourseName === cert.CourseName);
-    const design = (course && db.CourseCertDesigns[course.CourseID]) || JSON.parse(JSON.stringify(DEFAULT_CERT));
+    const course = db.Courses.find(c => c.CourseName === cert.CourseName || c.CourseID === cert.CourseID);
+    const design = getEffectiveCertDesignForCourse(course);
 
     document.getElementById('certificateRenderBox').innerHTML = buildCertificateCanvasHTML(design, {
         id: cert.CertificateID,
@@ -4801,7 +4827,7 @@ function renderCertDesignerView(container) {
         currentDesignerCourseId = db.Courses[0].CourseID;
     }
     if (!db.CourseCertDesigns[currentDesignerCourseId]) {
-        db.CourseCertDesigns[currentDesignerCourseId] = JSON.parse(JSON.stringify(DEFAULT_CERT));
+        db.CourseCertDesigns[currentDesignerCourseId] = JSON.parse(JSON.stringify(getEffectiveCertDesignForCourse(null)));
     }
     certDraft = JSON.parse(JSON.stringify(db.CourseCertDesigns[currentDesignerCourseId]));
     if (!certDraft.patternDarkColor) certDraft.patternDarkColor = '#171717';
@@ -5037,9 +5063,12 @@ function applySavedCertTemplate(idx) {
     certDraft = JSON.parse(JSON.stringify(tpl.design));
     selectedElementId = certDraft.elements[0]?.id || null;
     db.CourseCertDesigns[currentDesignerCourseId] = JSON.parse(JSON.stringify(certDraft));
+    db.CourseCertDesigns.__DEFAULT_GLOBAL_CERT__ = JSON.parse(JSON.stringify(certDraft));
     saveDB();
+    syncGlobalSettingsToCloud();
+    refreshOpenCertificateModalIfAny();
     renderCertDesignerView(document.getElementById('mainViewContent'));
-    showNonBlockingToast(`เรียกใช้แม่แบบ "${tpl.name}" เรียบร้อยแล้ว`, 'success');
+    showNonBlockingToast(`เรียกใช้แม่แบบ "${tpl.name}" และอัปเดตทุกเครื่องเรียบร้อยแล้ว`, 'success');
 }
 
 function deleteSavedCertTemplate(idx) {
@@ -5254,9 +5283,12 @@ function applyPhunphinGoldPreset() {
     }
     selectedElementId = 'el_logo';
     db.CourseCertDesigns[currentDesignerCourseId] = JSON.parse(JSON.stringify(certDraft));
+    db.CourseCertDesigns.__DEFAULT_GLOBAL_CERT__ = JSON.parse(JSON.stringify(certDraft));
     saveDB();
+    syncGlobalSettingsToCloud();
+    refreshOpenCertificateModalIfAny();
     renderCertDesignerView(document.getElementById('mainViewContent'));
-    showNonBlockingToast('โหลดแม่แบบกรอบริบบิ้นดำ-ทอง พร้อมตราโรงพยาบาลพุนพินเรียบร้อย', 'success');
+    showNonBlockingToast('โหลดแม่แบบกรอบริบบิ้นดำ-ทอง พร้อมตราโรงพยาบาลพุนพินและซิงก์ทุกเครื่องเรียบร้อย', 'success');
 }
 
 function uploadCertBgImage(inp) {
@@ -5613,7 +5645,10 @@ function deleteSelectedCertElement() {
 }
 function saveCourseCertDesign() {
     if (!hasPermission('designCert')) return;
-    db.CourseCertDesigns[currentDesignerCourseId] = JSON.parse(JSON.stringify(certDraft));
+    const savedCopy = JSON.parse(JSON.stringify(certDraft));
+    savedCopy._updatedAt = Date.now();
+    db.CourseCertDesigns[currentDesignerCourseId] = savedCopy;
+    db.CourseCertDesigns.__DEFAULT_GLOBAL_CERT__ = JSON.parse(JSON.stringify(savedCopy));
 
     if (!db.SavedCertTemplates) db.SavedCertTemplates = [];
     const course = db.Courses.find(c => c.CourseID === currentDesignerCourseId);
@@ -5624,7 +5659,7 @@ function saveCourseCertDesign() {
         courseId: currentDesignerCourseId,
         name: tplName,
         savedAt: getNowThai(),
-        design: JSON.parse(JSON.stringify(certDraft))
+        design: JSON.parse(JSON.stringify(savedCopy))
     };
     if (existingIdx > -1) db.SavedCertTemplates[existingIdx] = tplObj;
     else db.SavedCertTemplates.unshift(tplObj);
@@ -5632,12 +5667,13 @@ function saveCourseCertDesign() {
     saveDB();
     renderSavedCertTemplatesList();
     syncGlobalSettingsToCloud();
+    refreshOpenCertificateModalIfAny();
     const nextBtn = document.getElementById('btnCertNextToCourses');
     if (nextBtn) nextBtn.classList.remove('hidden');
     Swal.fire({
         icon: 'success',
-        title: 'บันทึกแม่แบบเกียรติบัตรเรียบร้อย!',
-        text: 'แม่แบบถูกบันทึกเก็บไว้ในคลังสามารถเรียกกลับมาใช้กับคอร์สอื่นได้ตลอดเวลา',
+        title: 'บันทึกและซิงก์แม่แบบเกียรติบัตรเรียบร้อย!',
+        text: 'รูปแบบใบประกาศนียบัตรถูกอัปเดตไปยังทุกเครื่องและทุกบัญชีผู้ใช้โดยอัตโนมัติแล้ว',
         showCancelButton: true,
         confirmButtonText: 'ถัดไป (กลับหน้าคอร์สเรียน) ➔',
         cancelButtonText: 'แก้ไขต่อ',
@@ -5653,8 +5689,10 @@ function resetCourseCertDesign() {
     pushCertUndoState();
     certDraft = JSON.parse(JSON.stringify(DEFAULT_CERT));
     db.CourseCertDesigns[currentDesignerCourseId] = JSON.parse(JSON.stringify(DEFAULT_CERT));
+    db.CourseCertDesigns.__DEFAULT_GLOBAL_CERT__ = JSON.parse(JSON.stringify(DEFAULT_CERT));
     saveDB();
     syncGlobalSettingsToCloud();
+    refreshOpenCertificateModalIfAny();
     renderCertDesignerView(document.getElementById('mainViewContent'));
 }
 
@@ -6408,16 +6446,29 @@ function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
 // ==================== REAL-TIME CROSS-DEVICE & MOBILE SYNC ENGINE ====================
 function buildGlobalConfigChunks() {
     const ts = Date.now();
-    return [
+    const chunks = [
         { id: 'SYS_CFG_THEME', key: 'SiteThemeSettings', data: { ...db.SiteThemeSettings, _ts: ts } },
         { id: 'SYS_CFG_DASHBOARD', key: 'DashboardConfig', data: { ...db.DashboardConfig, _ts: ts } },
         { id: 'SYS_CFG_CLASSROOM', key: 'ClassroomLayoutConfig', data: { ...db.ClassroomLayoutConfig, _ts: ts } },
         { id: 'SYS_CFG_PROFSTATS', key: 'ProfessionStatsConfig', data: { ...db.ProfessionStatsConfig, _ts: ts } },
         { id: 'SYS_CFG_DEPT_PROF', key: 'DeptProfBundle', data: { HospitalDepartments: db.HospitalDepartments, Professions: db.Professions, _ts: ts } },
         { id: 'SYS_CFG_PERMS', key: 'PermsBundle', data: { RolePermissions: db.RolePermissions, UserPermissions: db.UserPermissions, _ts: ts } },
-        { id: 'SYS_CFG_CERT_DESIGNS', key: 'CourseCertDesigns', data: db.CourseCertDesigns || {} },
         { id: 'SYS_CFG_CERT_TEMPLATES', key: 'SavedCertTemplates', data: db.SavedCertTemplates || [] }
     ];
+    const designs = db.CourseCertDesigns || {};
+    const designKeys = Object.keys(designs).filter(k => k !== '__SITE_THEME_SETTINGS__' && k !== '__GLOBAL_CONFIG_BUNDLE__');
+    if (designKeys.length === 0) {
+        chunks.push({ id: 'SYS_CFG_CERT_DESIGNS', key: 'CourseCertDesigns', data: {} });
+    } else {
+        designKeys.forEach(dk => {
+            chunks.push({
+                id: `SYS_CFG_CERT_D_${dk}`,
+                key: 'SingleCourseCertDesign',
+                data: { courseId: dk, design: designs[dk], _ts: ts }
+            });
+        });
+    }
+    return chunks;
 }
 
 function buildGlobalConfigSnapshot() {
@@ -6492,6 +6543,10 @@ function applyRemoteGlobalSettings(remote) {
             applied = true;
         } else if (key === 'CourseCertDesigns' && typeof val === 'object') {
             db.CourseCertDesigns = { ...db.CourseCertDesigns, ...val };
+            applied = true;
+        } else if (key === 'SingleCourseCertDesign' && typeof val === 'object' && val.courseId && val.design) {
+            if (!db.CourseCertDesigns) db.CourseCertDesigns = {};
+            db.CourseCertDesigns[val.courseId] = val.design;
             applied = true;
         } else if (key === 'SavedCertTemplates' && Array.isArray(val)) {
             db.SavedCertTemplates = val;
@@ -6621,6 +6676,7 @@ function startRealtimeSyncEngine() {
                 applyDeletedRegistryFilter();
                 applyGlobalSiteTheme();
                 populateRegisterDropdowns();
+                refreshOpenCertificateModalIfAny();
                 if (currentUser) {
                     renderSidebarMenu();
                     renderNotifications();
@@ -6693,13 +6749,16 @@ async function silentRealtimePullFromCloud() {
 
             updateSyncStatusUI('ซิงก์เรียลไทม์แล้ว', 'emerald');
 
-            if (prevSignature !== nextSignature && currentUser) {
-                const updatedMe = db.Users.find(u => u.UserID === currentUser.UserID);
-                if (updatedMe) currentUser = updatedMe;
-                renderSidebarMenu();
-                renderNotifications();
-                if (!Swal.isVisible() && currentView !== 'certDesigner' && !activeLearningSession.timerInterval && !activeQuizTimer) {
-                    switchView(currentView);
+            if (prevSignature !== nextSignature) {
+                refreshOpenCertificateModalIfAny();
+                if (currentUser) {
+                    const updatedMe = db.Users.find(u => u.UserID === currentUser.UserID);
+                    if (updatedMe) currentUser = updatedMe;
+                    renderSidebarMenu();
+                    renderNotifications();
+                    if (!Swal.isVisible() && currentView !== 'certDesigner' && !activeLearningSession.timerInterval && !activeQuizTimer) {
+                        switchView(currentView);
+                    }
                 }
             }
         }
@@ -6927,5 +6986,6 @@ removeBulkQuizRow = function(idx, stageFilter) {
 </script>
 </body>
 </html>
+
 
 
