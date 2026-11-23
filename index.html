@@ -574,153 +574,7 @@
         </div>
     </div>
 </div>
-
-   // ==================== UI CUSTOMIZER (ADMIN) ====================
-let uiEditMode = false;
-const uiOrigText = new Map();
-const FA_SKIP = ['fa-solid','fa-regular','fa-brands','fa-spin','fa-beat','fa-fw','fa-lg','fa-xl','fa-pulse'];
-function uiHash(s) { let h = 0; for (const c of String(s)) h = ((h << 5) - h + c.charCodeAt(0)) | 0; return Math.abs(h).toString(36); }
-const getFaName = i => [...i.classList].find(c => c.startsWith('fa-') && !FA_SKIP.includes(c) && !/^fa-\d/.test(c));
-function commitUiOverrides() { saveDB(); applyUIOverrides(); syncGlobalSettingsToCloud(); }
-
-function applyUIOverrides() {
-    if (!db.UIOverrides) db.UIOverrides = { style: {}, texts: {}, icons: {}, images: {} };
-    const o = db.UIOverrides, s = o.style || {}, texts = o.texts || {};
-    let st = document.getElementById('uiOverrideStyle');
-    if (!st) { st = document.createElement('style'); st.id = 'uiOverrideStyle'; document.head.appendChild(st); }
-    const R = [];
-    const add = (v, sel, prop = 'background') => { if (v) R.push(`${sel}{${prop}:${v}!important}`); };
-    add(s.pageBg, 'body'); add(s.textColor, 'body', 'color');
-    add(s.navBg, '#topNavbar'); add(s.sidebarBg, '#sidebarPanel'); add(s.cardBg, '.custom-card');
-    add(s.btnPrimary, 'button.bg-blue-600,button.bg-blue-700,button.bg-blue-800,button.bg-blue-900,.sidebar-link.active');
-    add(s.btnSuccess, 'button.bg-emerald-600,button.bg-emerald-700');
-    add(s.btnWarn, 'button.bg-amber-500,button.bg-amber-600');
-    add(s.btnDanger, 'button.bg-rose-600,button.bg-rose-700');
-    if (uiEditMode) R.push('#mainViewContent *:hover,#topNavbar *:hover,#sidebarPanel *:hover{outline:1px dashed #d946ef;cursor:crosshair}');
-    st.textContent = R.join('\n');
-
-    // ข้อความ
-    uiOrigText.forEach((rec, node) => {
-        if (!node.isConnected) { uiOrigText.delete(node); return; }
-        const want = texts[rec.orig];
-        if (want === undefined) { node.nodeValue = node.nodeValue.replace(rec.cur, rec.orig); uiOrigText.delete(node); }
-        else if (want !== rec.cur) { node.nodeValue = node.nodeValue.replace(rec.cur, want); rec.cur = want; }
-    });
-    if (Object.keys(texts).length) {
-        const w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
-        let n;
-        while ((n = w.nextNode())) {
-            if (uiOrigText.has(n)) continue;
-            const p = n.parentElement; if (!p || ['SCRIPT','STYLE','TEXTAREA','NOSCRIPT'].includes(p.tagName)) continue;
-            const raw = n.nodeValue.trim();
-            if (raw && texts[raw] !== undefined) { n.nodeValue = n.nodeValue.replace(raw, texts[raw]); uiOrigText.set(n, { orig: raw, cur: texts[raw] }); }
-        }
-    }
-    // ไอคอน
-    document.querySelectorAll('i[class*="fa-"]').forEach(i => {
-        const cur = getFaName(i); if (!cur) return;
-        const orig = i.dataset.uiOrig || cur, want = (o.icons || {})[orig];
-        if (want && want !== cur) { i.classList.remove(cur); i.classList.add(want); i.dataset.uiOrig = orig; }
-        else if (!want && i.dataset.uiOrig && i.dataset.uiOrig !== cur) { i.classList.remove(cur); i.classList.add(i.dataset.uiOrig); delete i.dataset.uiOrig; }
-    });
-    // รูปภาพ (ยกเว้นเกียรติบัตร)
-    document.querySelectorAll('img').forEach(im => {
-        if (im.closest('#certCanvasSurface')) return;
-        const cur = im.getAttribute('src') || '', orig = im.dataset.uiOrigSrc || cur, want = (o.images || {})[orig];
-        if (want && want !== cur) { im.dataset.uiOrigSrc = orig; im.setAttribute('src', want); }
-        else if (!want && im.dataset.uiOrigSrc && im.dataset.uiOrigSrc !== cur) { im.setAttribute('src', im.dataset.uiOrigSrc); delete im.dataset.uiOrigSrc; }
-    });
-    updateUiFab();
-}
-
-function updateUiFab() {
-    let b = document.getElementById('uiEditorFab');
-    const show = !!currentUser && (isAdmin() || hasPermission('manageTheme'));
-    if (!b) {
-        if (!show) return;
-        b = document.createElement('button');
-        b.id = 'uiEditorFab'; b.type = 'button';
-        b.className = 'fixed bottom-4 right-4 z-[9998] px-4 py-3 rounded-full bg-fuchsia-600 text-white text-xs font-bold shadow-xl';
-        b.onclick = () => uiEditMode ? toggleUiEditMode(false) : openUiEditorPanel();
-        document.body.appendChild(b);
-    }
-    b.style.display = show ? '' : 'none';
-    b.innerHTML = uiEditMode ? '<i class="fa-solid fa-xmark mr-1"></i> ออกจากโหมดแก้ไข' : '<i class="fa-solid fa-wand-magic-sparkles mr-1"></i> ปรับแต่งหน้าเว็บ';
-}
-
-function toggleUiEditMode(on) {
-    uiEditMode = !!on; applyUIOverrides();
-    if (on) showNonBlockingToast('คลิกที่ ข้อความ / ไอคอน / รูปภาพ ในหน้าเว็บเพื่อแก้ไขได้ทันที', 'success');
-}
-
-function openUiEditorPanel() {
-    const s = db.UIOverrides.style || {};
-    const F = [['pageBg','พื้นหลังหน้าเว็บ','#f8fafc'],['textColor','สีตัวอักษรหลัก','#1e293b'],['navBg','แถบด้านบน','#ffffff'],['sidebarBg','เมนูด้านซ้าย','#ffffff'],['cardBg','พื้นหลังการ์ด','#ffffff'],['btnPrimary','ปุ่มหลัก (น้ำเงิน)','#2563eb'],['btnSuccess','ปุ่มยืนยัน (เขียว)','#059669'],['btnWarn','ปุ่มเตือน (ส้ม)','#f59e0b'],['btnDanger','ปุ่มลบ (แดง)','#e11d48']];
-    Swal.fire({
-        title: 'ปรับแต่งหน้าเว็บทั้งระบบ', width: 560,
-        html: `<div class="text-left text-xs space-y-3">
-            <div class="grid grid-cols-3 gap-2">${F.map(([k,l,d]) => `<div><label class="block mb-1">${l}</label><input type="color" class="uiClr w-full h-8" data-k="${k}" data-def="${d}" value="${s[k] || d}"></div>`).join('')}</div>
-            <button type="button" onclick="Swal.close();toggleUiEditMode(true)" class="w-full py-2.5 rounded-xl bg-fuchsia-600 text-white font-bold">✏️ เปิดโหมดคลิกแก้ไข ข้อความ / ไอคอน / รูปภาพ</button>
-            <p class="text-slate-500">ข้อมูลที่แก้ไขจะซิงก์ไปทุกเครื่องและทุกบัญชีอัตโนมัติ</p></div>`,
-        showCancelButton: true, showDenyButton: true,
-        confirmButtonText: 'บันทึกสี', denyButtonText: 'รีเซ็ตทั้งหมด', cancelButtonText: 'ปิด',
-        preConfirm: () => { const m = { ...s }; document.querySelectorAll('.uiClr').forEach(i => { if (i.value !== i.dataset.def || m[i.dataset.k]) m[i.dataset.k] = i.value; }); return m; }
-    }).then(r => {
-        if (r.isConfirmed) { db.UIOverrides.style = r.value; commitUiOverrides(); }
-        else if (r.isDenied) {
-            const imgs = db.UIOverrides.images || {}; Object.keys(imgs).forEach(k => imgs[k] = '');
-            db.UIOverrides = { style: {}, texts: {}, icons: {}, images: imgs }; commitUiOverrides();
-        }
-    });
-}
-
-document.addEventListener('click', async (e) => {
-    if (!uiEditMode || e.target.closest('.swal2-container,#uiEditorFab')) return;
-    e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
-    const t = e.target, o = db.UIOverrides;
-    const icon = t.closest('i[class*="fa-"]');
-    if (icon && getFaName(icon)) {
-        const cur = getFaName(icon), orig = icon.dataset.uiOrig || cur;
-        const r = await Swal.fire({ title: 'เปลี่ยนไอคอน (Font Awesome)', text: 'เช่น fa-heart-pulse, fa-pills, fa-star', input: 'text', inputValue: cur, showCancelButton: true });
-        if (r.isConfirmed) {
-            let v = (r.value || '').trim(); if (v && !v.startsWith('fa-')) v = 'fa-' + v;
-            if (!v || v === orig) delete o.icons[orig]; else o.icons[orig] = v;
-            commitUiOverrides();
-        }
-        return;
-    }
-    if (t.tagName === 'IMG' && !t.closest('#certCanvasSurface')) {
-        const src = t.getAttribute('src') || '', orig = t.dataset.uiOrigSrc || src;
-        if (orig.startsWith('data:')) { showNonBlockingToast('รูปนี้ฝังในข้อมูล (เช่นรูปปกคอร์ส) ให้แก้ที่หน้าจัดการคอร์ส', 'warning'); return; }
-        const r = await Swal.fire({
-            title: 'เปลี่ยนรูปภาพ',
-            html: `<input id="uiImgUrl" class="swal2-input" placeholder="วาง URL รูปใหม่"><input id="uiImgFile" type="file" accept="image/*" class="swal2-file">`,
-            showCancelButton: true, showDenyButton: true, denyButtonText: 'คืนรูปเดิม',
-            preConfirm: async () => {
-                const f = document.getElementById('uiImgFile').files[0];
-                if (f) { const d = await new Promise(res => { const fr = new FileReader(); fr.onload = () => res(fr.result); fr.readAsDataURL(f); }); return compressImageToMaxChars(d, 40000); }
-                return document.getElementById('uiImgUrl').value.trim() || false;
-            }
-        });
-        if (r.isConfirmed && r.value) { o.images[orig] = r.value; commitUiOverrides(); }
-        else if (r.isDenied) { o.images[orig] = ''; commitUiOverrides(); }
-        return;
-    }
-    const node = [...t.childNodes].find(n => n.nodeType === 3 && n.nodeValue.trim());
-    if (!node) return;
-    const rec = uiOrigText.get(node), orig = rec ? rec.orig : node.nodeValue.trim();
-    const r = await Swal.fire({ title: 'แก้ไขข้อความ', input: 'textarea', inputValue: node.nodeValue.trim(), showCancelButton: true, showDenyButton: true, denyButtonText: 'คืนค่าเดิม' });
-    if (r.isConfirmed) {
-        const v = (r.value || '').trim();
-        if (!v || v === orig) delete o.texts[orig]; else o.texts[orig] = v;
-        commitUiOverrides();
-    } else if (r.isDenied) { delete o.texts[orig]; commitUiOverrides(); }
-}, true);
-
-let uiObsTimer;
-new MutationObserver(() => { clearTimeout(uiObsTimer); uiObsTimer = setTimeout(applyUIOverrides, 60); })
-    .observe(document.body, { childList: true, subtree: true }); 
-<script>
+  <script>
 /**
  * ============================================================================
  * E-LEARNING PHARMACY - FULL ENTERPRISE SPA CONTROLLER + GOOGLE SHEETS SYNC
@@ -7157,6 +7011,164 @@ removeBulkQuizRow = function(idx, stageFilter) {
     renderBulkQuizEditorView(stageFilter);
     showNonBlockingToast('นำข้อสอบออกแล้ว (กดปุ่มบันทึกเพื่อยืนยันข้ามเครื่อง)', 'info');
 };
+      // ==================== UI CUSTOMIZER (ADMIN) ====================
+let uiEditMode = false;
+const uiOrigText = new Map();
+const FA_SKIP = ['fa-solid','fa-regular','fa-brands','fa-spin','fa-beat','fa-fw','fa-lg','fa-xl','fa-pulse'];
+function uiHash(s) { let h = 0; for (const c of String(s)) h = ((h << 5) - h + c.charCodeAt(0)) | 0; return Math.abs(h).toString(36); }
+const getFaName = i => [...i.classList].find(c => c.startsWith('fa-') && !FA_SKIP.includes(c) && !/^fa-\d/.test(c));
+function commitUiOverrides() { saveDB(); applyUIOverrides(); syncGlobalSettingsToCloud(); }
+
+function applyUIOverrides() {
+    if (!db.UIOverrides) db.UIOverrides = { style: {}, texts: {}, icons: {}, images: {} };
+    const o = db.UIOverrides, s = o.style || {}, texts = o.texts || {};
+    let st = document.getElementById('uiOverrideStyle');
+    if (!st) { st = document.createElement('style'); st.id = 'uiOverrideStyle'; document.head.appendChild(st); }
+    const R = [];
+    const add = (v, sel, prop = 'background') => { if (v) R.push(`${sel}{${prop}:${v}!important}`); };
+    add(s.pageBg, 'body'); add(s.textColor, 'body', 'color');
+    add(s.navBg, '#topNavbar'); add(s.sidebarBg, '#sidebarPanel'); add(s.cardBg, '.custom-card');
+    add(s.btnPrimary, 'button.bg-blue-600,button.bg-blue-700,button.bg-blue-800,button.bg-blue-900,.sidebar-link.active');
+    add(s.btnSuccess, 'button.bg-emerald-600,button.bg-emerald-700');
+    add(s.btnWarn, 'button.bg-amber-500,button.bg-amber-600');
+    add(s.btnDanger, 'button.bg-rose-600,button.bg-rose-700');
+    if (uiEditMode) R.push('#mainViewContent *:hover,#topNavbar *:hover,#sidebarPanel *:hover{outline:1px dashed #d946ef;cursor:crosshair}');
+    const cssText = R.join('\n');
+    if (st.textContent !== cssText) st.textContent = cssText;
+
+    // ข้อความ
+    uiOrigText.forEach((rec, node) => {
+        if (!node.isConnected) { uiOrigText.delete(node); return; }
+        const want = texts[rec.orig];
+        if (want === undefined) { node.nodeValue = node.nodeValue.replace(rec.cur, rec.orig); uiOrigText.delete(node); }
+        else if (want !== rec.cur) { node.nodeValue = node.nodeValue.replace(rec.cur, want); rec.cur = want; }
+    });
+    if (Object.keys(texts).length) {
+        const w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+        let n;
+        while ((n = w.nextNode())) {
+            if (uiOrigText.has(n)) continue;
+            const p = n.parentElement;
+            if (!p || ['SCRIPT','STYLE','TEXTAREA','NOSCRIPT'].includes(p.tagName)) continue;
+            const raw = n.nodeValue.trim();
+            if (raw && texts[raw] !== undefined) {
+                n.nodeValue = n.nodeValue.replace(raw, texts[raw]);
+                uiOrigText.set(n, { orig: raw, cur: texts[raw] });
+            }
+        }
+    }
+    // ไอคอน
+    document.querySelectorAll('i[class*="fa-"]').forEach(i => {
+        const cur = getFaName(i); if (!cur) return;
+        const orig = i.dataset.uiOrig || cur, want = (o.icons || {})[orig];
+        if (want && want !== cur) { i.classList.remove(cur); i.classList.add(want); i.dataset.uiOrig = orig; }
+        else if (!want && i.dataset.uiOrig && i.dataset.uiOrig !== cur) { i.classList.remove(cur); i.classList.add(i.dataset.uiOrig); delete i.dataset.uiOrig; }
+    });
+    // รูปภาพ (ยกเว้นเกียรติบัตร)
+    document.querySelectorAll('img').forEach(im => {
+        if (im.closest('#certCanvasSurface')) return;
+        const cur = im.getAttribute('src') || '', orig = im.dataset.uiOrigSrc || cur, want = (o.images || {})[orig];
+        if (want && want !== cur) { im.dataset.uiOrigSrc = orig; im.setAttribute('src', want); }
+        else if (!want && im.dataset.uiOrigSrc && im.dataset.uiOrigSrc !== cur) { im.setAttribute('src', im.dataset.uiOrigSrc); delete im.dataset.uiOrigSrc; }
+    });
+    updateUiFab();
+}
+
+function updateUiFab() {
+    let b = document.getElementById('uiEditorFab');
+    const show = !!currentUser && (isAdmin() || hasPermission('manageTheme'));
+    if (!b) {
+        if (!show) return;
+        b = document.createElement('button');
+        b.id = 'uiEditorFab'; b.type = 'button';
+        b.className = 'fixed bottom-4 right-4 z-[9998] px-4 py-3 rounded-full bg-fuchsia-600 text-white text-xs font-bold shadow-xl';
+        b.onclick = () => uiEditMode ? toggleUiEditMode(false) : openUiEditorPanel();
+        document.body.appendChild(b);
+    }
+    const wantDisplay = show ? '' : 'none';
+    if (b.style.display !== wantDisplay) b.style.display = wantDisplay;
+    // ตั้งค่า innerHTML เฉพาะเมื่อโหมดเปลี่ยนจริง กันไม่ให้ MutationObserver วนซ้ำไม่รู้จบ
+    const mode = uiEditMode ? 'on' : 'off';
+    if (b.dataset.mode !== mode) {
+        b.dataset.mode = mode;
+        b.innerHTML = uiEditMode
+            ? '<i class="fa-solid fa-xmark mr-1"></i> ออกจากโหมดแก้ไข'
+            : '<i class="fa-solid fa-wand-magic-sparkles mr-1"></i> ปรับแต่งหน้าเว็บ';
+    }
+}
+
+function toggleUiEditMode(on) {
+    uiEditMode = !!on; applyUIOverrides();
+    if (on) showNonBlockingToast('คลิกที่ ข้อความ / ไอคอน / รูปภาพ ในหน้าเว็บเพื่อแก้ไขได้ทันที', 'success');
+}
+
+function openUiEditorPanel() {
+    const s = db.UIOverrides.style || {};
+    const F = [['pageBg','พื้นหลังหน้าเว็บ','#f8fafc'],['textColor','สีตัวอักษรหลัก','#1e293b'],['navBg','แถบด้านบน','#ffffff'],['sidebarBg','เมนูด้านซ้าย','#ffffff'],['cardBg','พื้นหลังการ์ด','#ffffff'],['btnPrimary','ปุ่มหลัก (น้ำเงิน)','#2563eb'],['btnSuccess','ปุ่มยืนยัน (เขียว)','#059669'],['btnWarn','ปุ่มเตือน (ส้ม)','#f59e0b'],['btnDanger','ปุ่มลบ (แดง)','#e11d48']];
+    Swal.fire({
+        title: 'ปรับแต่งหน้าเว็บทั้งระบบ', width: 560,
+        html: `<div class="text-left text-xs space-y-3">
+            <div class="grid grid-cols-3 gap-2">${F.map(([k,l,d]) => `<div><label class="block mb-1">${l}</label><input type="color" class="uiClr w-full h-8" data-k="${k}" data-def="${d}" value="${s[k] || d}"></div>`).join('')}</div>
+            <button type="button" onclick="Swal.close();toggleUiEditMode(true)" class="w-full py-2.5 rounded-xl bg-fuchsia-600 text-white font-bold">✏️ เปิดโหมดคลิกแก้ไข ข้อความ / ไอคอน / รูปภาพ</button>
+            <p class="text-slate-500">ข้อมูลที่แก้ไขจะซิงก์ไปทุกเครื่องและทุกบัญชีอัตโนมัติ</p></div>`,
+        showCancelButton: true, showDenyButton: true,
+        confirmButtonText: 'บันทึกสี', denyButtonText: 'รีเซ็ตทั้งหมด', cancelButtonText: 'ปิด',
+        preConfirm: () => { const m = { ...s }; document.querySelectorAll('.uiClr').forEach(i => { if (i.value !== i.dataset.def || m[i.dataset.k]) m[i.dataset.k] = i.value; }); return m; }
+    }).then(r => {
+        if (r.isConfirmed) { db.UIOverrides.style = r.value; commitUiOverrides(); }
+        else if (r.isDenied) {
+            const imgs = db.UIOverrides.images || {}; Object.keys(imgs).forEach(k => imgs[k] = '');
+            db.UIOverrides = { style: {}, texts: {}, icons: {}, images: imgs }; commitUiOverrides();
+        }
+    });
+}
+
+document.addEventListener('click', async (e) => {
+    if (!uiEditMode || e.target.closest('.swal2-container,#uiEditorFab')) return;
+    e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+    const t = e.target, o = db.UIOverrides;
+    const icon = t.closest('i[class*="fa-"]');
+    if (icon && getFaName(icon)) {
+        const cur = getFaName(icon), orig = icon.dataset.uiOrig || cur;
+        const r = await Swal.fire({ title: 'เปลี่ยนไอคอน (Font Awesome)', text: 'เช่น fa-heart-pulse, fa-pills, fa-star', input: 'text', inputValue: cur, showCancelButton: true });
+        if (r.isConfirmed) {
+            let v = (r.value || '').trim(); if (v && !v.startsWith('fa-')) v = 'fa-' + v;
+            if (!v || v === orig) delete o.icons[orig]; else o.icons[orig] = v;
+            commitUiOverrides();
+        }
+        return;
+    }
+    if (t.tagName === 'IMG' && !t.closest('#certCanvasSurface')) {
+        const src = t.getAttribute('src') || '', orig = t.dataset.uiOrigSrc || src;
+        if (orig.startsWith('data:')) { showNonBlockingToast('รูปนี้ฝังในข้อมูล (เช่นรูปปกคอร์ส) ให้แก้ที่หน้าจัดการคอร์ส', 'warning'); return; }
+        const r = await Swal.fire({
+            title: 'เปลี่ยนรูปภาพ',
+            html: `<input id="uiImgUrl" class="swal2-input" placeholder="วาง URL รูปใหม่"><input id="uiImgFile" type="file" accept="image/*" class="swal2-file">`,
+            showCancelButton: true, showDenyButton: true, denyButtonText: 'คืนรูปเดิม',
+            preConfirm: async () => {
+                const f = document.getElementById('uiImgFile').files[0];
+                if (f) { const d = await new Promise(res => { const fr = new FileReader(); fr.onload = () => res(fr.result); fr.readAsDataURL(f); }); return compressImageToMaxChars(d, 40000); }
+                return document.getElementById('uiImgUrl').value.trim() || false;
+            }
+        });
+        if (r.isConfirmed && r.value) { o.images[orig] = r.value; commitUiOverrides(); }
+        else if (r.isDenied) { o.images[orig] = ''; commitUiOverrides(); }
+        return;
+    }
+    const node = [...t.childNodes].find(n => n.nodeType === 3 && n.nodeValue.trim());
+    if (!node) return;
+    const rec = uiOrigText.get(node), orig = rec ? rec.orig : node.nodeValue.trim();
+    const r = await Swal.fire({ title: 'แก้ไขข้อความ', input: 'textarea', inputValue: node.nodeValue.trim(), showCancelButton: true, showDenyButton: true, denyButtonText: 'คืนค่าเดิม' });
+    if (r.isConfirmed) {
+        const v = (r.value || '').trim();
+        if (!v || v === orig) delete o.texts[orig]; else o.texts[orig] = v;
+        commitUiOverrides();
+    } else if (r.isDenied) { delete o.texts[orig]; commitUiOverrides(); }
+}, true);
+
+let uiObsTimer;
+new MutationObserver(() => { clearTimeout(uiObsTimer); uiObsTimer = setTimeout(applyUIOverrides, 60); })
+    .observe(document.body, { childList: true, subtree: true });
 </script>
 </body>
 </html>
