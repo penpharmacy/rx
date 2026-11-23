@@ -6496,6 +6496,17 @@ function applyRemoteGlobalSettings(remote) {
         } else if (key === 'SavedCertTemplates' && Array.isArray(val)) {
             db.SavedCertTemplates = val;
             applied = true;
+        } else if (key === 'DeletedRegistry' && typeof val === 'object') {
+            ['Courses', 'Lessons', 'Quiz'].forEach(t => {
+                if (Array.isArray(val[t])) {
+                    if (!deletedRegistry[t]) deletedRegistry[t] = [];
+                    val[t].forEach(id => {
+                        if (!deletedRegistry[t].includes(id)) deletedRegistry[t].push(id);
+                    });
+                }
+            });
+            saveDeletedRegistry();
+            applied = true;
         }
     };
 
@@ -6591,7 +6602,7 @@ function startRealtimeSyncEngine() {
                 silentRealtimePullFromCloud();
             }
         }
-    }, 5000);
+    }, 2500);
 
     document.addEventListener('visibilitychange', () => {
         if (document.visibilityState === 'visible') {
@@ -6626,12 +6637,13 @@ async function silentRealtimePullFromCloud() {
     isSyncingNow = true;
     try {
         const prevSignature = JSON.stringify({
-            c: db.Courses.map(x => x.CourseID + x.CourseName + x.Status),
-            l: db.Lessons.map(x => x.LessonID + x.Title + x.Status),
-            q: db.Quiz.map(x => x.QuizID + x.Question),
-            u: db.Users.length,
-            s: db.Scores.length,
-            cert: db.Certificates.length,
+            c: db.Courses,
+            l: db.Lessons,
+            q: db.Quiz,
+            u: db.Users,
+            p: db.Progress,
+            s: db.Scores,
+            cert: db.Certificates,
             cfg: buildGlobalConfigSnapshot()
         });
 
@@ -6669,12 +6681,13 @@ async function silentRealtimePullFromCloud() {
             populateRegisterDropdowns();
 
             const nextSignature = JSON.stringify({
-                c: db.Courses.map(x => x.CourseID + x.CourseName + x.Status),
-                l: db.Lessons.map(x => x.LessonID + x.Title + x.Status),
-                q: db.Quiz.map(x => x.QuizID + x.Question),
-                u: db.Users.length,
-                s: db.Scores.length,
-                cert: db.Certificates.length,
+                c: db.Courses,
+                l: db.Lessons,
+                q: db.Quiz,
+                u: db.Users,
+                p: db.Progress,
+                s: db.Scores,
+                cert: db.Certificates,
                 cfg: buildGlobalConfigSnapshot()
             });
 
@@ -6685,7 +6698,7 @@ async function silentRealtimePullFromCloud() {
                 if (updatedMe) currentUser = updatedMe;
                 renderSidebarMenu();
                 renderNotifications();
-                if (!Swal.isVisible()) {
+                if (!Swal.isVisible() && currentView !== 'certDesigner' && !activeLearningSession.timerInterval && !activeQuizTimer) {
                     switchView(currentView);
                 }
             }
@@ -6695,6 +6708,32 @@ async function silentRealtimePullFromCloud() {
         isSyncingNow = false;
     }
 }
+
+function pushDeletedRegistryToCloud() {
+    const sysNotif = {
+        NotificationID: 'SYS_CFG_DELETED',
+        UserID: '__SYS_CONFIG__',
+        Message: `__SYS_CHUNK__:DeletedRegistry:${JSON.stringify(deletedRegistry)}`,
+        Type: '__SYS_CONFIG__',
+        Status: 'Read',
+        CreateDate: getNowThai()
+    };
+    const existIdx = db.Notifications.findIndex(n => n.NotificationID === 'SYS_CFG_DELETED');
+    if (existIdx > -1) db.Notifications[existIdx] = sysNotif;
+    else db.Notifications.push(sysNotif);
+    saveDB();
+    pushRecordToGoogleSheet('saveNotification', sysNotif);
+}
+
+// ดักจับการบันทึกจากทุกฟังก์ชันให้ซิงก์ขึ้น Google Sheets ทันที
+const _origPushRecordToGoogleSheet = pushRecordToGoogleSheet;
+pushRecordToGoogleSheet = async function(actionName, payloadObj) {
+    const res = await _origPushRecordToGoogleSheet(actionName, payloadObj);
+    if (actionName === 'deleteRecord') {
+        pushDeletedRegistryToCloud();
+    }
+    return res;
+};
 
 startRealtimeSyncEngine();
 
@@ -6888,4 +6927,5 @@ removeBulkQuizRow = function(idx, stageFilter) {
 </script>
 </body>
 </html>
+
 
