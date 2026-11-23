@@ -80,7 +80,7 @@
                 <div>
                     <div class="flex justify-between items-center mb-1.5">
                         <label id="lblLoginPassword" class="block text-xs font-bold text-slate-700 dark:text-slate-300">รหัสผ่าน</label>
-                        <button type="button" onclick="openForgotPasswordModal()" class="text-xs font-semibold text-blue-600 hover:underline">ลืมรหัสผ่าน?</button>
+                        <button type="button" id="btnForgotPassLink" onclick="openForgotPasswordModal()" class="text-xs font-semibold text-blue-600 hover:underline">ลืมรหัสผ่าน?</button>
                     </div>
                     <div class="flex rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-slate-900 overflow-hidden focus-within:ring-2 focus-within:ring-blue-500">
                         <input type="password" id="loginPass" required placeholder="รหัสผ่าน" class="w-full px-4 py-2.5 bg-transparent outline-none text-sm">
@@ -97,7 +97,7 @@
             <div class="pt-4 border-t border-slate-100 dark:border-slate-700 text-center">
                 <div class="text-xs text-slate-500">
                     ยังไม่มีบัญชีผู้ใช้งาน? 
-                    <button type="button" onclick="switchAuthView('register')" class="text-blue-600 font-bold hover:underline ml-1">
+                    <button type="button" id="btnRegisterSwitchLink" onclick="switchAuthView('register')" class="text-blue-600 font-bold hover:underline ml-1">
                         <i class="fa-solid fa-user-plus"></i> ลงทะเบียนสมาชิกใหม่
                     </button>
                 </div>
@@ -1158,7 +1158,8 @@ function applyGlobalSiteTheme() {
 
     const authScreen = document.getElementById('authScreen');
     if (authScreen) {
-        authScreen.style.background = `linear-gradient(135deg, ${t.authBgFrom}, ${t.authBgVia}, ${t.authBgTo})`;
+        const bgTo = t.authBgTo || t.authBgVia || t.authBgFrom;
+        authScreen.style.background = `linear-gradient(135deg, ${t.authBgFrom}, ${t.authBgVia}, ${bgTo})`;
     }
     const setText = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
     setText('authMainTitle', t.authMainTitle);
@@ -1169,8 +1170,23 @@ function applyGlobalSiteTheme() {
     setText('navBrandTitle', t.navBrandTitle);
     setText('navBrandSub', t.navBrandSub);
 
+    const accentColor = t.authBtnColor || '#1e40af';
     const btnLogin = document.getElementById('btnLoginSubmit');
-    if (btnLogin) btnLogin.style.backgroundColor = t.authBtnColor;
+    if (btnLogin) {
+        btnLogin.style.backgroundColor = accentColor;
+        btnLogin.style.boxShadow = `0 10px 18px -6px ${accentColor}66`;
+    }
+    const authTitle = document.getElementById('authMainTitle');
+    if (authTitle) authTitle.style.color = accentColor;
+    const authLogoIcon = document.getElementById('authLogoIcon');
+    if (authLogoIcon) {
+        authLogoIcon.style.color = accentColor;
+        if (authLogoIcon.parentElement) authLogoIcon.parentElement.style.backgroundColor = `${accentColor}15`;
+    }
+    const forgotLink = document.getElementById('btnForgotPassLink');
+    if (forgotLink) forgotLink.style.color = accentColor;
+    const regLink = document.getElementById('btnRegisterSwitchLink');
+    if (regLink) regLink.style.color = accentColor;
 }
 
 function populateRegisterDropdowns() {
@@ -6009,10 +6025,11 @@ function renderAdminThemeSettingsView(container) {
                 </div>
                 <div><label class="font-semibold block mb-1">ชื่อระบบหน้า Login</label><input id="thAuthTitle" value="${sanitizeHTML(t.authMainTitle)}" class="w-full px-3 py-2 rounded-xl border dark:bg-slate-900"></div>
                 <div><label class="font-semibold block mb-1">คำบรรยายหน้า Login</label><input id="thAuthSub" value="${sanitizeHTML(t.authSubTitle)}" class="w-full px-3 py-2 rounded-xl border dark:bg-slate-900"></div>
-                <div class="grid grid-cols-3 gap-2">
-                    <div><label class="block mb-1">สีพื้นหลัง Login 1</label><input type="color" id="thAuthFrom" value="${t.authBgFrom}" class="w-full h-8"></div>
-                    <div><label class="block mb-1">สีพื้นหลัง Login 2</label><input type="color" id="thAuthVia" value="${t.authBgVia}" class="w-full h-8"></div>
-                    <div><label class="block mb-1">สีปุ่มเข้าสู่ระบบ</label><input type="color" id="thAuthBtn" value="${t.authBtnColor}" class="w-full h-8"></div>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    <div><label class="block mb-1">สีพื้นหลัง Login 1</label><input type="color" id="thAuthFrom" value="${t.authBgFrom}" class="w-full h-8 cursor-pointer"></div>
+                    <div><label class="block mb-1">สีพื้นหลัง Login 2</label><input type="color" id="thAuthVia" value="${t.authBgVia}" class="w-full h-8 cursor-pointer"></div>
+                    <div><label class="block mb-1">สีพื้นหลัง Login 3</label><input type="color" id="thAuthTo" value="${t.authBgTo || t.authBgVia}" class="w-full h-8 cursor-pointer"></div>
+                    <div><label class="block mb-1">สีปุ่ม & ธีมหน้า Login</label><input type="color" id="thAuthBtn" value="${t.authBtnColor}" class="w-full h-8 cursor-pointer"></div>
                 </div>
             </div>
 
@@ -6065,6 +6082,7 @@ function saveGlobalThemeForm() {
     t.authSubTitle = document.getElementById('thAuthSub').value;
     t.authBgFrom = document.getElementById('thAuthFrom').value;
     t.authBgVia = document.getElementById('thAuthVia').value;
+    t.authBgTo = document.getElementById('thAuthTo').value;
     t.authBtnColor = document.getElementById('thAuthBtn').value;
     t.navBrandTitle = document.getElementById('thNavTitle').value;
     t.classroomTitle = document.getElementById('thClassTitle').value;
@@ -6081,18 +6099,30 @@ function saveGlobalThemeForm() {
 
 // ==================== VIEW 12: ADMIN BACKEND DATABASE VIEWER ====================
 let adminDbTable = 'Users';
+const ADMIN_DB_SHEET_META = {
+    Users: { primaryKey: 'UserID', saveAction: 'saveUser' },
+    Courses: { primaryKey: 'CourseID', saveAction: 'saveCourse' },
+    Lessons: { primaryKey: 'LessonID', saveAction: 'saveLesson' },
+    Progress: { primaryKey: 'ProgressID', saveAction: 'saveProgress' },
+    Quiz: { primaryKey: 'QuizID', saveAction: 'saveQuiz' },
+    Scores: { primaryKey: 'ScoreID', saveAction: 'saveScore' },
+    Certificates: { primaryKey: 'CertificateID', saveAction: 'saveCertificate' },
+    Notifications: { primaryKey: 'NotificationID', saveAction: 'saveNotification' }
+};
+
 function setAdminDbTable(n) { adminDbTable = n; renderAdminDBView(document.getElementById('mainViewContent')); }
 function renderAdminDBView(container) {
     if (!hasPermission('viewDB')) return;
     const names = Object.keys(db).filter(k => Array.isArray(db[k]));
     const rows = db[adminDbTable] || [];
-    const cols = [...new Set(rows.flatMap(r => Object.keys(r)))];
+    const isPrimitiveArray = rows.length > 0 && (typeof rows[0] !== 'object' || rows[0] === null);
+    const cols = isPrimitiveArray ? ['Value'] : [...new Set(rows.flatMap(r => Object.keys(r || {})))];
 
     container.innerHTML = `
         <div class="flex flex-wrap justify-between items-center gap-3">
             <div>
                 <h2 class="text-2xl font-bold text-blue-900 dark:text-white">🗄️ ฐานข้อมูลเบื้องหลัง (Admin DB Viewer)</h2>
-                <p class="text-xs text-slate-500">แสดงข้อมูลทุกตารางในระบบแบบเรียลไทม์ (เชื่อมต่อกับ Google Sheets)</p>
+                <p class="text-xs text-slate-500">แสดง แก้ไข และลบข้อมูลทุกตารางในระบบแบบเรียลไทม์ (เชื่อมต่อกับ Google Sheets)</p>
             </div>
             <button onclick="syncAllDataWithGoogleSheet(true)" class="px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold shadow">
                 <i class="fa-solid fa-cloud-arrow-down mr-1"></i> ดึงข้อมูลล่าสุดจาก Google Sheets
@@ -6104,14 +6134,184 @@ function renderAdminDBView(container) {
         <div class="custom-card bg-white dark:bg-slate-800 p-4 shadow-sm border overflow-x-auto">
             <table class="w-full text-left text-xs">
                 <thead class="bg-slate-100 dark:bg-slate-700">
-                    <tr>${cols.map(c => `<th class="p-2 whitespace-nowrap">${c}</th>`).join('')}</tr>
+                    <tr>
+                        <th class="p-2 whitespace-nowrap sticky left-0 bg-slate-100 dark:bg-slate-700 z-10">จัดการ</th>
+                        ${cols.map(c => `<th class="p-2 whitespace-nowrap">${sanitizeHTML(c)}</th>`).join('')}
+                    </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 dark:divide-slate-700">
-                    ${rows.map(r => `<tr>${cols.map(c => `<td class="p-2 whitespace-nowrap">${sanitizeHTML(String(Array.isArray(r[c]) ? r[c].join(',') : (r[c] ?? '')).slice(0, 80))}</td>`).join('')}</tr>`).join('') || '<tr><td class="p-3 text-slate-400">ไม่มีข้อมูล</td></tr>'}
+                    ${rows.map((r, rowIdx) => `
+                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/40">
+                            <td class="p-2 whitespace-nowrap sticky left-0 bg-white dark:bg-slate-800 z-10 border-r border-slate-100 dark:border-slate-700">
+                                <div class="flex items-center gap-1.5">
+                                    <button type="button" onclick="editAdminDbRow('${adminDbTable}', ${rowIdx})" class="px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 font-semibold" title="แก้ไขข้อมูลแถวนี้">
+                                        <i class="fa-solid fa-pen"></i> แก้ไข
+                                    </button>
+                                    <button type="button" onclick="deleteAdminDbRow('${adminDbTable}', ${rowIdx})" class="px-2.5 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 font-semibold" title="ลบข้อมูลแถวนี้">
+                                        <i class="fa-solid fa-trash-can"></i> ลบ
+                                    </button>
+                                </div>
+                            </td>
+                            ${isPrimitiveArray
+                                ? `<td class="p-2 whitespace-nowrap">${sanitizeHTML(String(r ?? ''))}</td>`
+                                : cols.map(c => {
+                                    const rawVal = r[c];
+                                    const displayVal = Array.isArray(rawVal)
+                                        ? rawVal.join(',')
+                                        : (typeof rawVal === 'object' && rawVal !== null ? JSON.stringify(rawVal) : (rawVal ?? ''));
+                                    return `<td class="p-2 whitespace-nowrap">${sanitizeHTML(String(displayVal).slice(0, 80))}</td>`;
+                                }).join('')
+                            }
+                        </tr>
+                    `).join('') || `<tr><td colspan="${cols.length + 1}" class="p-4 text-center text-slate-400">ไม่มีข้อมูลในตารางนี้</td></tr>`}
                 </tbody>
             </table>
         </div>
     `;
+}
+
+function editAdminDbRow(tableName, rowIdx) {
+    if (!hasPermission('viewDB')) return;
+    const rows = db[tableName];
+    if (!Array.isArray(rows) || rowIdx < 0 || rowIdx >= rows.length) return;
+    const row = rows[rowIdx];
+
+    if (typeof row !== 'object' || row === null) {
+        Swal.fire({
+            title: `แก้ไขข้อมูลในตาราง ${tableName}`,
+            input: 'text',
+            inputValue: String(row ?? ''),
+            showCancelButton: true,
+            confirmButtonText: 'บันทึกการแก้ไข',
+            cancelButtonText: 'ยกเลิก',
+            confirmButtonColor: '#2563eb'
+        }).then(res => {
+            if (res.isConfirmed && res.value !== undefined) {
+                rows[rowIdx] = res.value.trim();
+                saveDB();
+                renderAdminDBView(document.getElementById('mainViewContent'));
+                showNonBlockingToast('บันทึกการแก้ไขข้อมูลเรียบร้อยแล้ว', 'success');
+            }
+        });
+        return;
+    }
+
+    const keys = Object.keys(row);
+    const meta = ADMIN_DB_SHEET_META[tableName];
+
+    Swal.fire({
+        title: `แก้ไขข้อมูล: ${tableName} (แถวที่ ${rowIdx + 1})`,
+        width: 640,
+        html: `
+            <div class="text-left text-xs space-y-2.5 max-h-[65vh] overflow-y-auto pr-1">
+                ${keys.map(k => {
+                    const val = row[k];
+                    const isPrimary = meta && meta.primaryKey === k;
+                    const isBool = typeof val === 'boolean';
+                    const isObj = typeof val === 'object' && val !== null && !Array.isArray(val);
+                    const strVal = Array.isArray(val) ? val.join(',') : (isObj ? JSON.stringify(val) : String(val ?? ''));
+                    if (isBool) {
+                        return `
+                            <div class="flex items-center justify-between p-2 rounded-xl border bg-slate-50">
+                                <label class="font-bold text-slate-700">${sanitizeHTML(k)}</label>
+                                <input type="checkbox" data-db-key="${sanitizeHTML(k)}" data-db-type="bool" class="adb-edit-field w-4 h-4 rounded" ${val ? 'checked' : ''}>
+                            </div>
+                        `;
+                    }
+                    return `
+                        <div>
+                            <label class="font-bold block mb-1 text-slate-700">${sanitizeHTML(k)} ${isPrimary ? '<span class="text-[10px] text-amber-600">(Primary Key)</span>' : ''}</label>
+                            ${strVal.length > 80 || isObj
+                                ? `<textarea rows="2" data-db-key="${sanitizeHTML(k)}" data-db-type="${Array.isArray(val) ? 'array' : (isObj ? 'json' : 'text')}" class="adb-edit-field w-full px-3 py-2 rounded-xl border font-mono text-xs">${sanitizeHTML(strVal)}</textarea>`
+                                : `<input type="text" data-db-key="${sanitizeHTML(k)}" data-db-type="${Array.isArray(val) ? 'array' : (typeof val === 'number' ? 'number' : 'text')}" value="${sanitizeHTML(strVal)}" class="adb-edit-field w-full px-3 py-2 rounded-xl border text-xs">`
+                            }
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+        `,
+        showCancelButton: true,
+        confirmButtonText: 'บันทึกการแก้ไข',
+        cancelButtonText: 'ยกเลิก',
+        confirmButtonColor: '#2563eb',
+        preConfirm: () => {
+            const updated = { ...row };
+            const fields = document.querySelectorAll('.adb-edit-field');
+            for (const el of fields) {
+                const k = el.dataset.dbKey;
+                const t = el.dataset.dbType;
+                if (t === 'bool') {
+                    updated[k] = el.checked;
+                } else if (t === 'array') {
+                    updated[k] = el.value.split(',').map(s => s.trim()).filter(Boolean);
+                } else if (t === 'number') {
+                    const num = Number(el.value);
+                    updated[k] = isNaN(num) ? el.value : num;
+                } else if (t === 'json') {
+                    try {
+                        updated[k] = JSON.parse(el.value);
+                    } catch (err) {
+                        Swal.showValidationMessage(`รูปแบบ JSON ในฟิลด์ ${k} ไม่ถูกต้อง`);
+                        return false;
+                    }
+                } else {
+                    updated[k] = el.value;
+                }
+            }
+            return updated;
+        }
+    }).then(res => {
+        if (res.isConfirmed && res.value) {
+            rows[rowIdx] = res.value;
+            saveDB();
+            if (meta && meta.saveAction) {
+                pushRecordToGoogleSheet(meta.saveAction, res.value);
+            }
+            renderAdminDBView(document.getElementById('mainViewContent'));
+            showNonBlockingToast(`อัปเดตข้อมูลในตาราง ${tableName} เรียบร้อยแล้ว`, 'success');
+        }
+    });
+}
+
+function deleteAdminDbRow(tableName, rowIdx) {
+    if (!hasPermission('viewDB')) return;
+    const rows = db[tableName];
+    if (!Array.isArray(rows) || rowIdx < 0 || rowIdx >= rows.length) return;
+    const row = rows[rowIdx];
+    const meta = ADMIN_DB_SHEET_META[tableName];
+
+    if (tableName === 'Users' && currentUser && row && row.UserID === currentUser.UserID) {
+        Swal.fire('ไม่สามารถลบได้', 'ไม่สามารถลบบัญชีผู้ดูแลระบบที่กำลังเข้าสู่ระบบอยู่ได้', 'warning');
+        return;
+    }
+
+    const rowLabel = (typeof row === 'object' && row !== null)
+        ? (meta && row[meta.primaryKey] ? `${meta.primaryKey}: ${row[meta.primaryKey]}` : `แถวที่ ${rowIdx + 1}`)
+        : String(row);
+
+    Swal.fire({
+        title: 'ยืนยันการลบข้อมูล?',
+        html: `<div class="text-xs text-slate-600">คุณต้องการลบข้อมูล <strong>${sanitizeHTML(rowLabel)}</strong> ออกจากตาราง <strong>${sanitizeHTML(tableName)}</strong> ใช่หรือไม่?</div>`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'ลบข้อมูลถาวร',
+        cancelButtonText: 'ยกเลิก',
+        confirmButtonColor: '#e11d48'
+    }).then(res => {
+        if (res.isConfirmed) {
+            rows.splice(rowIdx, 1);
+            saveDB();
+            if (meta && row && row[meta.primaryKey] !== undefined) {
+                pushRecordToGoogleSheet('deleteRecord', {
+                    sheetName: tableName,
+                    primaryKey: meta.primaryKey,
+                    id: row[meta.primaryKey]
+                });
+            }
+            renderAdminDBView(document.getElementById('mainViewContent'));
+            showNonBlockingToast(`ลบข้อมูลออกจาก ${tableName} เรียบร้อยแล้ว`, 'success');
+        }
+    });
 }
 
 // ==================== VIEW 13: ARCHITECTURE GUIDE (ADMIN ONLY) ====================
@@ -6126,7 +6326,7 @@ function renderArchitectureGuideView(container) {
                 <ol class="list-decimal pl-5 space-y-1.5">
                     <li>นำไฟล์ <code>index.html</code>, <code>Code.gs</code>, <code>README.md</code> และ <code>.gitignore</code> อัปโหลดขึ้น GitHub Repository และเปิดใช้งาน GitHub Pages</li>
                     <li>สร้าง Google Sheets ใหม่ ไปที่เมนู <b>ส่วนขยาย (Extensions) &gt; Apps Script</b> แล้ววางโค้ดจากไฟล์ <code>Code.gs</code></li>
-                    <li>เลือกฟังก์ชัน <code>SetupAllSheet</code> แล้วกด <b>Run (เรียกใช้)</b> 1 ครั้งเพื่อสร้างตารางทั้ง 9 ชีตและบัญชี Admin อัตโนมัติ</li>
+                    <li>เลือกฟังก์ชัน <code>SetupAllSheet</code> แล้วกด <b>Run (เรียกใช้)</b> 1 ครั้งเพื่อสร้างตารางและบัญชี Admin อัตโนมัติ</li>
                     <li>กด <b>Deploy &gt; New deployment &gt; Web app</b> เลือก Execute as: <b>Me</b> และ Who has access: <b>Anyone</b> แล้วนำ Web App URL มากรอกในหน้า <b>ตั้งค่าระบบ / Sheets / Telegram</b></li>
                 </ol>
             </div>
@@ -6148,18 +6348,23 @@ function pushNotification(userId, message, type) {
     pushRecordToGoogleSheet('saveNotification', notif);
 }
 function renderNotifications() {
+    if (!currentUser) return;
     const list = db.Notifications.filter(n => n.UserID === 'ALL' || n.UserID === currentUser.UserID);
     const unread = list.filter(n => n.Status === 'Unread').length;
     const badge = document.getElementById('notifBadge');
-    badge.textContent = unread;
-    badge.classList.toggle('hidden', unread === 0);
-
-    document.getElementById('notifListContainer').innerHTML = list.map(n => `
-        <div class="p-3 text-xs ${n.Status === 'Unread' ? 'bg-blue-50/70 dark:bg-slate-700/60 font-semibold' : ''}">
-            <div>${sanitizeHTML(n.Message)}</div>
-            <div class="text-[10px] text-slate-400 mt-1">${n.CreateDate}</div>
-        </div>
-    `).join('');
+    if (badge) {
+        badge.textContent = unread;
+        badge.classList.toggle('hidden', unread === 0);
+    }
+    const holder = document.getElementById('notifListContainer');
+    if (holder) {
+        holder.innerHTML = list.map(n => `
+            <div class="p-3 text-xs ${n.Status === 'Unread' ? 'bg-blue-50/70 dark:bg-slate-700/60 font-semibold' : ''}">
+                <div>${sanitizeHTML(n.Message)}</div>
+                <div class="text-[10px] text-slate-400 mt-1">${n.CreateDate}</div>
+            </div>
+        `).join('');
+    }
 }
 function showBroadcastNotifPrompt() {
     if (!hasPermission('broadcastNotif')) return;
