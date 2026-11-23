@@ -117,7 +117,7 @@
                 <div class="grid grid-cols-2 gap-2">
                     <div>
                         <label class="font-semibold block mb-1">รหัสพนักงาน / ID *</label>
-                        <input type="text" id="regUserId" required placeholder="เช่น u1111" class="w-full px-3 py-2 rounded-xl border dark:border-slate-700 dark:bg-slate-900">
+                        <input type="text" id="regUserId" required placeholder="เช่น EMP105" class="w-full px-3 py-2 rounded-xl border dark:border-slate-700 dark:bg-slate-900">
                     </div>
                     <div>
                         <label class="font-semibold block mb-1">รหัสผ่าน *</label>
@@ -126,11 +126,11 @@
                 </div>
                 <div>
                     <label class="font-semibold block mb-1">คำนำหน้า ชื่อ-นามสกุล *</label>
-                    <input type="text" id="regFullName" required placeholder="เช่น นส.สมหญิง ใจดี" class="w-full px-3 py-2 rounded-xl border dark:border-slate-700 dark:bg-slate-900">
+                    <input type="text" id="regFullName" required placeholder="เช่น พว.สมหญิง ใจดี" class="w-full px-3 py-2 rounded-xl border dark:border-slate-700 dark:bg-slate-900">
                 </div>
                 <div>
                     <label class="font-semibold block mb-1">อีเมล (สำหรับกู้คืนรหัสผ่านและรับเกียรติบัตร) *</label>
-                    <input type="email" id="regEmail" required placeholder="you@example.com" class="w-full px-3 py-2 rounded-xl border dark:border-slate-700 dark:bg-slate-900">
+                    <input type="email" id="regEmail" required placeholder="name@hospital.go.th" class="w-full px-3 py-2 rounded-xl border dark:border-slate-700 dark:bg-slate-900">
                 </div>
                 <div>
                     <label class="font-semibold block mb-1">แผนกในโรงพยาบาล *</label>
@@ -588,7 +588,7 @@
  * E-LEARNING PHARMACY - FULL ENTERPRISE SPA CONTROLLER + GOOGLE SHEETS SYNC
  * ============================================================================
  */
-const DEFAULT_GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzVhRpEPx1nltZCDI01Nt-Jd8MRWcv5Kwz2YD8Rh_UdQ3T68qmixPVoeFNfehVjpduVEQ/exec";
+const DEFAULT_GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycby9fXcuY37bF6uaiwfXOpoeRzNLcCSg3lzzXipM0vzX235dUUBy3lkYg0On8-HlLHMwOw/exec";
 
 function getGasUrl() {
     return (db && db.SiteThemeSettings && db.SiteThemeSettings.gasWebAppUrl) || DEFAULT_GAS_WEB_APP_URL;
@@ -708,7 +708,7 @@ const initialDatabase = {
         adminDbSubtitle: "แสดง แก้ไข และลบข้อมูลทุกตารางในระบบแบบเรียลไทม์ (เชื่อมต่อกับ Google Sheets)",
         gasWebAppUrl: DEFAULT_GAS_WEB_APP_URL,
         telegramBotToken: "9280509192:AAE6Ux-E2cQ3yHvoHvBoyJLMxL_wbFW28TE",
-        telegramChatId: "127792770"
+        telegramChatId: "8801241740"
     },
     ClassroomLayoutConfig: {
         layoutMode: "grid",
@@ -4156,13 +4156,21 @@ async function shareCertToTelegramAndEmail() {
 
     try {
         const target = document.getElementById('certCanvasSurface') || document.getElementById('certificateRenderBox');
-        const canvas = await html2canvas(target, { useCORS: true, scale: 2 });
+        const canvas = await html2canvas(target, { useCORS: true, scale: 1.5 });
         const { jsPDF } = window.jspdf;
         const pdf = new jsPDF('l', 'mm', 'a4');
         const w = 277, h = Math.min(190, (canvas.height / canvas.width) * w);
-        pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 10, 10, w, h);
-        const base64Pdf = pdf.output('datauristring');
+        pdf.addImage(canvas.toDataURL('image/jpeg', 0.92), 'JPEG', 10, 10, w, h);
         const pdfBlob = pdf.output('blob');
+        const base64Pdf = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                const resStr = String(reader.result || '');
+                resolve(resStr.includes(',') ? resStr.split(',')[1] : resStr);
+            };
+            reader.onerror = () => reject(new Error('Failed to encode PDF'));
+            reader.readAsDataURL(pdfBlob);
+        });
 
         let telegramSentOk = false;
         let telegramErrorMsg = '';
@@ -4213,7 +4221,7 @@ async function shareCertToTelegramAndEmail() {
                                 score: cert.Score,
                                 certId: cert.CertificateID,
                                 verifyUrl: cert.VerifyURL,
-                                base64Pdf
+                                base64Pdf: pureBase64Pdf
                             }
                         })
                     });
@@ -4241,7 +4249,7 @@ async function shareCertToTelegramAndEmail() {
                             certId: cert.CertificateID,
                             issueDate: cert.IssueDate,
                             verifyUrl: cert.VerifyURL,
-                            base64Pdf
+                            base64Pdf: pureBase64Pdf
                         }
                     })
                 });
@@ -4259,15 +4267,18 @@ async function shareCertToTelegramAndEmail() {
         }
 
         const isAnyOk = telegramSentOk || emailSentOk;
+        const tgHint = telegramErrorMsg.toLowerCase().includes('chat not found')
+            ? '<br><span class="text-[11px] text-rose-700 font-semibold">💡 วิธีแก้: เปิดแอป Telegram ค้นหาบอทของคุณแล้วกดปุ่ม <b>Start (/start)</b> 1 ครั้ง หรือเช็กเลข Chat ID ให้ถูกต้อง</span>'
+            : '';
         Swal.fire({
             icon: isAnyOk ? 'success' : 'warning',
             title: isAnyOk ? 'ดำเนินการส่งเกียรติบัตรเรียบร้อย!' : 'แจ้งผลการส่งเกียรติบัตร',
             html: `<div class="text-left text-xs text-slate-600 space-y-2">
                 <div class="p-2.5 rounded-xl ${telegramSentOk ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-amber-50 text-amber-800 border border-amber-200'}">
-                    ✈️ <b>Telegram (${sanitizeHTML(chatId)}):</b> ${telegramSentOk ? 'ส่งไฟล์ PDF เกียรติบัตรเข้า Telegram สำเร็จแล้ว!' : `ส่งไม่สำเร็จ (${sanitizeHTML(telegramErrorMsg || 'ตรวจสอบ Bot Token / Chat ID')})`}
+                    ✈️ <b>Telegram (${sanitizeHTML(chatId)}):</b> ${telegramSentOk ? 'ส่งไฟล์ PDF เกียรติบัตรเข้า Telegram สำเร็จแล้ว!' : `ส่งไม่สำเร็จ (${sanitizeHTML(telegramErrorMsg || 'ตรวจสอบ Bot Token / Chat ID')})${tgHint}`}
                 </div>
                 <div class="p-2.5 rounded-xl ${emailSentOk ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-amber-50 text-amber-800 border border-amber-200'}">
-                    📧 <b>Email (${sanitizeHTML(targetEmail || '-')}):</b> ${emailSentOk ? 'ส่งไฟล์ PDF เกียรติบัตรไปยังอีเมลที่ลงทะเบียนไว้สำเร็จแล้ว!' : `สถานะ: ${sanitizeHTML(emailErrorMsg || 'กรุณาตรวจสอบการ Deploy Code.gs')}`}
+                    📧 <b>Email (${sanitizeHTML(targetEmail || '-')}):</b> ${emailSentOk ? 'ส่งไฟล์ PDF เกียรติบัตรไปยังอีเมลที่ลงทะเบียนไว้สำเร็จแล้ว!' : `สถานะ: ${sanitizeHTML(emailErrorMsg || 'กรุณาอัปเดตโค้ด Code.gs และกด Deploy ใหม่')}`}
                 </div>
             </div>`,
             confirmButtonColor: '#229ED9'
@@ -6657,7 +6668,7 @@ function resetGlobalThemeDefaults() {
         ...JSON.parse(JSON.stringify(initialDatabase.SiteThemeSettings)),
         gasWebAppUrl: db.SiteThemeSettings.gasWebAppUrl || DEFAULT_GAS_WEB_APP_URL,
         telegramBotToken: db.SiteThemeSettings.telegramBotToken || "9280509192:AAE6Ux-E2cQ3yHvoHvBoyJLMxL_wbFW28TE",
-        telegramChatId: db.SiteThemeSettings.telegramChatId || "8801241740"
+        telegramChatId: db.SiteThemeSettings.telegramChatId || "127792770"
     };
     saveDB();
     applyGlobalSiteTheme();
