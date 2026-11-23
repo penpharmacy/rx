@@ -591,7 +591,7 @@
  * E-LEARNING PHARMACY - FULL ENTERPRISE SPA CONTROLLER + GOOGLE SHEETS SYNC
  * ============================================================================
  */
-const DEFAULT_GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxXudlzczA9Lmqku45bj7D6lWXKVOLD1jmwq6P5k7mUGC6y57A7yBM2y4_AfJa1W-1jHw/exec";
+const DEFAULT_GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwoppyY8prkniNrkzcAop3doJ3k4_ymL3MKQMCuDDynaCv75CaRqazlq9IAgS_Rh06ukg/exec";
 
 function getGasUrl() {
     return (db && db.SiteThemeSettings && db.SiteThemeSettings.gasWebAppUrl) || DEFAULT_GAS_WEB_APP_URL;
@@ -4347,8 +4347,12 @@ function downloadCertAsPDF() {
 async function shareCertToTelegramAndEmail() {
     const cert = db.Certificates.find(c => c.CertificateID === currentCertId);
     if (!cert) return;
-    const stu = db.Users.find(u => u.UserID === cert.StudentID) || currentUser || {};
-    const targetEmail = (stu.Email || currentUser?.Email || '').trim();
+    // ค้นหาข้อมูลผู้เรียนที่ตรงกับเกียรติบัตร (ทั้งจาก StudentID และ FullName)
+    const stu = db.Users.find(u => String(u.UserID || '').trim().toLowerCase() === String(cert.StudentID || '').trim().toLowerCase())
+        || db.Users.find(u => String(u.FullName || '').trim() === String(cert.FullName || '').trim())
+        || currentUser
+        || {};
+    const targetEmail = String(stu.Email || (currentUser && currentUser.UserID === cert.StudentID ? currentUser.Email : '') || '').trim();
     const botToken = (db.SiteThemeSettings.telegramBotToken || '9280509192:AAE6Ux-E2cQ3yHvoHvBoyJLMxL_wbFW28TE').trim();
 
     if (!stu.TelegramChatId && stu.UserID) {
@@ -4357,14 +4361,13 @@ async function shareCertToTelegramAndEmail() {
     const matchedUserByEmail = targetEmail
         ? db.Users.find(u => String(u.Email || '').trim().toLowerCase() === targetEmail.toLowerCase() && String(u.TelegramChatId || '').trim())
         : null;
-    const personalChatId = (stu.TelegramChatId || matchedUserByEmail?.TelegramChatId || '').trim();
-    const fallbackChatId = (db.SiteThemeSettings.telegramChatId || '8801241740').trim();
-    const targetChatId = personalChatId || fallbackChatId;
+    const personalChatId = String(stu.TelegramChatId || matchedUserByEmail?.TelegramChatId || '').trim();
+    const targetChatId = personalChatId;
     const gasUrl = getGasUrl();
 
     Swal.fire({
         title: 'กำลังสร้างไฟล์เกียรติบัตร PDF และส่งจริง...',
-        text: `กำลังส่งไปยัง Email (${targetEmail || '-'}) และ Telegram`,
+        text: `กำลังส่งไปยัง Email (${targetEmail || '-'}) และ Telegram ของผู้เรียน`,
         allowOutsideClick: false,
         didOpen: () => Swal.showLoading()
     });
@@ -4392,7 +4395,7 @@ async function shareCertToTelegramAndEmail() {
         let emailSentOk = false;
         let emailErrorMsg = '';
 
-        // 1. ส่งเข้า Telegram ส่วนตัวของผู้เรียน (หรือกลุ่มกลางสำรองหากยังไม่กด Start)
+        // 1. ส่งเข้า Telegram ส่วนตัวของผู้เรียนโดยตรง
         if (botToken && targetChatId) {
             const captionText =
                 `🎓 เกียรติบัตรอิเล็กทรอนิกส์ (E-Certificate)\n` +
@@ -4449,6 +4452,8 @@ async function shareCertToTelegramAndEmail() {
                     }
                 } catch (e2) {}
             }
+        } else {
+            telegramErrorMsg = `ผู้เรียน (${cert.FullName}) ยังไม่ได้กด Start เชื่อมต่อ @PPHPharmacyLearningBot`;
         }
 
         // 2. ส่งเข้า Email ที่ผู้เรียนลงทะเบียนไว้โดยตรง
@@ -4480,25 +4485,22 @@ async function shareCertToTelegramAndEmail() {
                 emailErrorMsg = emErr.message;
             }
         } else if (!targetEmail || !targetEmail.includes('@')) {
-            emailErrorMsg = 'บัญชีผู้ใช้นี้ยังไม่ได้ระบุอีเมลที่ถูกต้อง';
+            emailErrorMsg = 'บัญชีผู้เรียนนี้ยังไม่ได้ระบุอีเมลที่ถูกต้อง';
         }
 
         const isAnyOk = telegramSentOk || emailSentOk;
-        const tgModeLabel = personalChatId
-            ? `Telegram ส่วนตัวของ ${sanitizeHTML(targetEmail)}`
-            : `Telegram กลุ่มกลาง (ยังไม่ได้กด Start บอทส่วนตัว)`;
-        const linkOwnTgBtnHtml = (!personalChatId && stu.UserID && currentUser && stu.UserID === currentUser.UserID)
-            ? `<div class="mt-2"><button type="button" onclick="Swal.close(); startOneClickTelegramLink('${stu.UserID}', () => shareCertToTelegramAndEmail())" class="w-full py-2 px-3 rounded-xl bg-[#229ED9] hover:bg-[#1d8ec4] text-white font-bold text-[11px] shadow flex items-center justify-center gap-1.5"><i class="fa-brands fa-telegram text-base"></i> เปิดแอป Telegram (@PPHPharmacyLearningBot)</button></div>`
+        const linkOwnTgBtnHtml = (!personalChatId && stu.UserID)
+            ? `<div class="mt-2"><button type="button" onclick="Swal.close(); startOneClickTelegramLink('${stu.UserID}', () => shareCertToTelegramAndEmail())" class="w-full py-2 px-3 rounded-xl bg-[#229ED9] hover:bg-[#1d8ec4] text-white font-bold text-[11px] shadow flex items-center justify-center gap-1.5"><i class="fa-brands fa-telegram text-base"></i> เชื่อมต่อ Telegram (@PPHPharmacyLearningBot) ทันที</button></div>`
             : '';
         Swal.fire({
             icon: isAnyOk ? 'success' : 'warning',
             title: isAnyOk ? 'ดำเนินการส่งเกียรติบัตรเรียบร้อย!' : 'แจ้งผลการส่งเกียรติบัตร',
             html: `<div class="text-left text-xs text-slate-600 space-y-2">
                 <div class="p-2.5 rounded-xl ${emailSentOk ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-amber-50 text-amber-800 border border-amber-200'}">
-                    📧 <b>Email ที่ลงทะเบียนไว้ (${sanitizeHTML(targetEmail || '-')}):</b> ${emailSentOk ? 'ส่งไฟล์ PDF เกียรติบัตรไปยังอีเมลที่ผู้เรียนลงทะเบียนไว้โดยตรงสำเร็จแล้ว!' : `สถานะ: ${sanitizeHTML(emailErrorMsg || 'กรุณาอัปเดตโค้ด Code.gs และกด Deploy ใหม่')}`}
+                    📧 <b>Email ผู้ลงทะเบียน (${sanitizeHTML(targetEmail || '-')}):</b> ${emailSentOk ? 'ส่งไฟล์ PDF เกียรติบัตรไปยังอีเมลที่ลงทะเบียนไว้สำเร็จแล้ว!' : `ส่งไม่สำเร็จ (${sanitizeHTML(emailErrorMsg || 'กรุณาอัปเดต Code.gs และ Deploy ใหม่')})`}
                 </div>
                 <div class="p-2.5 rounded-xl ${telegramSentOk ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-amber-50 text-amber-800 border border-amber-200'}">
-                    ✈️ <b>${tgModeLabel}:</b> ${telegramSentOk ? 'ส่งไฟล์ PDF เกียรติบัตรเข้า Telegram สำเร็จแล้ว!' : `ส่งไม่สำเร็จ (${sanitizeHTML(telegramErrorMsg || 'ตรวจสอบ Bot Token')})`}
+                    ✈️ <b>Telegram ส่วนตัวของ ${sanitizeHTML(cert.FullName)}:</b> ${telegramSentOk ? 'ส่งไฟล์ PDF เกียรติบัตรเข้า Telegram ผู้เรียนสำเร็จแล้ว!' : `${sanitizeHTML(telegramErrorMsg)}`}
                     ${linkOwnTgBtnHtml}
                 </div>
             </div>`,
