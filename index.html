@@ -591,7 +591,7 @@
  * E-LEARNING PHARMACY - FULL ENTERPRISE SPA CONTROLLER + GOOGLE SHEETS SYNC
  * ============================================================================
  */
-const DEFAULT_GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwoppyY8prkniNrkzcAop3doJ3k4_ymL3MKQMCuDDynaCv75CaRqazlq9IAgS_Rh06ukg/exec";
+const DEFAULT_GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyKA3YfNUsOgSgdgbEtZuRvH7bjjUv-UmCTuITKTsNLoDrHXwh2g-nfNO72PEnclfH63g/exec";
 
 function getGasUrl() {
     return (db && db.SiteThemeSettings && db.SiteThemeSettings.gasWebAppUrl) || DEFAULT_GAS_WEB_APP_URL;
@@ -1936,9 +1936,10 @@ async function fetchTelegramBotUsername(botToken) {
 }
 
 async function checkAndBindTelegramUser(userId, botToken) {
-    const u = db.Users.find(x => x.UserID === userId);
+    const u = db.Users.find(x => String(x.UserID || '').trim().toLowerCase() === String(userId || '').trim().toLowerCase());
     if (!u || !botToken) return '';
-    const expectedTag = `/START LINK_${userId.toUpperCase()}`;
+    const cleanUidUpper = String(u.UserID || '').trim().toUpperCase();
+    const expectedTag = `/START LINK_${cleanUidUpper}`;
     const userEmailLower = String(u.Email || '').trim().toLowerCase();
     let foundChatId = '';
 
@@ -1959,11 +1960,14 @@ async function checkAndBindTelegramUser(userId, botToken) {
                         username: msg.chat.username ? `@${msg.chat.username}` : ''
                     });
                 }
-                const txt = String(msg.text || '').trim().toUpperCase();
+                const rawTxt = String(msg.text || '').trim();
+                const txtUpper = rawTxt.toUpperCase();
+                const txtLower = rawTxt.toLowerCase();
+                // ตรวจสอบแบบตรงตัว (Exact Match) เพื่อไม่ให้รหัสสั้นๆ เช่น "pen" ไปตรงกับอีเมลคนอื่น
                 if (
-                    txt === expectedTag ||
-                    txt.includes(userId.toUpperCase()) ||
-                    (userEmailLower && txt.toLowerCase().includes(userEmailLower))
+                    txtUpper === expectedTag ||
+                    txtUpper === cleanUidUpper ||
+                    (userEmailLower && txtLower === userEmailLower)
                 ) {
                     foundChatId = cidStr;
                     break;
@@ -1974,12 +1978,12 @@ async function checkAndBindTelegramUser(userId, botToken) {
     } catch (e) {}
 
     if (!foundChatId) {
-        const gasRes = await pushRecordToGoogleSheet('resolveTelegramAutoLink', { botToken, userId, email: u.Email || '' });
+        const gasRes = await pushRecordToGoogleSheet('resolveTelegramAutoLink', { botToken, userId: u.UserID, email: u.Email || '' });
         if (gasRes && gasRes.chatId) foundChatId = String(gasRes.chatId);
     }
 
     if (foundChatId) {
-        bindTelegramChatIdToUser(userId, foundChatId, botToken);
+        bindTelegramChatIdToUser(u.UserID, foundChatId, botToken);
     }
     return foundChatId;
 }
@@ -4347,27 +4351,30 @@ function downloadCertAsPDF() {
 async function shareCertToTelegramAndEmail() {
     const cert = db.Certificates.find(c => c.CertificateID === currentCertId);
     if (!cert) return;
-    // ค้นหาข้อมูลผู้เรียนที่ตรงกับเกียรติบัตร (ทั้งจาก StudentID และ FullName)
+    // ค้นหาข้อมูลผู้เรียนเจ้าของเกียรติบัตรโดยตรง (ตรงกับ UserID หรือ FullName ในระบบ)
     const stu = db.Users.find(u => String(u.UserID || '').trim().toLowerCase() === String(cert.StudentID || '').trim().toLowerCase())
         || db.Users.find(u => String(u.FullName || '').trim() === String(cert.FullName || '').trim())
-        || currentUser
-        || {};
-    const targetEmail = String(stu.Email || (currentUser && currentUser.UserID === cert.StudentID ? currentUser.Email : '') || '').trim();
+        || (currentUser && String(currentUser.UserID || '').trim().toLowerCase() === String(cert.StudentID || '').trim().toLowerCase() ? currentUser : null);
+
+    if (!stu) {
+        Swal.fire('ไม่พบข้อมูลผู้ลงทะเบียน', `ไม่พบบัญชีผู้ใช้ของ "${cert.FullName}" (${cert.StudentID}) ในฐานข้อมูล`, 'error');
+        return;
+    }
+
+    const targetEmail = String(stu.Email || '').trim();
     const botToken = (db.SiteThemeSettings.telegramBotToken || '9280509192:AAE6Ux-E2cQ3yHvoHvBoyJLMxL_wbFW28TE').trim();
 
     if (!stu.TelegramChatId && stu.UserID) {
         await checkAndBindTelegramUser(stu.UserID, botToken);
     }
-    const matchedUserByEmail = targetEmail
-        ? db.Users.find(u => String(u.Email || '').trim().toLowerCase() === targetEmail.toLowerCase() && String(u.TelegramChatId || '').trim())
-        : null;
-    const personalChatId = String(stu.TelegramChatId || matchedUserByEmail?.TelegramChatId || '').trim();
+    // ใช้เฉพาะ TelegramChatId ที่ผูกกับบัญชีผู้เรียนเจ้าของเกียรติบัตรคนนี้เท่านั้น
+    const personalChatId = String(stu.TelegramChatId || '').trim();
     const targetChatId = personalChatId;
     const gasUrl = getGasUrl();
 
     Swal.fire({
         title: 'กำลังสร้างไฟล์เกียรติบัตร PDF และส่งจริง...',
-        text: `กำลังส่งไปยัง Email (${targetEmail || '-'}) และ Telegram ของผู้เรียน`,
+        text: `กำลังส่งไปยัง Email (${targetEmail || '-'}) และ Telegram ของ ${stu.FullName}`,
         allowOutsideClick: false,
         didOpen: () => Swal.showLoading()
     });
@@ -7836,4 +7843,3 @@ removeBulkQuizRow = function(idx, stageFilter) {
 </script>
 </body>
 </html>
-
