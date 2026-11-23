@@ -575,6 +575,151 @@
     </div>
 </div>
 
+   // ==================== UI CUSTOMIZER (ADMIN) ====================
+let uiEditMode = false;
+const uiOrigText = new Map();
+const FA_SKIP = ['fa-solid','fa-regular','fa-brands','fa-spin','fa-beat','fa-fw','fa-lg','fa-xl','fa-pulse'];
+function uiHash(s) { let h = 0; for (const c of String(s)) h = ((h << 5) - h + c.charCodeAt(0)) | 0; return Math.abs(h).toString(36); }
+const getFaName = i => [...i.classList].find(c => c.startsWith('fa-') && !FA_SKIP.includes(c) && !/^fa-\d/.test(c));
+function commitUiOverrides() { saveDB(); applyUIOverrides(); syncGlobalSettingsToCloud(); }
+
+function applyUIOverrides() {
+    if (!db.UIOverrides) db.UIOverrides = { style: {}, texts: {}, icons: {}, images: {} };
+    const o = db.UIOverrides, s = o.style || {}, texts = o.texts || {};
+    let st = document.getElementById('uiOverrideStyle');
+    if (!st) { st = document.createElement('style'); st.id = 'uiOverrideStyle'; document.head.appendChild(st); }
+    const R = [];
+    const add = (v, sel, prop = 'background') => { if (v) R.push(`${sel}{${prop}:${v}!important}`); };
+    add(s.pageBg, 'body'); add(s.textColor, 'body', 'color');
+    add(s.navBg, '#topNavbar'); add(s.sidebarBg, '#sidebarPanel'); add(s.cardBg, '.custom-card');
+    add(s.btnPrimary, 'button.bg-blue-600,button.bg-blue-700,button.bg-blue-800,button.bg-blue-900,.sidebar-link.active');
+    add(s.btnSuccess, 'button.bg-emerald-600,button.bg-emerald-700');
+    add(s.btnWarn, 'button.bg-amber-500,button.bg-amber-600');
+    add(s.btnDanger, 'button.bg-rose-600,button.bg-rose-700');
+    if (uiEditMode) R.push('#mainViewContent *:hover,#topNavbar *:hover,#sidebarPanel *:hover{outline:1px dashed #d946ef;cursor:crosshair}');
+    st.textContent = R.join('\n');
+
+    // ข้อความ
+    uiOrigText.forEach((rec, node) => {
+        if (!node.isConnected) { uiOrigText.delete(node); return; }
+        const want = texts[rec.orig];
+        if (want === undefined) { node.nodeValue = node.nodeValue.replace(rec.cur, rec.orig); uiOrigText.delete(node); }
+        else if (want !== rec.cur) { node.nodeValue = node.nodeValue.replace(rec.cur, want); rec.cur = want; }
+    });
+    if (Object.keys(texts).length) {
+        const w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+        let n;
+        while ((n = w.nextNode())) {
+            if (uiOrigText.has(n)) continue;
+            const p = n.parentElement; if (!p || ['SCRIPT','STYLE','TEXTAREA','NOSCRIPT'].includes(p.tagName)) continue;
+            const raw = n.nodeValue.trim();
+            if (raw && texts[raw] !== undefined) { n.nodeValue = n.nodeValue.replace(raw, texts[raw]); uiOrigText.set(n, { orig: raw, cur: texts[raw] }); }
+        }
+    }
+    // ไอคอน
+    document.querySelectorAll('i[class*="fa-"]').forEach(i => {
+        const cur = getFaName(i); if (!cur) return;
+        const orig = i.dataset.uiOrig || cur, want = (o.icons || {})[orig];
+        if (want && want !== cur) { i.classList.remove(cur); i.classList.add(want); i.dataset.uiOrig = orig; }
+        else if (!want && i.dataset.uiOrig && i.dataset.uiOrig !== cur) { i.classList.remove(cur); i.classList.add(i.dataset.uiOrig); delete i.dataset.uiOrig; }
+    });
+    // รูปภาพ (ยกเว้นเกียรติบัตร)
+    document.querySelectorAll('img').forEach(im => {
+        if (im.closest('#certCanvasSurface')) return;
+        const cur = im.getAttribute('src') || '', orig = im.dataset.uiOrigSrc || cur, want = (o.images || {})[orig];
+        if (want && want !== cur) { im.dataset.uiOrigSrc = orig; im.setAttribute('src', want); }
+        else if (!want && im.dataset.uiOrigSrc && im.dataset.uiOrigSrc !== cur) { im.setAttribute('src', im.dataset.uiOrigSrc); delete im.dataset.uiOrigSrc; }
+    });
+    updateUiFab();
+}
+
+function updateUiFab() {
+    let b = document.getElementById('uiEditorFab');
+    const show = !!currentUser && (isAdmin() || hasPermission('manageTheme'));
+    if (!b) {
+        if (!show) return;
+        b = document.createElement('button');
+        b.id = 'uiEditorFab'; b.type = 'button';
+        b.className = 'fixed bottom-4 right-4 z-[9998] px-4 py-3 rounded-full bg-fuchsia-600 text-white text-xs font-bold shadow-xl';
+        b.onclick = () => uiEditMode ? toggleUiEditMode(false) : openUiEditorPanel();
+        document.body.appendChild(b);
+    }
+    b.style.display = show ? '' : 'none';
+    b.innerHTML = uiEditMode ? '<i class="fa-solid fa-xmark mr-1"></i> ออกจากโหมดแก้ไข' : '<i class="fa-solid fa-wand-magic-sparkles mr-1"></i> ปรับแต่งหน้าเว็บ';
+}
+
+function toggleUiEditMode(on) {
+    uiEditMode = !!on; applyUIOverrides();
+    if (on) showNonBlockingToast('คลิกที่ ข้อความ / ไอคอน / รูปภาพ ในหน้าเว็บเพื่อแก้ไขได้ทันที', 'success');
+}
+
+function openUiEditorPanel() {
+    const s = db.UIOverrides.style || {};
+    const F = [['pageBg','พื้นหลังหน้าเว็บ','#f8fafc'],['textColor','สีตัวอักษรหลัก','#1e293b'],['navBg','แถบด้านบน','#ffffff'],['sidebarBg','เมนูด้านซ้าย','#ffffff'],['cardBg','พื้นหลังการ์ด','#ffffff'],['btnPrimary','ปุ่มหลัก (น้ำเงิน)','#2563eb'],['btnSuccess','ปุ่มยืนยัน (เขียว)','#059669'],['btnWarn','ปุ่มเตือน (ส้ม)','#f59e0b'],['btnDanger','ปุ่มลบ (แดง)','#e11d48']];
+    Swal.fire({
+        title: 'ปรับแต่งหน้าเว็บทั้งระบบ', width: 560,
+        html: `<div class="text-left text-xs space-y-3">
+            <div class="grid grid-cols-3 gap-2">${F.map(([k,l,d]) => `<div><label class="block mb-1">${l}</label><input type="color" class="uiClr w-full h-8" data-k="${k}" data-def="${d}" value="${s[k] || d}"></div>`).join('')}</div>
+            <button type="button" onclick="Swal.close();toggleUiEditMode(true)" class="w-full py-2.5 rounded-xl bg-fuchsia-600 text-white font-bold">✏️ เปิดโหมดคลิกแก้ไข ข้อความ / ไอคอน / รูปภาพ</button>
+            <p class="text-slate-500">ข้อมูลที่แก้ไขจะซิงก์ไปทุกเครื่องและทุกบัญชีอัตโนมัติ</p></div>`,
+        showCancelButton: true, showDenyButton: true,
+        confirmButtonText: 'บันทึกสี', denyButtonText: 'รีเซ็ตทั้งหมด', cancelButtonText: 'ปิด',
+        preConfirm: () => { const m = { ...s }; document.querySelectorAll('.uiClr').forEach(i => { if (i.value !== i.dataset.def || m[i.dataset.k]) m[i.dataset.k] = i.value; }); return m; }
+    }).then(r => {
+        if (r.isConfirmed) { db.UIOverrides.style = r.value; commitUiOverrides(); }
+        else if (r.isDenied) {
+            const imgs = db.UIOverrides.images || {}; Object.keys(imgs).forEach(k => imgs[k] = '');
+            db.UIOverrides = { style: {}, texts: {}, icons: {}, images: imgs }; commitUiOverrides();
+        }
+    });
+}
+
+document.addEventListener('click', async (e) => {
+    if (!uiEditMode || e.target.closest('.swal2-container,#uiEditorFab')) return;
+    e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+    const t = e.target, o = db.UIOverrides;
+    const icon = t.closest('i[class*="fa-"]');
+    if (icon && getFaName(icon)) {
+        const cur = getFaName(icon), orig = icon.dataset.uiOrig || cur;
+        const r = await Swal.fire({ title: 'เปลี่ยนไอคอน (Font Awesome)', text: 'เช่น fa-heart-pulse, fa-pills, fa-star', input: 'text', inputValue: cur, showCancelButton: true });
+        if (r.isConfirmed) {
+            let v = (r.value || '').trim(); if (v && !v.startsWith('fa-')) v = 'fa-' + v;
+            if (!v || v === orig) delete o.icons[orig]; else o.icons[orig] = v;
+            commitUiOverrides();
+        }
+        return;
+    }
+    if (t.tagName === 'IMG' && !t.closest('#certCanvasSurface')) {
+        const src = t.getAttribute('src') || '', orig = t.dataset.uiOrigSrc || src;
+        if (orig.startsWith('data:')) { showNonBlockingToast('รูปนี้ฝังในข้อมูล (เช่นรูปปกคอร์ส) ให้แก้ที่หน้าจัดการคอร์ส', 'warning'); return; }
+        const r = await Swal.fire({
+            title: 'เปลี่ยนรูปภาพ',
+            html: `<input id="uiImgUrl" class="swal2-input" placeholder="วาง URL รูปใหม่"><input id="uiImgFile" type="file" accept="image/*" class="swal2-file">`,
+            showCancelButton: true, showDenyButton: true, denyButtonText: 'คืนรูปเดิม',
+            preConfirm: async () => {
+                const f = document.getElementById('uiImgFile').files[0];
+                if (f) { const d = await new Promise(res => { const fr = new FileReader(); fr.onload = () => res(fr.result); fr.readAsDataURL(f); }); return compressImageToMaxChars(d, 40000); }
+                return document.getElementById('uiImgUrl').value.trim() || false;
+            }
+        });
+        if (r.isConfirmed && r.value) { o.images[orig] = r.value; commitUiOverrides(); }
+        else if (r.isDenied) { o.images[orig] = ''; commitUiOverrides(); }
+        return;
+    }
+    const node = [...t.childNodes].find(n => n.nodeType === 3 && n.nodeValue.trim());
+    if (!node) return;
+    const rec = uiOrigText.get(node), orig = rec ? rec.orig : node.nodeValue.trim();
+    const r = await Swal.fire({ title: 'แก้ไขข้อความ', input: 'textarea', inputValue: node.nodeValue.trim(), showCancelButton: true, showDenyButton: true, denyButtonText: 'คืนค่าเดิม' });
+    if (r.isConfirmed) {
+        const v = (r.value || '').trim();
+        if (!v || v === orig) delete o.texts[orig]; else o.texts[orig] = v;
+        commitUiOverrides();
+    } else if (r.isDenied) { delete o.texts[orig]; commitUiOverrides(); }
+}, true);
+
+let uiObsTimer;
+new MutationObserver(() => { clearTimeout(uiObsTimer); uiObsTimer = setTimeout(applyUIOverrides, 60); })
+    .observe(document.body, { childList: true, subtree: true }); 
 <script>
 /**
  * ============================================================================
@@ -733,7 +878,7 @@ if (!db.SavedCertTemplates) db.SavedCertTemplates = [];
 if (!db.SavedCertLogos) db.SavedCertLogos = [];
 if (!db.RolePermissions) db.RolePermissions = JSON.parse(JSON.stringify(initialDatabase.RolePermissions));
 if (!db.UserPermissions) db.UserPermissions = {};
-
+if (!db.UIOverrides) db.UIOverrides = { style: {}, texts: {}, icons: {}, images: {} };
 const initAdminAccount = (db.Users || []).find(u => u.UserID === 'admin' || u.Role === 'Admin');
 if (initAdminAccount && (!initAdminAccount.Email || initAdminAccount.Email === 'penpharmacy@gmail.com')) {
     initAdminAccount.Email = 'penpharmacypp@gmail.com';
@@ -971,6 +1116,40 @@ function compressImageDataUrl(rawDataUrl, maxWidth = 850, quality = 0.8) {
     });
 }
 
+async function compressImageToMaxChars(dataUrl, maxChars = 40000) {
+    if (!dataUrl || !dataUrl.startsWith('data:image') || dataUrl.length <= maxChars) return dataUrl;
+    let w = 640, q = 0.7, out = dataUrl;
+    for (let i = 0; i < 8; i++) {
+        out = await new Promise(res => {
+            const img = new Image();
+            img.onload = () => {
+                const sc = Math.min(1, w / img.width);
+                const c = document.createElement('canvas');
+                c.width = Math.round(img.width * sc); c.height = Math.round(img.height * sc);
+                const x = c.getContext('2d');
+                x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height);
+                x.drawImage(img, 0, 0, c.width, c.height);
+                res(c.toDataURL('image/jpeg', q));
+            };
+            img.onerror = () => res(dataUrl);
+            img.src = dataUrl;
+        });
+        if (out.length <= maxChars) return out;
+        w = Math.round(w * 0.8); q = Math.max(0.4, q - 0.08);
+    }
+    return out;
+}
+function importCourseCover(inp) {
+    const f = inp.files[0]; if (!f) return;
+    const r = new FileReader();
+    r.onload = async () => {
+        document.getElementById('fmCourseCover').value = await compressImageToMaxChars(r.result, 40000);
+        inp.value = '';
+        showNonBlockingToast('นำเข้ารูปปกสำเร็จ', 'success');
+    };
+    r.readAsDataURL(f);
+}
+    
 function clearInputField(targetInputId, previewImgId = null) {
     const el = document.getElementById(targetInputId);
     if (el) {
@@ -1193,6 +1372,7 @@ function applyGlobalSiteTheme() {
     if (forgotLink) forgotLink.style.color = accentColor;
     const regLink = document.getElementById('btnRegisterSwitchLink');
     if (regLink) regLink.style.color = accentColor;
+    applyUIOverrides();
 }
 
 function populateRegisterDropdowns() {
@@ -2023,7 +2203,7 @@ function promptManageKpiCards() {
                         <input id="newKpiImage" placeholder="URL รูปภาพการ์ด (เว้นว่างเพื่อใช้ไอคอน)" class="flex-1 px-3 py-1.5 rounded-lg border">
                         <label class="px-3 py-1.5 rounded-lg bg-white border font-semibold cursor-pointer">
                             อัปโหลดรูป
-                            <input type="file" accept="image/*" class="hidden" onchange="importFileToInput(this, 'newKpiImage')">
+                            <input type="file" accept="image/*" class="hidden" onchange="importCourseCover(this)">
                         </label>
                     </div>
                 </div>
@@ -3884,77 +4064,62 @@ async function shareCertToTelegramAndEmail() {
     const cert = db.Certificates.find(c => c.CertificateID === currentCertId);
     if (!cert) return;
     const stu = db.Users.find(u => u.UserID === cert.StudentID) || currentUser || {};
-    const targetEmail = stu.Email || '';
-    const botToken = (db.SiteThemeSettings.telegramBotToken || '9280509192:AAE6Ux-E2cQ3yHvoHvBoyJLMxL_wbFW28TE').trim();
-    const chatId = (db.SiteThemeSettings.telegramChatId || '127792770').trim();
+    const targetEmail = String(stu.Email || '').trim();
+    const t = db.SiteThemeSettings || {};
+    const botToken = String(t.telegramBotToken || '').trim();
+    const chatId = String(t.telegramChatId || '').trim();
     const gasUrl = getGasUrl();
 
-    Swal.fire({
-        title: 'กำลังสร้างไฟล์ PDF และส่งข้อมูล...',
-        text: 'กรุณารอสักครู่ ระบบกำลังส่งเกียรติบัตรไปยัง Email และ Telegram',
-        allowOutsideClick: false,
-        didOpen: () => Swal.showLoading()
-    });
+    Swal.fire({ title: 'กำลังสร้าง PDF และส่งเกียรติบัตร...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
 
+    let pdfBlob, base64Pdf;
     try {
         const target = document.getElementById('certCanvasSurface') || document.getElementById('certificateRenderBox');
-        const canvas = await html2canvas(target, { useCORS: true, scale: 2 });
+        const canvas = await html2canvas(target, { useCORS: true, scale: 1.5 });
         const { jsPDF } = window.jspdf;
         const pdf = new jsPDF('l', 'mm', 'a4');
         const w = 277, h = Math.min(190, (canvas.height / canvas.width) * w);
-        pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 10, 10, w, h);
-        const base64Pdf = pdf.output('datauristring');
-
-        const tasks = [];
-        if (targetEmail && targetEmail.includes('@')) {
-            tasks.push(fetch(gasUrl, {
-                method: 'POST',
-                body: JSON.stringify({
-                    action: 'sendCertEmail',
-                    payload: {
-                        email: targetEmail,
-                        fullName: cert.FullName,
-                        courseName: cert.CourseName,
-                        certId: cert.CertificateID,
-                        verifyUrl: cert.VerifyURL,
-                        base64Pdf
-                    }
-                })
-            }).then(r => r.json()).catch(() => ({ status: 'error' })));
-        }
-
-        if (botToken && chatId) {
-            tasks.push(fetch(gasUrl, {
-                method: 'POST',
-                body: JSON.stringify({
-                    action: 'sendTelegramCert',
-                    payload: {
-                        botToken,
-                        chatId,
-                        fullName: cert.FullName,
-                        courseName: cert.CourseName,
-                        score: cert.Score,
-                        certId: cert.CertificateID,
-                        verifyUrl: cert.VerifyURL,
-                        base64Pdf
-                    }
-                })
-            }).then(r => r.json()).catch(() => ({ status: 'error' })));
-        }
-
-        await Promise.all(tasks);
-        Swal.fire({
-            icon: 'success',
-            title: 'ส่งเกียรติบัตร PDF สำเร็จ!',
-            html: `<div class="text-xs text-slate-600 space-y-1">
-                ${targetEmail ? `<div>📧 <b>Email:</b> ส่งไฟล์ PDF ไปยัง <code>${sanitizeHTML(targetEmail)}</code> เรียบร้อย</div>` : ''}
-                ${(botToken && chatId) ? `<div>✈️ <b>Telegram:</b> ส่งไฟล์ PDF และแจ้งเตือนเข้าห้องแชท <code>${sanitizeHTML(chatId)}</code> เรียบร้อย</div>` : ''}
-            </div>`,
-            confirmButtonColor: '#229ED9'
-        });
+        pdf.addImage(canvas.toDataURL('image/jpeg', 0.92), 'JPEG', 10, 10, w, h);
+        pdfBlob = pdf.output('blob');
+        base64Pdf = pdf.output('datauristring');
     } catch (err) {
-        Swal.fire('เกิดข้อผิดพลาด', 'ไม่สามารถสร้างหรือส่งไฟล์ PDF ได้: ' + err.message, 'error');
+        Swal.fire('สร้างไฟล์ PDF ไม่สำเร็จ', String(err.message || err), 'error');
+        return;
     }
+
+    const sendTelegram = async () => {
+        if (!botToken || !chatId) throw new Error('ยังไม่ได้ตั้งค่า Bot Token / Chat ID');
+        const fd = new FormData();
+        fd.append('chat_id', chatId);
+        fd.append('caption', `🎓 เกียรติบัตร ${cert.CertificateID}\nผู้รับ: ${cert.FullName}\nหลักสูตร: ${cert.CourseName}\nคะแนน: ${cert.Score}%\nตรวจสอบ: ${cert.VerifyURL}`);
+        fd.append('document', pdfBlob, `${cert.CertificateID}.pdf`);
+        const r = await fetch(`https://api.telegram.org/bot${botToken}/sendDocument`, { method: 'POST', body: fd });
+        const j = await r.json();
+        if (!j.ok) throw new Error(j.description || 'Telegram ปฏิเสธการส่ง');
+    };
+    const sendMail = async () => {
+        if (!targetEmail.includes('@')) throw new Error('ผู้ใช้ยังไม่มีอีเมลที่ลงทะเบียนไว้');
+        const r = await fetch(gasUrl, {
+            method: 'POST',
+            body: JSON.stringify({ action: 'sendCertEmail', payload: {
+                email: targetEmail, fullName: cert.FullName, courseName: cert.CourseName,
+                certId: cert.CertificateID, verifyUrl: cert.VerifyURL, base64Pdf } })
+        });
+        const j = await r.json();
+        if (j.status !== 'success') throw new Error(j.message || 'Google Apps Script ส่งอีเมลไม่สำเร็จ (ตรวจสอบว่าเพิ่ม sendCertEmail แล้ว)');
+    };
+
+    const [tg, ml] = await Promise.allSettled([sendTelegram(), sendMail()]);
+    const line = (icon, name, r) => r.status === 'fulfilled'
+        ? `<div>✅ <b>${name}:</b> ส่งสำเร็จ</div>`
+        : `<div class="text-rose-600">❌ <b>${name}:</b> ${sanitizeHTML(r.reason && r.reason.message ? r.reason.message : String(r.reason))}</div>`;
+    const allOk = tg.status === 'fulfilled' && ml.status === 'fulfilled';
+    Swal.fire({
+        icon: allOk ? 'success' : ((tg.status === 'fulfilled' || ml.status === 'fulfilled') ? 'warning' : 'error'),
+        title: allOk ? 'ส่งเกียรติบัตรสำเร็จ' : 'ผลการส่งเกียรติบัตร',
+        html: `<div class="text-xs text-left space-y-1">${line('✈️', 'Telegram', tg)}${line('📧', `Email (${sanitizeHTML(targetEmail || '-')})`, ml)}</div>`,
+        confirmButtonColor: '#229ED9'
+    });
 }
 
 // ==================== VIEW 5: LEADERBOARD ====================
@@ -4184,41 +4349,38 @@ function openCourseModal(courseId = null) {
     document.getElementById('courseModal').classList.remove('hidden');
 }
 
-document.getElementById('courseForm').addEventListener('submit', (e) => {
+document.getElementById('courseForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const id = document.getElementById('fmCourseId').value;
     const pickedProfs = [...document.querySelectorAll('.courseProfChk:checked')].map(x => x.value);
-    const finalProfs = pickedProfs.length ? pickedProfs : ['ALL'];
+    let cover = document.getElementById('fmCourseCover').value.trim();
+    if (cover.startsWith('data:image')) cover = await compressImageToMaxChars(cover, 40000);
 
     const payload = {
         CourseID: id || ('CRS' + String(Date.now()).slice(-4)),
         CourseName: document.getElementById('fmCourseName').value.trim(),
-        Professions: finalProfs,
+        Professions: pickedProfs.length ? pickedProfs : ['ALL'],
         Description: document.getElementById('fmCourseDesc').value.trim(),
         Teacher: currentUser.FullName,
-        CoverImage: document.getElementById('fmCourseCover').value.trim() || 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=600&q=80',
+        CoverImage: cover || 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=600&q=80',
         PassScore: Number(document.getElementById('fmCoursePass').value) || 70,
         TotalLessons: Number(document.getElementById('fmCourseTotalLessons').value) || 2,
         CreateDate: getNowThai().split(' ')[0],
         Status: document.getElementById('fmCourseStatus').value
     };
-
-    if (id) {
-        const idx = db.Courses.findIndex(x => x.CourseID === id);
-        if (idx > -1) db.Courses[idx] = payload;
-    } else {
-        db.Courses.push(payload);
-    }
-
-    pushRecordToGoogleSheet('saveCourse', payload);
+    if (id) { const idx = db.Courses.findIndex(x => x.CourseID === id); if (idx > -1) db.Courses[idx] = payload; }
+    else db.Courses.push(payload);
+    saveDB();
     closeModal('courseModal');
+
+    const r = await pushRecordToGoogleSheet('saveCourse', payload);
+    if (!r || r.status === 'error') showNonBlockingToast('บันทึกขึ้น Google Sheets ไม่สำเร็จ เครื่องอื่นอาจยังไม่เห็นรูปใหม่', 'error');
+    else showNonBlockingToast('บันทึกคอร์สและซิงก์ทุกเครื่องแล้ว', 'success');
+
     promptAdminCustomNotification(`📚 อัปเดตรายวิชา "${payload.CourseName}" โดย ${payload.Teacher}`, 'ALL', () => {
-        saveDB();
-        renderNotifications();
-        switchView('manageLessons');
+        saveDB(); renderNotifications(); switchView('manageLessons');
     });
 });
-
 function toggleCourseStatus(courseId) {
     const c = db.Courses.find(x => x.CourseID === courseId);
     if (!c) return;
@@ -6456,6 +6618,9 @@ function buildGlobalConfigChunks() {
         { id: 'SYS_CFG_CERT_TEMPLATES', key: 'SavedCertTemplates', data: db.SavedCertTemplates || [] }
     ];
     const designs = db.CourseCertDesigns || {};
+    chunks.push({ id: 'SYS_CFG_UI', key: 'UIOverrides', data: { style: db.UIOverrides.style, texts: db.UIOverrides.texts, icons: db.UIOverrides.icons, _ts: ts } });
+Object.entries(db.UIOverrides.images || {}).forEach(([from, to]) =>
+    chunks.push({ id: 'SYS_CFG_UIIMG_' + uiHash(from), key: 'UIOverrideImg', data: { from, to } }));
     const designKeys = Object.keys(designs).filter(k => k !== '__SITE_THEME_SETTINGS__' && k !== '__GLOBAL_CONFIG_BUNDLE__');
     if (designKeys.length === 0) {
         chunks.push({ id: 'SYS_CFG_CERT_DESIGNS', key: 'CourseCertDesigns', data: {} });
@@ -6551,6 +6716,13 @@ function applyRemoteGlobalSettings(remote) {
         } else if (key === 'SavedCertTemplates' && Array.isArray(val)) {
             db.SavedCertTemplates = val;
             applied = true;
+        } else if (key === 'UIOverrides' && typeof val === 'object') {
+    db.UIOverrides = { style: val.style || {}, texts: val.texts || {}, icons: val.icons || {}, images: (db.UIOverrides && db.UIOverrides.images) || {} };
+    applied = true;
+} else if (key === 'UIOverrideImg' && val && val.from !== undefined) {
+    if (!db.UIOverrides) db.UIOverrides = { style: {}, texts: {}, icons: {}, images: {} };
+    db.UIOverrides.images[val.from] = val.to || '';
+    applied = true;    
         } else if (key === 'DeletedRegistry' && typeof val === 'object') {
             ['Courses', 'Lessons', 'Quiz'].forEach(t => {
                 if (Array.isArray(val[t])) {
@@ -6608,6 +6780,7 @@ function applyRemoteGlobalSettings(remote) {
 
 let realtimeSyncTimer = null;
 let isSyncingNow = false;
+    let pendingCloudWrites = 0, lastLocalWriteAt = 0;
 let deletedRegistry = JSON.parse(localStorage.getItem('edulearn_deleted_registry') || '{"Courses":[],"Lessons":[],"Quiz":[]}');
 
 function saveDeletedRegistry() {
@@ -6689,7 +6862,7 @@ function startRealtimeSyncEngine() {
 
 async function silentRealtimePullFromCloud() {
     const url = getGasUrl();
-    if (!url || !url.startsWith('http') || isSyncingNow) return;
+   if (!url || !url.startsWith('http') || isSyncingNow || pendingCloudWrites > 0 || Date.now() - lastLocalWriteAt < 5000) return;
     isSyncingNow = true;
     try {
         const prevSignature = JSON.stringify({
@@ -6787,10 +6960,11 @@ function pushDeletedRegistryToCloud() {
 // ดักจับการบันทึกจากทุกฟังก์ชันให้ซิงก์ขึ้น Google Sheets ทันที
 const _origPushRecordToGoogleSheet = pushRecordToGoogleSheet;
 pushRecordToGoogleSheet = async function(actionName, payloadObj) {
-    const res = await _origPushRecordToGoogleSheet(actionName, payloadObj);
-    if (actionName === 'deleteRecord') {
-        pushDeletedRegistryToCloud();
-    }
+    pendingCloudWrites++; lastLocalWriteAt = Date.now();
+    let res = null;
+    try { res = await _origPushRecordToGoogleSheet(actionName, payloadObj); }
+    finally { pendingCloudWrites--; lastLocalWriteAt = Date.now(); }
+    if (actionName === 'deleteRecord') pushDeletedRegistryToCloud();
     return res;
 };
 
