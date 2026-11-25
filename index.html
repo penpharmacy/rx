@@ -309,12 +309,7 @@
         </div>
 
         <div class="flex items-center gap-2 sm:gap-3">
-            <!-- 2. ปุ่มกดดูประกาศนียบัตรที่เคยได้ -->
-            <button onclick="openMyEarnedCertificatesModal()" id="btnMyEarnedCertsTop" class="flex items-center gap-1.5 text-[11px] font-bold px-3 py-1.5 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700 hover:bg-amber-100 transition shadow-sm" title="คลิกเพื่อดูและดาวน์โหลดประกาศนียบัตรที่เคยได้รับทั้งหมด">
-                <i class="fa-solid fa-award text-amber-500 text-sm"></i>
-                <span class="hidden md:inline">ประกาศนียบัตรของฉัน</span>
-                <span id="myEarnedCertCountBadge" class="px-1.5 py-0.5 rounded-full bg-amber-500 text-white text-[10px] font-extrabold">0</span>
-            </button>
+          
 
             <!-- Google Sheets Sync Status Pill -->
             <button onclick="syncAllDataWithGoogleSheet(true)" id="gsSyncStatusBtn" class="flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1.5 rounded-xl bg-emerald-50 dark:bg-slate-700 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-slate-600 hover:bg-emerald-100 transition" title="คลิกเพื่อซิงก์ข้อมูลกับ Google Sheets ทันที">
@@ -1207,7 +1202,7 @@ function saveDB() {
                 db.SavedCertLogos = db.SavedCertLogos.slice(0, 3);
             }
             localStorage.setItem('edulearn_hospital_db_v4', JSON.stringify(db));
-            showNonBlockingToast('ระบบปรับลดแคชรูปภาพอัตโนมัติเพื่อเพิ่มพื้นที่เบราว์เซอร์แล้ว', 'warning');
+            
         } catch (err2) {
             showNonBlockingToast('พื้นที่เบราว์เซอร์เต็ม แนะนำให้ใช้ลิงก์ URL รูปภาพแทนการอัปโหลดไฟล์ใหญ่', 'error');
         }
@@ -2331,7 +2326,8 @@ function renderSidebarMenu() {
 
     const menuEl = document.getElementById('sidebarMenuContainer');
     menuEl.innerHTML = items
-        .filter(item => !item.perm || hasPermission(item.perm))
+        .filter(item => (!item.perm || hasPermission(item.perm)) && (item.id !== 'certificates' || isAdmin() || currentUser.Role === 'Examiner'))
+        
         .map(item => `
             <button onclick="switchView('${item.id}')" id="navItem_${item.id}" class="sidebar-link ${currentView === item.id ? 'active' : ''} w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-blue-50 dark:hover:bg-slate-700">
                 <i class="fa-solid ${sanitizeHTML(item.icon)} w-5 text-center"></i>
@@ -2358,6 +2354,9 @@ function switchView(viewId) {
         viewId = 'dashboard';
     }
 
+        if (viewId === 'certificates' && !(isAdmin() || currentUser.Role === 'Examiner')) {
+        viewId = 'dashboard';
+    }
     currentView = viewId;
     document.querySelectorAll('.sidebar-link').forEach(el => el.classList.remove('active'));
     const activeBtn = document.getElementById(`navItem_${viewId}`);
@@ -2423,9 +2422,7 @@ function renderDashboardView(container) {
                     <p class="text-blue-100 text-sm">${sanitizeHTML(cfg.bannerSubtitle)}</p>
                 </div>
                 <div class="flex flex-wrap gap-2.5 shrink-0">
-                    <button onclick="openMyEarnedCertificatesModal()" class="px-4 py-3 rounded-2xl bg-amber-400 hover:bg-amber-300 text-slate-900 font-bold text-sm shadow-lg hover:scale-105 transition">
-                        <i class="fa-solid fa-award mr-1"></i> ดูประกาศนียบัตร (${myCertCount})
-                    </button>
+                  
                     <button onclick="switchView('classroom')" class="px-5 py-3 rounded-2xl bg-white text-blue-900 font-bold text-sm shadow-lg hover:scale-105 transition">
                         <i class="fa-solid fa-play mr-1 text-blue-600"></i> เข้าสู่บทเรียนของฉัน
                     </button>
@@ -3903,7 +3900,7 @@ function startCourseQuiz(courseId, stage = 'POST', isResuming = false) {
                     <p class="text-xs text-slate-500 mt-1">${stage === 'PRE' ? 'บันทึกผลสอบก่อนเรียนเรียบร้อย กดปุ่มด้านล่างเพื่อเข้าสู่บทเรียนที่ 1 ได้เลย' : (passed ? '🎉 สอบผ่านเกณฑ์มาตรฐานและจบหลักสูตรนี้แล้ว! ระบบออกเกียรติบัตรให้คุณเรียบร้อย' : `❌ ไม่ผ่านเกณฑ์การประเมิน (เกณฑ์ผ่าน ${course.PassScore}%) กรุณากลับไปเรียนทบทวนและทำแบบทดสอบใหม่อีกครั้ง`)}</p>
                     <div class="mt-4 flex flex-wrap justify-center gap-2.5">
                         ${stage === 'PRE' ? `<button type="button" onclick="enterCourseFlow('${course.CourseID}')" class="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow"><i class="fa-solid fa-play mr-1"></i> เข้าสู่บทเรียนที่ 1 ทันที</button>` : ''}
-                        ${certGenerated ? `<button type="button" onclick="previewCertificate('${certGenerated.CertificateID}')" class="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold shadow"><i class="fa-solid fa-award mr-1"></i> เปิดดูและดาวน์โหลดเกียรติบัตร</button>` : ''}
+                       
                         ${stage === 'POST' ? `<button type="button" onclick="switchView('classroom')" class="px-5 py-2.5 rounded-xl ${passed ? 'bg-blue-600 hover:bg-blue-700' : 'bg-rose-600 hover:bg-rose-700'} text-white text-xs font-bold shadow"><i class="fa-solid fa-house-laptop mr-1"></i> ${passed ? 'กลับสู่หน้าหลักห้องเรียนออนไลน์' : 'กลับสู่หน้าหลักห้องเรียนออนไลน์ เพื่อเรียนใหม่'}</button>` : ''}
                     </div>
                 </div>
@@ -4118,31 +4115,7 @@ function renderCertificatesView(container) {
         ? getMyEarnedCertificatesList()
         : db.Certificates;
 
-    if (!isInspector) {
-        container.innerHTML = `
-            <div class="flex flex-wrap justify-between items-center gap-3">
-                <div>
-                    <h2 class="text-2xl font-bold text-blue-900 dark:text-white"><i class="fa-solid fa-award text-amber-500 mr-2"></i>คลังเกียรติบัตรอิเล็กทรอนิกส์ของฉัน</h2>
-                    <p class="text-xs text-slate-500">ดาวน์โหลดเกียรติบัตร PDF/PNG หรือส่งเข้าอีเมลที่ลงทะเบียนไว้</p>
-                </div>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                ${myCerts.map(cert => `
-                    <div class="custom-card bg-white dark:bg-slate-800 p-5 shadow-sm border border-slate-100 dark:border-slate-700 flex items-center justify-between gap-4">
-                        <div class="space-y-1">
-                            <span class="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-bold">${cert.CertificateID}</span>
-                            <h3 class="font-bold text-base text-blue-900 dark:text-white">${sanitizeHTML(cert.CourseName)}</h3>
-                            <div class="text-xs text-slate-500">ผู้รับ: <strong>${sanitizeHTML(cert.FullName)}</strong> | คะแนน: <strong>${cert.Score}%</strong></div>
-                            <div class="text-[11px] text-slate-400">วันที่ออกเอกสาร: ${cert.IssueDate}</div>
-                        </div>
-                        <button onclick="previewCertificate('${cert.CertificateID}')" class="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shrink-0 shadow">
-                            <i class="fa-solid fa-eye mr-1"></i> เปิดเกียรติบัตร
-                        </button>
-                    </div>
-                `).join('') || '<div class="col-span-2 text-center py-10 text-xs text-slate-400">ยังไม่มีเกียรติบัตรในระบบ</div>'}
-            </div>
-        `;
-        return;
+       if (!isInspector) { switchView('dashboard'); return; }
     }
 
     const pStats = computeProfessionAuditStats();
