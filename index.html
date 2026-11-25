@@ -55,6 +55,138 @@
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
         .dark ::-webkit-scrollbar-thumb { background: #475569; }
+
+        /* 1. ปรับปรุงโหมดมืด (Dark Mode) ให้เห็นชัดเจนและมีคอนทราสต์สูงขึ้นทั้งตัวเลข ข้อความ และรายละเอียดอื่นๆ */
+        html.dark body#appBodyRoot {
+            background-color: #0b1120 !important;
+            background-image: none !important;
+            color: #f8fafc !important;
+        }
+        html.dark header#topNavbar {
+            background-color: #111827 !important;
+            border-color: #334155 !important;
+        }
+        html.dark aside#sidebarPanel {
+            background-color: #111827 !important;
+            border-color: #334155 !important;
+        }
+        html.dark .custom-card {
+            background-color: #1e293b !important;
+            border-color: #475569 !important;
+            color: #f8fafc !important;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35) !important;
+        }
+        html.dark main > div[style] {
+            background-color: #0f172a !important;
+            background-image: none !important;
+            color: #f8fafc !important;
+        }
+        html.dark .text-blue-900,
+        html.dark .text-blue-800,
+        html.dark .text-indigo-900,
+        html.dark .text-indigo-800,
+        html.dark .text-slate-900,
+        html.dark .text-slate-800,
+        html.dark .text-slate-700,
+        html.dark .text-slate-600 {
+            color: #f8fafc !important;
+        }
+        html.dark .text-slate-500,
+        html.dark .text-slate-400 {
+            color: #cbd5e1 !important;
+        }
+        html.dark .text-blue-600,
+        html.dark .text-blue-700,
+        html.dark .text-indigo-700,
+        html.dark .text-indigo-600 {
+            color: #60a5fa !important;
+        }
+        html.dark .text-emerald-700,
+        html.dark .text-emerald-600,
+        html.dark .text-emerald-800 {
+            color: #34d399 !important;
+        }
+        html.dark .text-amber-700,
+        html.dark .text-amber-800,
+        html.dark .text-amber-600 {
+            color: #fbbf24 !important;
+        }
+        html.dark .text-rose-700,
+        html.dark .text-rose-600,
+        html.dark .text-rose-800 {
+            color: #fb7185 !important;
+        }
+        html.dark .kpi-metric-value {
+            filter: brightness(1.38) saturate(1.15);
+            text-shadow: 0 1px 6px rgba(0, 0, 0, 0.45);
+        }
+        html.dark input,
+        html.dark select,
+        html.dark textarea {
+            background-color: #0f172a !important;
+            color: #f8fafc !important;
+            border-color: #64748b !important;
+        }
+        html.dark input::placeholder,
+        html.dark textarea::placeholder {
+            color: #94a3b8 !important;
+        }
+        html.dark table thead {
+            background-color: #0f172a !important;
+            color: #f8fafc !important;
+        }
+        html.dark table tbody tr {
+            border-color: #334155 !important;
+            color: #f1f5f9 !important;
+        }
+        html.dark table tbody tr:hover {
+            background-color: #334155 !important;
+        }
+        html.dark .bg-white,
+        html.dark .bg-slate-50,
+        html.dark .bg-slate-100,
+        html.dark .bg-blue-50,
+        html.dark .bg-indigo-50,
+        html.dark .bg-emerald-50,
+        html.dark .bg-amber-50,
+        html.dark .bg-rose-50 {
+            background-color: #1e293b !important;
+            color: #f8fafc !important;
+            border-color: #475569 !important;
+        }
+        html.dark .bg-emerald-100 {
+            background-color: rgba(16, 185, 129, 0.22) !important;
+            color: #6ee7b7 !important;
+        }
+        html.dark .bg-rose-100 {
+            background-color: rgba(244, 63, 94, 0.22) !important;
+            color: #fda4af !important;
+        }
+        html.dark .bg-amber-100 {
+            background-color: rgba(245, 158, 11, 0.22) !important;
+            color: #fcd34d !important;
+        }
+        html.dark .bg-blue-100,
+        html.dark .bg-indigo-100 {
+            background-color: rgba(59, 130, 246, 0.24) !important;
+            color: #93c5fd !important;
+        }
+        html.dark .sidebar-link {
+            color: #e2e8f0 !important;
+        }
+        html.dark .sidebar-link:hover {
+            background-color: #1e293b !important;
+            color: #ffffff !important;
+        }
+        html.dark .swal2-popup {
+            background-color: #1e293b !important;
+            color: #f8fafc !important;
+            border: 1px solid #475569 !important;
+        }
+        html.dark .swal2-title,
+        html.dark .swal2-html-container {
+            color: #f8fafc !important;
+        }
     </style>
     <style id="globalAdminCustomCss"></style>
 </head>
@@ -75,7 +207,7 @@
 
         <!-- VIEW A: LOGIN FORM -->
         <div id="authLoginView" class="space-y-4">
-            <form id="loginForm" class="space-y-4">
+            <form id="loginForm" onsubmit="handleLoginSubmit(event)" class="space-y-4">
                 <div>
                     <label id="lblLoginIdentity" class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">ชื่อผู้ใช้ หรือ อีเมล</label>
                     <input type="text" id="loginIdentity" required placeholder="เช่น admin หรือ you@example.com" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-slate-900 focus:ring-2 focus:ring-blue-500 outline-none text-sm">
@@ -92,7 +224,7 @@
                         </button>
                     </div>
                 </div>
-                <button type="submit" id="btnLoginSubmit" class="w-full py-3 rounded-xl bg-blue-800 hover:bg-blue-900 text-white font-bold text-sm shadow-lg shadow-blue-800/25 transition flex items-center justify-center gap-2">
+                <button type="submit" id="btnLoginSubmit" onclick="handleLoginSubmit(event)" class="w-full py-3 rounded-xl bg-blue-800 hover:bg-blue-900 text-white font-bold text-sm shadow-lg shadow-blue-800/25 transition flex items-center justify-center gap-2">
                     <i id="btnLoginIcon" class="fa-solid fa-right-to-bracket"></i> <span id="txtBtnLogin">เข้าสู่ระบบ</span>
                 </button>
             </form>
@@ -116,8 +248,8 @@
             <form id="registerForm" class="space-y-3 text-xs">
                 <div class="grid grid-cols-2 gap-2">
                     <div>
-                        <label class="font-semibold block mb-1">รหัสพนักงาน / ID *</label>
-                        <input type="text" id="regUserId" required placeholder="เช่น EMP105" class="w-full px-3 py-2 rounded-xl border dark:border-slate-700 dark:bg-slate-900">
+                        <label class="font-semibold block mb-1">ชื่อผู้ใช้ / รหัสพนักงาน (ID) *</label>
+                        <input type="text" id="regUserId" required placeholder="เช่น EMP105 (ห้ามซ้ำ)" class="w-full px-3 py-2 rounded-xl border dark:border-slate-700 dark:bg-slate-900">
                     </div>
                     <div>
                         <label class="font-semibold block mb-1">รหัสผ่าน *</label>
@@ -129,7 +261,7 @@
                     <input type="text" id="regFullName" required placeholder="เช่น พว.สมหญิง ใจดี" class="w-full px-3 py-2 rounded-xl border dark:border-slate-700 dark:bg-slate-900">
                 </div>
                 <div>
-                    <label class="font-semibold block mb-1">อีเมล (สำหรับกู้คืนรหัสผ่านและรับเกียรติบัตร) *</label>
+                    <label class="font-semibold block mb-1">อีเมล (ห้ามซ้ำ — สำหรับกู้คืนรหัสผ่านและรับเกียรติบัตร) *</label>
                     <input type="email" id="regEmail" required placeholder="name@hospital.go.th" class="w-full px-3 py-2 rounded-xl border dark:border-slate-700 dark:bg-slate-900">
                 </div>
                 <div>
@@ -177,10 +309,17 @@
         </div>
 
         <div class="flex items-center gap-2 sm:gap-3">
+            <!-- 2. ปุ่มกดดูประกาศนียบัตรที่เคยได้ -->
+            <button onclick="openMyEarnedCertificatesModal()" id="btnMyEarnedCertsTop" class="flex items-center gap-1.5 text-[11px] font-bold px-3 py-1.5 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700 hover:bg-amber-100 transition shadow-sm" title="คลิกเพื่อดูและดาวน์โหลดประกาศนียบัตรที่เคยได้รับทั้งหมด">
+                <i class="fa-solid fa-award text-amber-500 text-sm"></i>
+                <span class="hidden md:inline">ประกาศนียบัตรของฉัน</span>
+                <span id="myEarnedCertCountBadge" class="px-1.5 py-0.5 rounded-full bg-amber-500 text-white text-[10px] font-extrabold">0</span>
+            </button>
+
             <!-- Google Sheets Sync Status Pill -->
             <button onclick="syncAllDataWithGoogleSheet(true)" id="gsSyncStatusBtn" class="flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1.5 rounded-xl bg-emerald-50 dark:bg-slate-700 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-slate-600 hover:bg-emerald-100 transition" title="คลิกเพื่อซิงก์ข้อมูลกับ Google Sheets ทันที">
                 <i class="fa-solid fa-cloud-arrow-up"></i>
-                <span id="gsSyncStatusText">Google Sheets Ready</span>
+                <span id="gsSyncStatusText" class="hidden sm:inline">Google Sheets Ready</span>
             </button>
 
             <!-- Profession Status Pill -->
@@ -195,6 +334,11 @@
             <!-- Dark Mode Toggle -->
             <button onclick="toggleDarkMode()" class="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-slate-600 dark:text-amber-400 hover:scale-105 transition" title="สลับโหมดมืด/สว่าง">
                 <i id="darkModeIcon" class="fa-solid fa-moon"></i>
+            </button>
+
+            <!-- 6. ปุ่มเคลียร์แคชเพื่อเพิ่มหน่วยความจำ -->
+            <button onclick="clearBrowserCacheAndFreeMemory()" id="btnClearCacheTop" class="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-amber-600 dark:text-amber-300 hover:scale-105 transition" title="เคลียร์แคชเพื่อเพิ่มหน่วยความจำ">
+                <i class="fa-solid fa-broom"></i>
             </button>
 
             <!-- Notification Dropdown -->
@@ -781,7 +925,21 @@ const initialDatabase = {
     UserPermissions: {}
 };
 
-let db = JSON.parse(localStorage.getItem('edulearn_hospital_db_v4')) || initialDatabase;
+let db;
+try {
+    db = JSON.parse(localStorage.getItem('edulearn_hospital_db_v4')) || JSON.parse(JSON.stringify(initialDatabase));
+} catch (e) {
+    db = JSON.parse(JSON.stringify(initialDatabase));
+}
+if (!db || typeof db !== 'object') db = JSON.parse(JSON.stringify(initialDatabase));
+if (!Array.isArray(db.Users)) db.Users = JSON.parse(JSON.stringify(initialDatabase.Users));
+if (!Array.isArray(db.Courses)) db.Courses = [];
+if (!Array.isArray(db.Lessons)) db.Lessons = [];
+if (!Array.isArray(db.Progress)) db.Progress = [];
+if (!Array.isArray(db.Quiz)) db.Quiz = [];
+if (!Array.isArray(db.Scores)) db.Scores = [];
+if (!Array.isArray(db.Certificates)) db.Certificates = [];
+if (!Array.isArray(db.Notifications)) db.Notifications = JSON.parse(JSON.stringify(initialDatabase.Notifications));
 if (!db.HospitalDepartments) db.HospitalDepartments = [...initialDatabase.HospitalDepartments];
 if (!db.Professions) db.Professions = [...initialDatabase.Professions];
 if (!db.SiteThemeSettings) db.SiteThemeSettings = { ...initialDatabase.SiteThemeSettings };
@@ -799,10 +957,24 @@ if (!db.RolePermissions) db.RolePermissions = JSON.parse(JSON.stringify(initialD
 if (!db.UserPermissions) db.UserPermissions = {};
 if (!db.CourseCoverRegistry) db.CourseCoverRegistry = {};
 
-const initAdminAccount = (db.Users || []).find(u => u.UserID === 'admin' || u.Role === 'Admin');
-if (initAdminAccount && (!initAdminAccount.Email || initAdminAccount.Email === 'penpharmacy@gmail.com')) {
-    initAdminAccount.Email = 'penpharmacypp@gmail.com';
+function ensureDefaultAdminExists() {
+    if (!Array.isArray(db.Users)) db.Users = [];
+    const adminAcc = db.Users.find(u => String(u.UserID || '').trim().toLowerCase() === 'admin' || u.Role === 'Admin');
+    if (!adminAcc) {
+        db.Users.unshift(JSON.parse(JSON.stringify(initialDatabase.Users[0])));
+    } else {
+        if (!adminAcc.Email || adminAcc.Email === 'penpharmacy@gmail.com') {
+            adminAcc.Email = 'penpharmacypp@gmail.com';
+        }
+        if (!adminAcc.Password || String(adminAcc.Password).trim() === '') {
+            adminAcc.Password = 'pen1234';
+        }
+        if (!adminAcc.Status) {
+            adminAcc.Status = 'Active';
+        }
+    }
 }
+ensureDefaultAdminExists();
 
 function getDefaultPhunphinLogoDataUri(primaryColor = '#14532d') {
     const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 140 140" width="140" height="140">
@@ -925,6 +1097,7 @@ async function syncAllDataWithGoogleSheet(showToast = false) {
         if (json.status === 'success' && json.data) {
             const remote = json.data;
             if (Array.isArray(remote.Users) && remote.Users.length > 0) db.Users = remote.Users;
+            ensureDefaultAdminExists();
             if (Array.isArray(remote.Courses)) db.Courses = remote.Courses.map(c => ({
                 ...c,
                 Professions: typeof c.Professions === 'string' ? c.Professions.split(',').map(s => s.trim()).filter(Boolean) : (c.Professions || ['ALL'])
@@ -949,6 +1122,7 @@ async function syncAllDataWithGoogleSheet(showToast = false) {
             if (currentUser) {
                 const updatedMe = db.Users.find(u => u.UserID === currentUser.UserID);
                 if (updatedMe) currentUser = updatedMe;
+                updateMyEarnedCertBadge();
                 renderSidebarMenu();
                 renderNotifications();
                 switchView(currentView);
@@ -1041,15 +1215,39 @@ function saveDB() {
 }
 
 function clearBrowserImageCacheAndOptimize() {
-    db.Notifications = (db.Notifications || []).filter(n => n.Type !== '__SYS_CONFIG__' && n.UserID !== '__SYS_CONFIG__');
-    db.SavedCertTemplates = (db.SavedCertTemplates || []).slice(0, 2);
-    db.SavedCertLogos = (db.SavedCertLogos || []).slice(0, 3);
+    clearBrowserCacheAndFreeMemory();
+}
+
+async function clearBrowserCacheAndFreeMemory() {
+    const beforeKB = getLocalStorageUsedKB();
+    db.Notifications = (db.Notifications || []).filter(n => n.Type !== '__SYS_CONFIG__' && n.UserID !== '__SYS_CONFIG__').slice(0, 30);
+    if (Array.isArray(db.SavedCertTemplates) && db.SavedCertTemplates.length > 2) {
+        db.SavedCertTemplates = db.SavedCertTemplates.slice(0, 2);
+    }
+    if (Array.isArray(db.SavedCertLogos) && db.SavedCertLogos.length > 3) {
+        db.SavedCertLogos = db.SavedCertLogos.slice(0, 3);
+    }
+    if (db.SavedLearningStates && currentUser) {
+        const myState = db.SavedLearningStates[currentUser.UserID];
+        db.SavedLearningStates = myState ? { [currentUser.UserID]: myState } : {};
+    }
+    try {
+        if ('caches' in window) {
+            const keys = await caches.keys();
+            await Promise.all(keys.map(k => caches.delete(k)));
+        }
+    } catch (e) {}
     saveDB();
-    const usedKB = getLocalStorageUsedKB();
+    const afterKB = getLocalStorageUsedKB();
+    const freedKB = Math.max(0, beforeKB - afterKB);
     Swal.fire({
         icon: 'success',
-        title: 'ล้างแคชข้อมูลซ้ำซ้อนเรียบร้อย!',
-        text: `พื้นที่ใช้งานในเบราว์เซอร์ปัจจุบันลดเหลือ ${usedKB} KB (จากโควตา ~5,120 KB)`,
+        title: 'เคลียร์แคชและเพิ่มหน่วยความจำเรียบร้อย!',
+        html: `<div class="text-xs space-y-1">
+            <div>คืนพื้นที่หน่วยความจำได้: <strong class="text-emerald-600">${freedKB} KB</strong></div>
+            <div>พื้นที่ใช้งานปัจจุบัน: <strong>${afterKB} KB</strong> (จากโควตา ~5,120 KB)</div>
+            <div class="text-[11px] opacity-75 pt-1">ข้อมูลผู้ใช้ คอร์สเรียน คะแนนสอบ และเกียรติบัตรยังคงอยู่ครบถ้วน</div>
+        </div>`,
         confirmButtonColor: '#059669'
     }).then(() => {
         if (currentView === 'adminThemeSettings') {
@@ -1298,6 +1496,13 @@ function getBestPostScoresPerUserCourse() {
 
 // ==================== INITIALIZATION & GLOBAL THEME ====================
 document.addEventListener('DOMContentLoaded', () => {
+    try {
+        if (localStorage.getItem('edulearn_dark_mode') === '1') {
+            document.documentElement.classList.add('dark');
+            const dmIcon = document.getElementById('darkModeIcon');
+            if (dmIcon) dmIcon.className = 'fa-solid fa-sun';
+        }
+    } catch (e) {}
     applyGlobalSiteTheme();
     populateRegisterDropdowns();
     syncAllDataWithGoogleSheet(false);
@@ -1474,8 +1679,17 @@ function togglePasswordVisibility() {
 }
 
 // ==================== AUTHENTICATION, REGISTER & FORGOT PASSWORD ====================
+function showSafeAlert(icon, title, text, confirmColor = '#1d4ed8') {
+    if (window.Swal && typeof window.Swal.fire === 'function') {
+        return window.Swal.fire({ icon, title, text, confirmButtonColor: confirmColor });
+    }
+    alert(`${title}\n${text}`);
+    return Promise.resolve();
+}
+
 function handleLoginSubmit(e) {
     if (e) e.preventDefault();
+    ensureDefaultAdminExists();
     const identityEl = document.getElementById('loginIdentity');
     const passEl = document.getElementById('loginPass');
     if (!identityEl || !passEl) return;
@@ -1484,23 +1698,36 @@ function handleLoginSubmit(e) {
     const pass = passEl.value.trim();
 
     if (!identity || !pass) {
-        Swal.fire({ icon: 'warning', title: 'กรุณากรอกข้อมูล', text: 'โปรดระบุชื่อผู้ใช้/อีเมล และรหัสผ่านให้ครบถ้วน', confirmButtonColor: '#1d4ed8' });
+        showSafeAlert('warning', 'กรุณากรอกข้อมูล', 'โปรดระบุชื่อผู้ใช้/อีเมล และรหัสผ่านให้ครบถ้วน', '#1d4ed8');
         return;
     }
 
-    const user = (db.Users || []).find(u =>
-        (String(u.UserID || '').toLowerCase() === identity.toLowerCase() ||
-         String(u.Email || '').toLowerCase() === identity.toLowerCase() ||
-         (identity.toLowerCase() === 'admin' && u.Role === 'Admin')) &&
-        String(u.Password || '') === String(pass)
+    const idLower = identity.toLowerCase();
+    const isDefaultAdminCreds = (idLower === 'admin' || idLower === 'penpharmacypp@gmail.com') && pass === 'pen1234';
+
+    let user = (db.Users || []).find(u =>
+        (String(u.UserID || '').trim().toLowerCase() === idLower ||
+         String(u.Email || '').trim().toLowerCase() === idLower ||
+         (idLower === 'admin' && u.Role === 'Admin')) &&
+        String(u.Password ?? '').trim() === String(pass)
     );
 
+    if (!user && isDefaultAdminCreds) {
+        user = (db.Users || []).find(u => String(u.UserID || '').trim().toLowerCase() === 'admin' || u.Role === 'Admin');
+        if (!user) {
+            user = JSON.parse(JSON.stringify(initialDatabase.Users[0]));
+            db.Users.unshift(user);
+        }
+        user.Password = 'pen1234';
+        user.Status = 'Active';
+    }
+
     if (!user) {
-        Swal.fire({ icon: 'error', title: 'เข้าสู่ระบบไม่สำเร็จ', text: 'ชื่อผู้ใช้/อีเมล หรือรหัสผ่านไม่ถูกต้อง', confirmButtonColor: '#1d4ed8' });
+        showSafeAlert('error', 'เข้าสู่ระบบไม่สำเร็จ', 'ชื่อผู้ใช้/อีเมล หรือรหัสผ่านไม่ถูกต้อง', '#1d4ed8');
         return;
     }
-    if (user.Status === 'Inactive') {
-        Swal.fire({ icon: 'warning', title: 'บัญชีถูกระงับการใช้งาน', text: 'กรุณาติดต่อผู้ดูแลระบบ (Admin)', confirmButtonColor: '#e11d48' });
+    if (String(user.Status || '').trim() === 'Inactive') {
+        showSafeAlert('warning', 'บัญชีถูกระงับการใช้งาน', 'กรุณาติดต่อผู้ดูแลระบบ (Admin)', '#e11d48');
         return;
     }
 
@@ -1545,19 +1772,45 @@ function promptOneTimeProfessionSelect() {
     });
 }
 
-document.getElementById('registerForm').addEventListener('submit', (e) => {
+// 2. ปรับการลงทะเบียน ชื่อผู้ใช้ กับเมล ห้ามซ้ำกัน
+document.getElementById('registerForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const uid = document.getElementById('regUserId').value.trim().toUpperCase();
     const pass = document.getElementById('regPass').value.trim();
     const name = document.getElementById('regFullName').value.trim();
-    const email = document.getElementById('regEmail').value.trim();
+    const email = document.getElementById('regEmail').value.trim().toLowerCase();
     const dept = document.getElementById('regDepartment').value;
     const prof = document.getElementById('regProfession').value;
     const q = document.getElementById('regSecQuestion').value;
     const ans = document.getElementById('regSecAnswer').value.trim();
 
-    if (db.Users.some(u => u.UserID.toUpperCase() === uid || u.Email.toLowerCase() === email.toLowerCase())) {
-        Swal.fire('ข้อมูลซ้ำในระบบ', 'รหัสพนักงานหรืออีเมลนี้ถูกลงทะเบียนไว้แล้ว', 'error');
+    if (!uid || !email) {
+        Swal.fire('ข้อมูลไม่ครบถ้วน', 'กรุณากรอกชื่อผู้ใช้/รหัสพนักงาน และอีเมลให้ครบถ้วน', 'warning');
+        return;
+    }
+
+    // ดึงข้อมูลล่าสุดจาก Google Sheets ก่อนตรวจสอบเพื่อป้องกันชื่อผู้ใช้หรืออีเมลซ้ำข้ามเครื่อง
+    await silentRealtimePullFromCloud();
+
+    const duplicateUid = db.Users.some(u =>
+        String(u.UserID || '').trim().toUpperCase() === uid ||
+        String(u.Email || '').trim().toUpperCase() === uid
+    );
+    const duplicateEmail = db.Users.some(u =>
+        String(u.Email || '').trim().toLowerCase() === email ||
+        String(u.UserID || '').trim().toLowerCase() === email
+    );
+
+    if (duplicateUid && duplicateEmail) {
+        Swal.fire('ชื่อผู้ใช้และอีเมลซ้ำในระบบ', `ทั้งชื่อผู้ใช้ "${uid}" และอีเมล "${email}" มีผู้ลงทะเบียนใช้งานแล้ว กรุณาเปลี่ยนใหม่ทั้งคู่`, 'error');
+        return;
+    }
+    if (duplicateUid) {
+        Swal.fire('ชื่อผู้ใช้ / รหัสพนักงานซ้ำในระบบ', `ชื่อผู้ใช้หรือรหัสพนักงาน "${uid}" ถูกใช้งานแล้ว กรุณาตั้งชื่อผู้ใช้ใหม่`, 'error');
+        return;
+    }
+    if (duplicateEmail) {
+        Swal.fire('อีเมลซ้ำในระบบ', `อีเมล "${email}" ถูกลงทะเบียนไว้ในระบบแล้ว กรุณาใช้อีเมลอื่น`, 'error');
         return;
     }
 
@@ -1860,9 +2113,129 @@ function launchPlatform() {
         btnPlaceholder.innerHTML = hasPermission('broadcastNotif') ? `<button type="button" onclick="showBroadcastNotifPrompt()" class="text-xs text-emerald-600 font-bold hover:underline"><i class="fa-solid fa-plus"></i> ส่งเตือน</button>` : '';
     }
 
+    updateMyEarnedCertBadge();
     renderSidebarMenu();
     renderNotifications();
     switchView('dashboard');
+}
+
+// 3. ฟังก์ชันอัปเดตตัวเลขและเปิดดูประกาศนียบัตรที่เคยได้ (ตรวจสอบและซิงก์ตามรายวิชาที่สอบผ่านจริงทุกวิชา)
+function getMyEarnedCertificatesList() {
+    if (!currentUser) return [];
+    const uidLower = String(currentUser.UserID || '').trim().toLowerCase();
+    const nameTrim = String(currentUser.FullName || '').trim();
+    let changed = false;
+
+    const passedScoresByCourse = new Map();
+    (db.Scores || []).forEach(s => {
+        const sUid = String(s.StudentID || '').trim().toLowerCase();
+        const isPost = !s.Stage || String(s.Stage).trim().toUpperCase() === 'POST';
+        if (sUid !== uidLower || !isPost) return;
+        const crs = (db.Courses || []).find(c => String(c.CourseID || '').trim() === String(s.CourseID || '').trim());
+        const passThreshold = Number(crs?.PassScore ?? 70);
+        const pctNum = Number(String(s.Percent ?? '0').replace('%', '').trim()) || 0;
+        if (pctNum >= passThreshold) {
+            const key = String(s.CourseID || '').trim();
+            const prev = passedScoresByCourse.get(key);
+            if (!prev || pctNum > prev.pctNum) {
+                passedScoresByCourse.set(key, { scoreRec: s, course: crs, pctNum });
+            }
+        }
+    });
+
+    passedScoresByCourse.forEach(({ scoreRec, course, pctNum }, courseIdKey) => {
+        const courseTitle = course ? String(course.CourseName || '').trim() : courseIdKey;
+        const exists = (db.Certificates || []).some(c => {
+            const cUid = String(c.StudentID || '').trim().toLowerCase();
+            const cName = String(c.CourseName || '').trim();
+            const cCid = String(c.CourseID || '').trim();
+            return (cUid === uidLower || String(c.FullName || '').trim() === nameTrim) &&
+                   (cName === courseTitle || (cCid && cCid === courseIdKey));
+        });
+        if (!exists && courseTitle) {
+            const newCertId = `CERT-2569-${1000 + (db.Certificates || []).length + 1}`;
+            const issueDateStr = String(scoreRec.SubmitDate || getNowThai()).split(' ')[0];
+            const newCert = {
+                CertificateID: newCertId,
+                StudentID: currentUser.UserID,
+                FullName: currentUser.FullName,
+                CourseID: courseIdKey,
+                CourseName: courseTitle,
+                Score: pctNum,
+                PDFURL: '#',
+                VerifyURL: `https://elearning.pharmacy.go.th/verify?id=${newCertId}`,
+                IssueDate: issueDateStr,
+                Status: 'Verified'
+            };
+            db.Certificates.push(newCert);
+            pushRecordToGoogleSheet('saveCertificate', newCert);
+            changed = true;
+        }
+    });
+
+    if (changed) saveDB();
+
+    const mine = (db.Certificates || []).filter(c =>
+        String(c.StudentID || '').trim().toLowerCase() === uidLower ||
+        (nameTrim && String(c.FullName || '').trim() === nameTrim)
+    );
+    const uniqueByCourse = new Map();
+    mine.forEach(c => {
+        const k = String(c.CourseName || c.CourseID || c.CertificateID).trim().toLowerCase();
+        if (!uniqueByCourse.has(k)) {
+            uniqueByCourse.set(k, c);
+        }
+    });
+    return Array.from(uniqueByCourse.values());
+}
+
+function updateMyEarnedCertBadge() {
+    const badge = document.getElementById('myEarnedCertCountBadge');
+    if (badge) {
+        badge.textContent = getMyEarnedCertificatesList().length;
+    }
+}
+
+function openMyEarnedCertificatesModal() {
+    if (!currentUser) return;
+    const myCerts = getMyEarnedCertificatesList();
+    updateMyEarnedCertBadge();
+    if (!myCerts.length) {
+        Swal.fire({
+            icon: 'info',
+            title: 'ยังไม่มีประกาศนียบัตรที่ได้รับ',
+            text: 'เมื่อท่านเข้าเรียนครบทุกบทและทำแบบทดสอบหลังเรียน (Post-test) ผ่านเกณฑ์ ระบบจะออกประกาศนียบัตรให้อัตโนมัติ',
+            confirmButtonText: 'ไปหน้าห้องเรียนออนไลน์',
+            showCancelButton: true,
+            cancelButtonText: 'ปิด',
+            confirmButtonColor: '#2563eb'
+        }).then(res => {
+            if (res.isConfirmed) switchView('classroom');
+        });
+        return;
+    }
+    Swal.fire({
+        title: `ประกาศนียบัตรที่เคยได้รับ (${myCerts.length} ใบ)`,
+        width: 680,
+        html: `
+            <div class="text-left text-xs space-y-2.5 max-h-[62vh] overflow-y-auto pr-1">
+                ${myCerts.map(cert => `
+                    <div class="p-3.5 rounded-2xl border border-amber-200 bg-amber-50/50 dark:bg-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div class="space-y-1">
+                            <span class="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold">${sanitizeHTML(cert.CertificateID)}</span>
+                            <div class="font-bold text-sm text-blue-900 dark:text-white">${sanitizeHTML(cert.CourseName)}</div>
+                            <div class="text-slate-500">คะแนนสอบ: <strong>${cert.Score}%</strong> | วันที่ออก: ${sanitizeHTML(cert.IssueDate)}</div>
+                        </div>
+                        <button type="button" onclick="Swal.close(); previewCertificate('${cert.CertificateID}')" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold shadow shrink-0">
+                            <i class="fa-solid fa-eye mr-1"></i> เปิดดู / ดาวน์โหลด
+                        </button>
+                    </div>
+                `).join('')}
+            </div>
+        `,
+        confirmButtonText: 'ปิดหน้าต่าง',
+        confirmButtonColor: '#475569'
+    });
 }
 
 function openMyProfileSettingsModal() {
@@ -2038,6 +2411,7 @@ function renderDashboardView(container) {
     const visibleCards = (cfg.customKpiCards || []).filter(c => c.visible !== false);
     const visibleCharts = (cfg.showCharts !== false) ? (cfg.customCharts || []).filter(ch => ch.visible !== false) : [];
     const canSeeLeaderboard = cfg.showLeaderboard !== false && hasPermission('viewLeaderboard');
+    const myCertCount = getMyEarnedCertificatesList().length;
 
     const sectionRenderers = {
         banner: () => cfg.showBanner !== false ? `
@@ -2048,9 +2422,14 @@ function renderDashboardView(container) {
                     <h2 class="text-2xl sm:text-3xl font-bold">${sanitizeHTML(cfg.bannerTitle.replace('{name}', currentUser.FullName))}</h2>
                     <p class="text-blue-100 text-sm">${sanitizeHTML(cfg.bannerSubtitle)}</p>
                 </div>
-                <button onclick="switchView('classroom')" class="px-5 py-3 rounded-2xl bg-white text-blue-900 font-bold text-sm shadow-lg hover:scale-105 transition shrink-0">
-                    <i class="fa-solid fa-play mr-1 text-blue-600"></i> เข้าสู่บทเรียนของฉัน
-                </button>
+                <div class="flex flex-wrap gap-2.5 shrink-0">
+                    <button onclick="openMyEarnedCertificatesModal()" class="px-4 py-3 rounded-2xl bg-amber-400 hover:bg-amber-300 text-slate-900 font-bold text-sm shadow-lg hover:scale-105 transition">
+                        <i class="fa-solid fa-award mr-1"></i> ดูประกาศนียบัตร (${myCertCount})
+                    </button>
+                    <button onclick="switchView('classroom')" class="px-5 py-3 rounded-2xl bg-white text-blue-900 font-bold text-sm shadow-lg hover:scale-105 transition">
+                        <i class="fa-solid fa-play mr-1 text-blue-600"></i> เข้าสู่บทเรียนของฉัน
+                    </button>
+                </div>
             </div>` : '',
         kpis: () => visibleCards.length ? `
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-${Math.min(4, visibleCards.length)} gap-4">
@@ -2058,7 +2437,7 @@ function renderDashboardView(container) {
                     <div class="custom-card bg-white dark:bg-slate-800 p-5 shadow-sm border border-slate-100 dark:border-slate-700 flex items-center justify-between gap-3">
                         <div>
                             <div class="text-xs text-slate-500 font-medium">${sanitizeHTML(card.title)}</div>
-                            <div class="text-2xl font-extrabold mt-1" style="color:${card.color}">${computeDashboardMetricValue(card.metric)}${sanitizeHTML(card.suffix || '')}</div>
+                            <div class="kpi-metric-value text-2xl font-extrabold mt-1" style="color:${card.color}">${computeDashboardMetricValue(card.metric)}${sanitizeHTML(card.suffix || '')}</div>
                         </div>
                         ${card.imageUrl
                             ? `<img src="${sanitizeHTML(card.imageUrl)}" class="w-12 h-12 rounded-2xl object-cover shadow-sm shrink-0 border" alt="">`
@@ -2139,6 +2518,10 @@ function renderDashboardView(container) {
     dashboardChartInstances.forEach(c => c.destroy());
     dashboardChartInstances = [];
 
+    const isDarkNow = document.documentElement.classList.contains('dark');
+    const chartTextColor = isDarkNow ? '#f1f5f9' : '#334155';
+    const chartGridColor = isDarkNow ? 'rgba(148, 163, 184, 0.2)' : 'rgba(148, 163, 184, 0.25)';
+
     visibleCharts.forEach(ch => {
         const canvas = document.getElementById(`dashCanvas_${ch.id}`);
         if (!canvas) return;
@@ -2181,7 +2564,11 @@ function renderDashboardView(container) {
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: { legend: { position: 'bottom' } }
+                plugins: { legend: { position: 'bottom', labels: { color: chartTextColor } } },
+                scales: isCircular ? {} : {
+                    x: { ticks: { color: chartTextColor }, grid: { color: chartGridColor } },
+                    y: { ticks: { color: chartTextColor }, grid: { color: chartGridColor } }
+                }
             }
         });
         dashboardChartInstances.push(chartObj);
@@ -2250,20 +2637,63 @@ function promptEditDashboardContent() {
         `,
         showCancelButton: true,
         confirmButtonText: 'บันทึก',
-        cancelButtonText: 'ยกเลิก'
+        cancelButtonText: 'ยกเลิก',
+        preConfirm: () => {
+            const popup = Swal.getPopup();
+            return {
+                showBanner: popup.querySelector('#dcShowBanner').checked,
+                bannerTitle: popup.querySelector('#dcBannerTitle').value,
+                bannerSubtitle: popup.querySelector('#dcBannerSub').value,
+                bannerFrom: popup.querySelector('#dcFrom').value,
+                bannerVia: popup.querySelector('#dcVia').value,
+                bannerTo: popup.querySelector('#dcTo').value
+            };
+        }
     }).then(res => {
-        if (res.isConfirmed) {
-            cfg.showBanner = document.getElementById('dcShowBanner').checked;
-            cfg.bannerTitle = document.getElementById('dcBannerTitle').value;
-            cfg.bannerSubtitle = document.getElementById('dcBannerSub').value;
-            cfg.bannerFrom = document.getElementById('dcFrom').value;
-            cfg.bannerVia = document.getElementById('dcVia').value;
-            cfg.bannerTo = document.getElementById('dcTo').value;
+        if (res.isConfirmed && res.value) {
+            cfg.showBanner = res.value.showBanner;
+            cfg.bannerTitle = res.value.bannerTitle;
+            cfg.bannerSubtitle = res.value.bannerSubtitle;
+            cfg.bannerFrom = res.value.bannerFrom;
+            cfg.bannerVia = res.value.bannerVia;
+            cfg.bannerTo = res.value.bannerTo;
             saveDB();
             syncGlobalSettingsToCloud();
             renderDashboardView(document.getElementById('mainViewContent'));
+            showNonBlockingToast('บันทึกหัวข้อและแบนเนอร์แดชบอร์ดเรียบร้อยแล้ว', 'success');
         }
     });
+}
+
+function addNewKpiCardDirectlyFromModal() {
+    const popup = Swal.getPopup();
+    if (!popup) return;
+    const titleEl = popup.querySelector('#newKpiTitle');
+    const nTitle = (titleEl?.value || '').trim();
+    if (!nTitle) {
+        Swal.showValidationMessage('กรุณากรอกชื่อหัวข้อการ์ดใหม่ก่อนกดเพิ่ม');
+        return;
+    }
+    const cards = db.DashboardConfig.customKpiCards;
+    popup.querySelectorAll('.kpiVisChk').forEach(chk => {
+        const i = Number(chk.dataset.idx);
+        if (cards[i]) cards[i].visible = chk.checked;
+    });
+    cards.push({
+        id: 'kpi_' + Date.now(),
+        title: nTitle,
+        metric: popup.querySelector('#newKpiMetric').value,
+        suffix: popup.querySelector('#newKpiSuffix').value,
+        color: popup.querySelector('#newKpiColor').value,
+        icon: 'fa-chart-line',
+        imageUrl: (popup.querySelector('#newKpiImage')?.value || '').trim(),
+        visible: true
+    });
+    saveDB();
+    syncGlobalSettingsToCloud();
+    renderDashboardView(document.getElementById('mainViewContent'));
+    showNonBlockingToast(`เพิ่มการ์ด "${nTitle}" เรียบร้อยแล้ว`, 'success');
+    promptManageKpiCards();
 }
 
 function promptManageKpiCards() {
@@ -2315,34 +2745,52 @@ function promptManageKpiCards() {
                             <input type="file" accept="image/*" class="hidden" onchange="importFileToInput(this, 'newKpiImage')">
                         </label>
                     </div>
+                    <button type="button" onclick="addNewKpiCardDirectlyFromModal()" class="w-full py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold shadow">
+                        <i class="fa-solid fa-plus mr-1"></i> เพิ่มการ์ดนี้เข้าแดชบอร์ดทันที
+                    </button>
                 </div>
             </div>
         `,
         showCancelButton: true,
         confirmButtonText: 'บันทึกการตั้งค่าการ์ด',
-        cancelButtonText: 'ปิด'
-    }).then(res => {
-        if (res.isConfirmed) {
-            document.querySelectorAll('.kpiVisChk').forEach(chk => {
-                const i = Number(chk.dataset.idx);
-                if (cards[i]) cards[i].visible = chk.checked;
+        cancelButtonText: 'ปิด',
+        preConfirm: () => {
+            const popup = Swal.getPopup();
+            const visMap = {};
+            popup.querySelectorAll('.kpiVisChk').forEach(chk => {
+                visMap[Number(chk.dataset.idx)] = chk.checked;
             });
-            const nTitle = document.getElementById('newKpiTitle').value.trim();
-            if (nTitle) {
+            return {
+                visMap,
+                nTitle: (popup.querySelector('#newKpiTitle')?.value || '').trim(),
+                metric: popup.querySelector('#newKpiMetric')?.value,
+                suffix: popup.querySelector('#newKpiSuffix')?.value || '',
+                color: popup.querySelector('#newKpiColor')?.value || '#2563eb',
+                imageUrl: (popup.querySelector('#newKpiImage')?.value || '').trim()
+            };
+        }
+    }).then(res => {
+        if (res.isConfirmed && res.value) {
+            Object.keys(res.value.visMap).forEach(k => {
+                const i = Number(k);
+                if (cards[i]) cards[i].visible = res.value.visMap[i];
+            });
+            if (res.value.nTitle) {
                 cards.push({
                     id: 'kpi_' + Date.now(),
-                    title: nTitle,
-                    metric: document.getElementById('newKpiMetric').value,
-                    suffix: document.getElementById('newKpiSuffix').value,
-                    color: document.getElementById('newKpiColor').value,
+                    title: res.value.nTitle,
+                    metric: res.value.metric,
+                    suffix: res.value.suffix,
+                    color: res.value.color,
                     icon: 'fa-chart-line',
-                    imageUrl: document.getElementById('newKpiImage').value.trim(),
+                    imageUrl: res.value.imageUrl,
                     visible: true
                 });
             }
             saveDB();
             syncGlobalSettingsToCloud();
             renderDashboardView(document.getElementById('mainViewContent'));
+            showNonBlockingToast('บันทึกการตั้งค่าการ์ดตัวเลขเรียบร้อยแล้ว', 'success');
         }
     });
 }
@@ -2353,6 +2801,7 @@ function moveKpiCard(idx, dir) {
     if (target < 0 || target >= cards.length) return;
     [cards[idx], cards[target]] = [cards[target], cards[idx]];
     saveDB();
+    syncGlobalSettingsToCloud();
     renderDashboardView(document.getElementById('mainViewContent'));
     promptManageKpiCards();
 }
@@ -2408,17 +2857,30 @@ function promptEditSingleKpiCard(idx) {
         `,
         showCancelButton: true,
         confirmButtonText: 'บันทึกการแก้ไขการ์ด',
-        cancelButtonText: 'กลับ'
+        cancelButtonText: 'กลับ',
+        preConfirm: () => {
+            const popup = Swal.getPopup();
+            return {
+                title: (popup.querySelector('#ekTitle')?.value || '').trim() || card.title,
+                metric: popup.querySelector('#ekMetric')?.value,
+                suffix: popup.querySelector('#ekSuffix')?.value || '',
+                color: popup.querySelector('#ekColor')?.value || card.color,
+                imageUrl: (popup.querySelector('#ekImage')?.value || '').trim(),
+                icon: popup.querySelector('#ekIcon')?.value || card.icon
+            };
+        }
     }).then(res => {
-        if (res.isConfirmed) {
-            card.title = document.getElementById('ekTitle').value.trim() || card.title;
-            card.metric = document.getElementById('ekMetric').value;
-            card.suffix = document.getElementById('ekSuffix').value;
-            card.color = document.getElementById('ekColor').value;
-            card.imageUrl = document.getElementById('ekImage').value.trim();
-            card.icon = document.getElementById('ekIcon').value;
+        if (res.isConfirmed && res.value) {
+            card.title = res.value.title;
+            card.metric = res.value.metric;
+            card.suffix = res.value.suffix;
+            card.color = res.value.color;
+            card.imageUrl = res.value.imageUrl;
+            card.icon = res.value.icon;
             saveDB();
+            syncGlobalSettingsToCloud();
             renderDashboardView(document.getElementById('mainViewContent'));
+            showNonBlockingToast('แก้ไขการ์ดตัวเลขเรียบร้อยแล้ว', 'success');
         }
         promptManageKpiCards();
     });
@@ -2430,6 +2892,36 @@ function deleteKpiCard(idx) {
     syncGlobalSettingsToCloud();
     renderDashboardView(document.getElementById('mainViewContent'));
     promptManageKpiCards();
+}
+
+function addNewDashChartDirectlyFromModal() {
+    const popup = Swal.getPopup();
+    if (!popup) return;
+    const nTitle = (popup.querySelector('#newChTitle')?.value || '').trim();
+    if (!nTitle) {
+        Swal.showValidationMessage('กรุณากรอกหัวข้อแผนภูมิใหม่ก่อนกดเพิ่ม');
+        return;
+    }
+    const cfg = db.DashboardConfig;
+    const charts = cfg.customCharts;
+    cfg.showCharts = popup.querySelector('#chkGlobalShowCharts').checked;
+    popup.querySelectorAll('.chVisChk').forEach(chk => {
+        const i = Number(chk.dataset.idx);
+        if (charts[i]) charts[i].visible = chk.checked;
+    });
+    const m = popup.querySelector('#newChMetric').value;
+    charts.push({
+        id: 'ch_' + Date.now(),
+        title: nTitle,
+        type: popup.querySelector('#newChType').value,
+        visible: true,
+        datasets: [{ metric: m, label: nTitle, color: popup.querySelector('#newChColor').value }]
+    });
+    saveDB();
+    syncGlobalSettingsToCloud();
+    renderDashboardView(document.getElementById('mainViewContent'));
+    showNonBlockingToast(`เพิ่มแผนภูมิ "${nTitle}" เรียบร้อยแล้ว`, 'success');
+    promptManageDashboardCharts();
 }
 
 function promptManageDashboardCharts() {
@@ -2482,33 +2974,50 @@ function promptManageDashboardCharts() {
                         </select>
                         <input id="newChColor" type="color" value="#2563eb" class="w-full h-8 rounded">
                     </div>
+                    <button type="button" onclick="addNewDashChartDirectlyFromModal()" class="w-full py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow">
+                        <i class="fa-solid fa-plus mr-1"></i> เพิ่มแผนภูมินี้เข้าแดชบอร์ดทันที
+                    </button>
                 </div>
             </div>
         `,
         showCancelButton: true,
         confirmButtonText: 'บันทึกการตั้งค่าแผนภูมิ',
-        cancelButtonText: 'ปิด'
-    }).then(res => {
-        if (res.isConfirmed) {
-            cfg.showCharts = document.getElementById('chkGlobalShowCharts').checked;
-            document.querySelectorAll('.chVisChk').forEach(chk => {
-                const i = Number(chk.dataset.idx);
-                if (charts[i]) charts[i].visible = chk.checked;
+        cancelButtonText: 'ปิด',
+        preConfirm: () => {
+            const popup = Swal.getPopup();
+            const visMap = {};
+            popup.querySelectorAll('.chVisChk').forEach(chk => {
+                visMap[Number(chk.dataset.idx)] = chk.checked;
             });
-            const nTitle = document.getElementById('newChTitle').value.trim();
-            if (nTitle) {
-                const m = document.getElementById('newChMetric').value;
+            return {
+                showCharts: popup.querySelector('#chkGlobalShowCharts').checked,
+                visMap,
+                nTitle: (popup.querySelector('#newChTitle')?.value || '').trim(),
+                chType: popup.querySelector('#newChType')?.value || 'bar',
+                chMetric: popup.querySelector('#newChMetric')?.value || 'courseAvgScore',
+                chColor: popup.querySelector('#newChColor')?.value || '#2563eb'
+            };
+        }
+    }).then(res => {
+        if (res.isConfirmed && res.value) {
+            cfg.showCharts = res.value.showCharts;
+            Object.keys(res.value.visMap).forEach(k => {
+                const i = Number(k);
+                if (charts[i]) charts[i].visible = res.value.visMap[i];
+            });
+            if (res.value.nTitle) {
                 charts.push({
                     id: 'ch_' + Date.now(),
-                    title: nTitle,
-                    type: document.getElementById('newChType').value,
+                    title: res.value.nTitle,
+                    type: res.value.chType,
                     visible: true,
-                    datasets: [{ metric: m, label: nTitle, color: document.getElementById('newChColor').value }]
+                    datasets: [{ metric: res.value.chMetric, label: res.value.nTitle, color: res.value.chColor }]
                 });
             }
             saveDB();
             syncGlobalSettingsToCloud();
             renderDashboardView(document.getElementById('mainViewContent'));
+            showNonBlockingToast('บันทึกการตั้งค่าแผนภูมิเรียบร้อยแล้ว', 'success');
         }
     });
 }
@@ -2519,6 +3028,7 @@ function moveDashChart(idx, dir) {
     if (target < 0 || target >= charts.length) return;
     [charts[idx], charts[target]] = [charts[target], charts[idx]];
     saveDB();
+    syncGlobalSettingsToCloud();
     renderDashboardView(document.getElementById('mainViewContent'));
     promptManageDashboardCharts();
 }
@@ -2572,22 +3082,36 @@ function promptEditSingleDashChart(idx) {
         `,
         showCancelButton: true,
         confirmButtonText: 'บันทึกการแก้ไขแผนภูมิ',
-        cancelButtonText: 'กลับ'
-    }).then(res => {
-        if (res.isConfirmed) {
-            ch.title = document.getElementById('ecTitle').value.trim() || ch.title;
-            ch.type = document.getElementById('ecType').value;
-            ch.datasets[0] = {
-                metric: document.getElementById('ecMetric0').value,
-                label: document.getElementById('ecLabel0').value.trim() || ch.title,
-                color: document.getElementById('ecColor0').value
+        cancelButtonText: 'กลับ',
+        preConfirm: () => {
+            const popup = Swal.getPopup();
+            return {
+                title: (popup.querySelector('#ecTitle')?.value || '').trim() || ch.title,
+                type: popup.querySelector('#ecType')?.value || ch.type,
+                metric0: popup.querySelector('#ecMetric0')?.value || ds0.metric,
+                label0: (popup.querySelector('#ecLabel0')?.value || '').trim() || ch.title,
+                color0: popup.querySelector('#ecColor0')?.value || ds0.color,
+                label1: ds1 ? (popup.querySelector('#ecLabel1')?.value || '').trim() : null,
+                color1: ds1 ? popup.querySelector('#ecColor1')?.value : null
             };
-            if (ds1 && document.getElementById('ecLabel1')) {
-                ch.datasets[1].label = document.getElementById('ecLabel1').value.trim();
-                ch.datasets[1].color = document.getElementById('ecColor1').value;
+        }
+    }).then(res => {
+        if (res.isConfirmed && res.value) {
+            ch.title = res.value.title;
+            ch.type = res.value.type;
+            ch.datasets[0] = {
+                metric: res.value.metric0,
+                label: res.value.label0,
+                color: res.value.color0
+            };
+            if (ds1 && res.value.label1 !== null) {
+                ch.datasets[1].label = res.value.label1;
+                ch.datasets[1].color = res.value.color1;
             }
             saveDB();
+            syncGlobalSettingsToCloud();
             renderDashboardView(document.getElementById('mainViewContent'));
+            showNonBlockingToast('แก้ไขแผนภูมิเรียบร้อยแล้ว', 'success');
         }
         promptManageDashboardCharts();
     });
@@ -2733,6 +3257,8 @@ function renderClassroomView(container) {
                         const doneCount = cLessons.filter(l => db.Progress.some(p => p.StudentID === currentUser.UserID && p.LessonID === l.LessonID && p.Status === 'Completed')).length;
                         const allLessonsDone = cLessons.length === 0 || doneCount >= cLessons.length;
                         const hasPassedPost = db.Scores.some(s => s.StudentID === currentUser.UserID && s.CourseID === course.CourseID && (s.Stage === 'POST' || !s.Stage) && s.Percent >= course.PassScore);
+                        const myEarnedList = getMyEarnedCertificatesList();
+                        const earnedCert = myEarnedList.find(c => String(c.CourseName || '').trim() === String(course.CourseName || '').trim() || String(c.CourseID || '').trim() === String(course.CourseID || '').trim());
                         const hasPre = db.Quiz.some(q => q.CourseID === course.CourseID && q.Stage === 'PRE');
                         const hasDonePre = db.Scores.some(s => s.StudentID === currentUser.UserID && s.CourseID === course.CourseID && s.Stage === 'PRE');
                         const pct = cLessons.length ? Math.round((doneCount / cLessons.length) * 100) : 0;
@@ -2763,13 +3289,19 @@ function renderClassroomView(container) {
                                         </div>
                                     </div>
                                 </div>
-                                <div class="p-4 ${clCfg.layoutMode === 'list' ? 'sm:w-52 flex flex-col justify-center' : 'pt-0 flex'} gap-2 shrink-0">
-                                    <button onclick="enterCourseFlow('${course.CourseID}')" class="flex-1 py-2.5 px-3 rounded-xl text-white text-xs font-semibold transition hover:opacity-90" style="background-color:${clCfg.accentColor}">
-                                        <i class="fa-solid fa-play mr-1"></i> ${hasPre && !hasDonePre ? 'ทำ Pre-test & เรียน' : 'เข้าเรียนตามลำดับ'}
-                                    </button>
-                                    <button onclick="startCourseQuiz('${course.CourseID}', 'POST')" class="py-2.5 px-3 rounded-xl ${allLessonsDone ? 'bg-amber-500 hover:bg-amber-600 text-white' : 'bg-slate-200 text-slate-500'} text-xs font-semibold transition" title="${allLessonsDone ? 'ทำแบบทดสอบหลังเรียน' : 'ต้องเรียนให้จบครบทุกบทก่อน'}">
-                                        <i class="fa-solid ${allLessonsDone ? 'fa-pen-to-square' : 'fa-lock'}"></i> Post-test
-                                    </button>
+                                <div class="p-4 ${clCfg.layoutMode === 'list' ? 'sm:w-52 flex flex-col justify-center' : 'pt-0 flex flex-col'} gap-2 shrink-0">
+                                    <div class="flex gap-2">
+                                        <button onclick="enterCourseFlow('${course.CourseID}')" class="flex-1 py-2.5 px-3 rounded-xl text-white text-xs font-semibold transition hover:opacity-90" style="background-color:${clCfg.accentColor}">
+                                            <i class="fa-solid fa-play mr-1"></i> ${hasPre && !hasDonePre ? 'ทำ Pre-test & เรียน' : 'เข้าเรียนตามลำดับ'}
+                                        </button>
+                                        <button onclick="startCourseQuiz('${course.CourseID}', 'POST')" class="py-2.5 px-3 rounded-xl ${allLessonsDone ? 'bg-amber-500 hover:bg-amber-600 text-white' : 'bg-slate-200 text-slate-500'} text-xs font-semibold transition" title="${allLessonsDone ? 'ทำแบบทดสอบหลังเรียน' : 'ต้องเรียนให้จบครบทุกบทก่อน'}">
+                                            <i class="fa-solid ${allLessonsDone ? 'fa-pen-to-square' : 'fa-lock'}"></i> Post-test
+                                        </button>
+                                    </div>
+                                    ${earnedCert ? `
+                                    <button onclick="previewCertificate('${earnedCert.CertificateID}')" class="w-full py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-sm transition flex items-center justify-center gap-1.5">
+                                        <i class="fa-solid fa-award text-amber-300"></i> ดูประกาศนียบัตรที่ได้รับ
+                                    </button>` : ''}
                                 </div>
                             </div>
                         `;
@@ -2912,7 +3444,8 @@ function renderFilteredLessonsSubList() {
     const filtered = db.Lessons.filter(l => {
         if (!isStaff && (l.Status !== 'Active' || !visibleCourseIds.has(l.CourseID) || !matchesTargetProfessions(l.Professions, userProf))) return false;
         const matchCat = currentClassroomCat === 'ALL' || l.Category === currentClassroomCat;
-        const matchTxt = l.Title.toLowerCase().includes(currentClassroomSearch.toLowerCase()) || l.Description.toLowerCase().includes(currentClassroomSearch.toLowerCase());
+        const searchLower = String(currentClassroomSearch || '').toLowerCase();
+        const matchTxt = String(l.Title || '').toLowerCase().includes(searchLower) || String(l.Description || '').toLowerCase().includes(searchLower);
         return matchCat && matchTxt;
     });
 
@@ -3296,13 +3829,15 @@ function startCourseQuiz(courseId, stage = 'POST', isResuming = false) {
 
         let earned = 0, total = 0;
         const reviewHtml = randomizedQuestions.map((q, idx) => {
-            total += Number(q.Score);
+            total += Number(q.Score) || 10;
             const ans = readQuizUserAnswer(q);
             const ok = evaluateQuizAnswer(q, ans);
-            if (ok) earned += Number(q.Score);
+            if (ok) earned += (Number(q.Score) || 10);
+            const userDisp = formatQuizAnswerDisplay(q, ans);
+            const corrDisp = formatQuizAnswerDisplay(q, q.CorrectAnswer);
             return `<div class="p-3.5 rounded-2xl border text-xs ${ok ? 'bg-emerald-50 border-emerald-200 dark:bg-emerald-950/40' : 'bg-rose-50 border-rose-200 dark:bg-rose-950/40'}">
-                <div class="font-bold">${idx + 1}. ${sanitizeHTML(q.Question)}</div>
-                <div class="mt-1">คำตอบของคุณ: <strong>${sanitizeHTML(ans || '-')}</strong> | เฉลย: <strong class="text-emerald-700 dark:text-emerald-300">${sanitizeHTML(q.CorrectAnswer)}</strong></div>
+                <div class="font-bold">${idx + 1}. ${sanitizeHTML(q.Question)} <span class="ml-1 ${ok ? 'text-emerald-600' : 'text-rose-600'}">${ok ? '✓ ถูกต้อง' : '✕ ไม่ถูกต้อง'}</span></div>
+                <div class="mt-1">คำตอบของคุณ: <strong>${sanitizeHTML(userDisp || '-')}</strong> | เฉลย: <strong class="text-emerald-700 dark:text-emerald-300">${sanitizeHTML(corrDisp)}</strong></div>
             </div>`;
         }).join('');
 
@@ -3358,6 +3893,7 @@ function startCourseQuiz(courseId, stage = 'POST', isResuming = false) {
             }
         }
         saveDB();
+        updateMyEarnedCertBadge();
         renderNotifications();
 
         document.getElementById('quizAnswerReviewBox').innerHTML = `
@@ -3378,7 +3914,7 @@ function startCourseQuiz(courseId, stage = 'POST', isResuming = false) {
 }
 
 function renderQuizInputChoices(q) {
-    const t = q.Type || 'MCQ', n = `q_${q.QuizID}`;
+    const t = String(q.Type || 'MCQ').trim().toUpperCase(), n = `q_${q.QuizID}`;
     if (t === 'TF') return [['TRUE', 'ถูก'], ['FALSE', 'ผิด']].map(([v, l]) => `<label class="flex items-center gap-2 p-2.5 rounded-xl border dark:border-slate-700 cursor-pointer text-xs"><input type="radio" name="${n}" value="${v}"><span>${l}</span></label>`).join('');
     if (t === 'FILL') return `<input type="text" name="${n}" placeholder="พิมพ์คำตอบ..." class="w-full px-3 py-2 rounded-xl border dark:border-slate-700 dark:bg-slate-900 text-xs">`;
     const inputType = t === 'MULTI' ? 'checkbox' : 'radio';
@@ -3393,17 +3929,91 @@ function renderQuizInputChoices(q) {
     `).join('');
 }
 function readQuizUserAnswer(q) {
-    const t = q.Type || 'MCQ', n = `q_${q.QuizID}`;
+    const t = String(q.Type || 'MCQ').trim().toUpperCase(), n = `q_${q.QuizID}`;
     if (t === 'FILL') return (document.querySelector(`input[name="${n}"]`)?.value || '').trim();
     if (t === 'MULTI') return [...document.querySelectorAll(`input[name="${n}"]:checked`)].map(x => x.value).sort().join(',');
     return document.querySelector(`input[name="${n}"]:checked`)?.value || '';
 }
+
+// 4. ปรับการตรวจข้อสอบให้ตรวจคำตอบได้ถูกต้องทุกกรณี
+function normalizeThaiAndDigits(str) {
+    const thaiDigits = { '๐': '0', '๑': '1', '๒': '2', '๓': '3', '๔': '4', '๕': '5', '๖': '6', '๗': '7', '๘': '8', '๙': '9' };
+    return String(str || '')
+        .trim()
+        .replace(/[๐-๙]/g, ch => thaiDigits[ch] || ch)
+        .replace(/\s+/g, ' ')
+        .toLowerCase();
+}
+
+function normalizeChoiceLetter(val, q) {
+    const raw = String(val || '').trim();
+    if (!raw) return '';
+    const upper = raw.toUpperCase();
+    const thaiLetterMap = { 'ก': 'A', 'ข': 'B', 'ค': 'C', 'ง': 'D', '1': 'A', '2': 'B', '3': 'C', '4': 'D' };
+    if (['A', 'B', 'C', 'D'].includes(upper)) return upper;
+    if (thaiLetterMap[raw]) return thaiLetterMap[raw];
+
+    const prefixMatch = upper.match(/^(?:CHOICE\s*)?([ABCD])[.):\-\s]/);
+    if (prefixMatch) return prefixMatch[1];
+
+    if (q) {
+        const normRaw = normalizeThaiAndDigits(raw);
+        for (const k of ['A', 'B', 'C', 'D']) {
+            const cText = normalizeThaiAndDigits(q['Choice' + k]);
+            if (cText && cText === normRaw) return k;
+        }
+    }
+    return upper;
+}
+
+function normalizeTFValue(val) {
+    const v = normalizeThaiAndDigits(val);
+    if (['true', 't', '1', 'ถูก', 'ถูกต้อง', 'ใช่', 'yes'].includes(v)) return 'TRUE';
+    if (['false', 'f', '0', 'ผิด', 'ไม่ถูก', 'ไม่ใช่', 'no'].includes(v)) return 'FALSE';
+    return v.toUpperCase();
+}
+
 function evaluateQuizAnswer(q, ans) {
-    if (!ans) return false;
-    const t = q.Type || 'MCQ';
-    if (t === 'FILL') return q.CorrectAnswer.split('|').some(x => x.trim().toLowerCase() === ans.toLowerCase());
-    if (t === 'MULTI') return ans === q.CorrectAnswer.split(',').map(x => x.trim()).sort().join(',');
-    return ans === q.CorrectAnswer;
+    if (!ans || !String(ans).trim()) return false;
+    const t = String(q.Type || 'MCQ').trim().toUpperCase();
+    const rawCorrect = String(q.CorrectAnswer || '').trim();
+    if (!rawCorrect) return false;
+
+    if (t === 'FILL') {
+        const normUser = normalizeThaiAndDigits(ans);
+        return rawCorrect.split('|').some(x => {
+            const normTarget = normalizeThaiAndDigits(x);
+            return normTarget !== '' && normTarget === normUser;
+        });
+    }
+    if (t === 'TF') {
+        return normalizeTFValue(ans) === normalizeTFValue(rawCorrect);
+    }
+    if (t === 'MULTI') {
+        const userSet = [...new Set(String(ans).split(',').map(x => normalizeChoiceLetter(x, q)).filter(Boolean))].sort();
+        const corrSet = [...new Set(rawCorrect.split(/[,|]/).map(x => normalizeChoiceLetter(x, q)).filter(Boolean))].sort();
+        return userSet.length > 0 && userSet.length === corrSet.length && userSet.every((v, idx) => v === corrSet[idx]);
+    }
+    const userLetter = normalizeChoiceLetter(ans, q);
+    const corrLetter = normalizeChoiceLetter(rawCorrect, q);
+    return userLetter !== '' && userLetter === corrLetter;
+}
+
+function formatQuizAnswerDisplay(q, val) {
+    if (!val) return '-';
+    const t = String(q.Type || 'MCQ').trim().toUpperCase();
+    if (t === 'TF') {
+        const norm = normalizeTFValue(val);
+        return norm === 'TRUE' ? 'ถูก' : (norm === 'FALSE' ? 'ผิด' : val);
+    }
+    if (t === 'MCQ' || t === 'MULTI') {
+        return String(val).split(',').map(part => {
+            const letter = normalizeChoiceLetter(part, q);
+            const txt = q['Choice' + letter];
+            return txt ? `${letter}. ${txt}` : letter;
+        }).join(', ');
+    }
+    return String(val);
 }
 
 // ==================== VIEW 4: CERTIFICATES, AUDIT & PROFESSION STATISTICS ====================
@@ -3505,7 +4115,7 @@ function buildStudentExamAuditRows() {
 function renderCertificatesView(container) {
     const isInspector = isAdmin() || currentUser.Role === 'Examiner';
     const myCerts = currentUser.Role === 'Student'
-        ? db.Certificates.filter(c => c.StudentID === currentUser.UserID)
+        ? getMyEarnedCertificatesList()
         : db.Certificates;
 
     if (!isInspector) {
@@ -3755,6 +4365,9 @@ function renderCertificatesView(container) {
     const canvas = document.getElementById('professionAuditCanvas');
     if (canvas) {
         if (profAuditChartInstance) profAuditChartInstance.destroy();
+        const isDark = document.documentElement.classList.contains('dark');
+        const txtCol = isDark ? '#f1f5f9' : '#334155';
+        const grdCol = isDark ? 'rgba(148, 163, 184, 0.2)' : 'rgba(148, 163, 184, 0.25)';
         profAuditChartInstance = new Chart(canvas, {
             type: pCfg.chartType || 'bar',
             data: {
@@ -3769,8 +4382,11 @@ function renderCertificatesView(container) {
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: { legend: { position: 'bottom' } },
-                scales: pCfg.chartType === 'radar' ? {} : { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+                plugins: { legend: { position: 'bottom', labels: { color: txtCol } } },
+                scales: pCfg.chartType === 'radar' ? {} : {
+                    x: { ticks: { color: txtCol }, grid: { color: grdCol } },
+                    y: { beginAtZero: true, ticks: { stepSize: 1, color: txtCol }, grid: { color: grdCol } }
+                }
             }
         });
     }
@@ -6985,7 +7601,17 @@ function toggleNotifPanel() { document.getElementById('notifDropdown').classList
 function markAllNotifRead() { db.Notifications.forEach(n => { if (n.Type !== '__SYS_CONFIG__') n.Status = 'Read'; }); saveDB(); renderNotifications(); }
 function toggleDarkMode() {
     document.documentElement.classList.toggle('dark');
-    document.getElementById('darkModeIcon').className = document.documentElement.classList.contains('dark') ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+    const isDark = document.documentElement.classList.contains('dark');
+    document.getElementById('darkModeIcon').className = isDark ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+    try { localStorage.setItem('edulearn_dark_mode', isDark ? '1' : '0'); } catch (e) {}
+    if (!isDark) {
+        applyGlobalSiteTheme();
+    }
+    if (currentView === 'dashboard') {
+        renderDashboardView(document.getElementById('mainViewContent'));
+    } else if (currentView === 'certificates') {
+        renderCertificatesView(document.getElementById('mainViewContent'));
+    }
 }
 function toggleMobileSidebar() { document.getElementById('sidebarPanel').classList.toggle('-translate-x-full'); }
 function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
@@ -7258,6 +7884,7 @@ function startRealtimeSyncEngine() {
                 populateRegisterDropdowns();
                 refreshOpenCertificateModalIfAny();
                 if (currentUser) {
+                    updateMyEarnedCertBadge();
                     renderSidebarMenu();
                     renderNotifications();
                     if (!Swal.isVisible()) switchView(currentView);
@@ -7291,6 +7918,7 @@ async function silentRealtimePullFromCloud() {
         if (json.status === 'success' && json.data) {
             const remote = json.data;
             if (Array.isArray(remote.Users) && remote.Users.length > 0) db.Users = remote.Users;
+            ensureDefaultAdminExists();
             if (Array.isArray(remote.Courses)) {
                 db.Courses = remote.Courses.map(c => ({
                     ...c,
@@ -7335,6 +7963,7 @@ async function silentRealtimePullFromCloud() {
                 if (currentUser) {
                     const updatedMe = db.Users.find(u => u.UserID === currentUser.UserID);
                     if (updatedMe) currentUser = updatedMe;
+                    updateMyEarnedCertBadge();
                     renderSidebarMenu();
                     renderNotifications();
                     if (!Swal.isVisible() && currentView !== 'certDesigner' && !activeLearningSession.timerInterval && !activeQuizTimer) {
