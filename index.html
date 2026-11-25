@@ -4116,7 +4116,7 @@ function renderCertificatesView(container) {
         : db.Certificates;
 
        if (!isInspector) { switchView('dashboard'); return; }
-    }
+    
 
     const pStats = computeProfessionAuditStats();
     const pCfg = db.ProfessionStatsConfig || initialDatabase.ProfessionStatsConfig;
