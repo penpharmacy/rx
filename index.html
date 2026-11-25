@@ -1080,6 +1080,7 @@ async function pushRecordToGoogleSheet(actionName, payloadObj) {
 }
 
 async function syncAllDataWithGoogleSheet(showToast = false) {
+    await localMediaRestorePromise;
     const url = getGasUrl();
     if (!url || !url.startsWith('http')) return;
     updateSyncStatusUI('กำลังซิงก์ข้อมูล...', 'amber');
@@ -1155,6 +1156,19 @@ function hasPermission(permKey) {
     const rolePerms = (db.RolePermissions && db.RolePermissions[currentUser.Role]) || [];
     return rolePerms.includes(permKey);
 }
+// แยกไฟล์แนบ Base64 ออกจาก localStorage ไปเก็บใน IndexedDB
+// เพื่อไม่ให้รูปภาพ วิดีโอ และ PDF ทำให้ฐานข้อมูลหลักเต็มโควตาเบราว์เซอร์
+const EDU_MEDIA_DB_NAME = 'edulearn_pharmacy_media_v1';
+const EDU_MEDIA_STORE_NAME = 'assets';
+const EDU_MEDIA_REF_PROP = '__EDULEARN_MEDIA_REF_V1__';
+const EDU_MEDIA_THRESHOLD = 24 * 1024;
+let eduMediaDbPromise = null;
+let eduMediaLastPersisted = new Map();
+let eduDbSaveSequence = 0;
+let eduDbSaveQueue = Promise.resolve();
+let eduStorageWarningShown = false;
+let localMediaRestorePromise = Promise.resolve({ restored: 0, missing: 0 });
+
 function getLocalStorageUsedKB() {
     try {
         const raw = localStorage.getItem('edulearn_hospital_db_v4') || '';
@@ -1164,50 +1178,197 @@ function getLocalStorageUsedKB() {
     }
 }
 
-function compactDatabaseForLocalStorage() {
-    if (Array.isArray(db.Notifications)) {
-        const seenChunkIds = new Set();
-        db.Notifications = db.Notifications.filter(n => {
-            if (n.Type === '__SYS_CONFIG__' || n.UserID === '__SYS_CONFIG__') {
-                if (seenChunkIds.has(n.NotificationID)) return false;
-                seenChunkIds.add(n.NotificationID);
+function openEduMediaDatabase() {
+    if (eduMediaDbPromise) return eduMediaDbPromise;
+    eduMediaDbPromise = new Promise((resolve, reject) => {
+        if (!('indexedDB' in window)) {
+            reject(new Error('เบราว์เซอร์นี้ไม่รองรับ IndexedDB'));
+            return;
+        }
+        const request = indexedDB.open(EDU_MEDIA_DB_NAME, 1);
+        request.onupgradeneeded = () => {
+            const idb = request.result;
+            if (!idb.objectStoreNames.contains(EDU_MEDIA_STORE_NAME)) {
+                idb.createObjectStore(EDU_MEDIA_STORE_NAME);
             }
-            return true;
-        });
-        if (db.Notifications.length > 60) {
-            const sysItems = db.Notifications.filter(n => n.Type === '__SYS_CONFIG__');
-            const normalItems = db.Notifications.filter(n => n.Type !== '__SYS_CONFIG__').slice(0, 40);
-            db.Notifications = [...normalItems, ...sysItems];
+        };
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => {
+            eduMediaDbPromise = null;
+            reject(request.error || new Error('เปิดพื้นที่จัดเก็บไฟล์แนบไม่สำเร็จ'));
+        };
+        request.onblocked = () => {
+            eduMediaDbPromise = null;
+            reject(new Error('พื้นที่จัดเก็บไฟล์แนบถูกเปิดค้างจากแท็บอื่น กรุณาปิดแท็บระบบที่ซ้ำกัน'));
+        };
+    });
+    return eduMediaDbPromise;
+}
+
+function getEduMediaRecordSegment(value, index) {
+    if (value && typeof value === 'object' && !Array.isArray(value)) {
+        const idFields = ['UserID', 'CourseID', 'LessonID', 'QuizID', 'CertificateID', 'ScoreID', 'ProgressID', 'NotificationID', 'TemplateID', 'LogoID', 'id'];
+        for (const field of idFields) {
+            if (value[field] !== undefined && value[field] !== null && String(value[field]) !== '') {
+                return `${field}:${String(value[field])}`;
+            }
         }
     }
-    if (Array.isArray(db.SavedCertTemplates) && db.SavedCertTemplates.length > 5) {
-        db.SavedCertTemplates = db.SavedCertTemplates.slice(0, 5);
+    return `index:${index}`;
+}
+
+function buildLocalDatabaseSnapshot(source) {
+    const mediaAssets = [];
+    const mediaKeys = [];
+
+    function walk(value, pathParts) {
+        if (typeof value === 'string' && /^data:[^,]*;base64,/i.test(value) && value.length >= EDU_MEDIA_THRESHOLD) {
+            const key = 'asset:' + pathParts.map(part => encodeURIComponent(String(part))).join('/');
+            mediaKeys.push(key);
+            if (eduMediaLastPersisted.get(key) !== value) {
+                mediaAssets.push({ key, value });
+            }
+            return { [EDU_MEDIA_REF_PROP]: key };
+        }
+        if (Array.isArray(value)) {
+            return value.map((item, index) => walk(item, [...pathParts, getEduMediaRecordSegment(item, index)]));
+        }
+        if (value && typeof value === 'object') {
+            // ตัวอ้างอิงจาก IndexedDB ต้องคงเดิม ไม่แปลงซ้ำ
+            if (Object.keys(value).length === 1 && typeof value[EDU_MEDIA_REF_PROP] === 'string') return value;
+            const output = {};
+            Object.keys(value).forEach(key => {
+                output[key] = walk(value[key], [...pathParts, key]);
+            });
+            return output;
+        }
+        return value;
     }
-    if (Array.isArray(db.SavedCertLogos) && db.SavedCertLogos.length > 8) {
-        db.SavedCertLogos = db.SavedCertLogos.slice(0, 8);
+
+    return {
+        snapshot: walk(source, ['database']),
+        mediaAssets,
+        mediaKeys
+    };
+}
+
+async function writeEduMediaAssets(assets) {
+    if (!assets.length) return;
+    const idb = await openEduMediaDatabase();
+    await new Promise((resolve, reject) => {
+        const tx = idb.transaction(EDU_MEDIA_STORE_NAME, 'readwrite');
+        const store = tx.objectStore(EDU_MEDIA_STORE_NAME);
+        assets.forEach(asset => store.put(asset.value, asset.key));
+        tx.oncomplete = resolve;
+        tx.onerror = () => reject(tx.error || new Error('บันทึกไฟล์แนบลง IndexedDB ไม่สำเร็จ'));
+        tx.onabort = () => reject(tx.error || new Error('การบันทึกไฟล์แนบถูกยกเลิก'));
+    });
+    assets.forEach(asset => eduMediaLastPersisted.set(asset.key, asset.value));
+}
+
+async function restoreLocalMediaReferences(targetDatabase) {
+    const keys = new Set();
+    function collect(value) {
+        if (!value || typeof value !== 'object') return;
+        if (!Array.isArray(value) && Object.keys(value).length === 1 && typeof value[EDU_MEDIA_REF_PROP] === 'string') {
+            keys.add(value[EDU_MEDIA_REF_PROP]);
+            return;
+        }
+        Object.values(value).forEach(collect);
     }
+    collect(targetDatabase);
+    if (!keys.size) return { restored: 0, missing: 0 };
+
+    const idb = await openEduMediaDatabase();
+    const values = new Map();
+    await new Promise((resolve, reject) => {
+        const tx = idb.transaction(EDU_MEDIA_STORE_NAME, 'readonly');
+        const store = tx.objectStore(EDU_MEDIA_STORE_NAME);
+        keys.forEach(key => {
+            const request = store.get(key);
+            request.onsuccess = () => {
+                if (typeof request.result === 'string') values.set(key, request.result);
+            };
+        });
+        tx.oncomplete = resolve;
+        tx.onerror = () => reject(tx.error || new Error('อ่านไฟล์แนบจาก IndexedDB ไม่สำเร็จ'));
+    });
+
+    function restore(value) {
+        if (!value || typeof value !== 'object') return value;
+        if (!Array.isArray(value) && Object.keys(value).length === 1 && typeof value[EDU_MEDIA_REF_PROP] === 'string') {
+            const key = value[EDU_MEDIA_REF_PROP];
+            if (values.has(key)) {
+                const media = values.get(key);
+                eduMediaLastPersisted.set(key, media);
+                return media;
+            }
+            return value; // คงตัวอ้างอิงไว้ หากสื่อยังไม่พร้อม เพื่อไม่ทำลายข้อมูลเดิม
+        }
+        if (Array.isArray(value)) return value.map(restore);
+        const output = {};
+        Object.keys(value).forEach(key => { output[key] = restore(value[key]); });
+        return output;
+    }
+
+    const restoredDatabase = restore(targetDatabase);
+    const restored = values.size;
+    const missing = keys.size - restored;
+    if (targetDatabase === db) db = restoredDatabase;
+    return { restored, missing, database: restoredDatabase };
+}
+
+function showStorageSaveWarning(error) {
+    if (eduStorageWarningShown) return;
+    eduStorageWarningShown = true;
+    const detail = error && error.message ? ` (${error.message})` : '';
+    showNonBlockingToast(`บันทึกข้อมูลในเครื่องไม่สำเร็จ${detail} กรุณาตรวจสอบพื้นที่จัดเก็บเบราว์เซอร์`, 'error');
 }
 
 function saveDB() {
+    let prepared;
+    let serialized;
     try {
-        compactDatabaseForLocalStorage();
-        localStorage.setItem('edulearn_hospital_db_v4', JSON.stringify(db));
+        prepared = buildLocalDatabaseSnapshot(db);
+        serialized = JSON.stringify(prepared.snapshot);
     } catch (err) {
-        try {
-            db.Notifications = (db.Notifications || []).filter(n => n.Type !== '__SYS_CONFIG__' && n.UserID !== '__SYS_CONFIG__').slice(0, 30);
-            if (Array.isArray(db.SavedCertTemplates) && db.SavedCertTemplates.length > 2) {
-                db.SavedCertTemplates = db.SavedCertTemplates.slice(0, 2);
-            }
-            if (Array.isArray(db.SavedCertLogos) && db.SavedCertLogos.length > 3) {
-                db.SavedCertLogos = db.SavedCertLogos.slice(0, 3);
-            }
-            localStorage.setItem('edulearn_hospital_db_v4', JSON.stringify(db));
-            
-        } catch (err2) {
-            showNonBlockingToast('พื้นที่เบราว์เซอร์เต็ม แนะนำให้ใช้ลิงก์ URL รูปภาพแทนการอัปโหลดไฟล์ใหญ่', 'error');
-        }
+        showStorageSaveWarning(err);
+        return Promise.resolve({ ok: false, error: err });
     }
+
+    const sequence = ++eduDbSaveSequence;
+    const task = eduDbSaveQueue.catch(() => {}).then(async () => {
+        // ข้ามงานบันทึกเก่าที่รอคิว หากมีการแก้ไขข้อมูลใหม่กว่าแล้ว
+        if (sequence !== eduDbSaveSequence) return { ok: true, skipped: true };
+        try {
+            await writeEduMediaAssets(prepared.mediaAssets);
+            if (sequence !== eduDbSaveSequence) return { ok: true, skipped: true };
+            localStorage.setItem('edulearn_hospital_db_v4', serialized);
+            eduStorageWarningShown = false;
+            return { ok: true, mediaCount: prepared.mediaKeys.length };
+        } catch (err) {
+            showStorageSaveWarning(err);
+            return { ok: false, error: err };
+        }
+    });
+    eduDbSaveQueue = task;
+    return task;
 }
+
+// ย้ายข้อมูล Base64 เก่าจาก localStorage ไป IndexedDB โดยอัตโนมัติเมื่อเปิดระบบรุ่นนี้ครั้งแรก
+localMediaRestorePromise = restoreLocalMediaReferences(db)
+    .then(async result => {
+        if (result.missing > 0) {
+            showNonBlockingToast(`พบไฟล์แนบเดิม ${result.missing} รายการที่ยังอ่านไม่พบ ระบบจะพยายามดึงข้อมูลจาก Google Sheets`, 'warning');
+        }
+        // เมื่ออ่านข้อมูลเดิมได้ครบ ให้จัดเก็บเป็นรูปแบบใหม่ที่ใช้พื้นที่ localStorage น้อยลง
+        if (result.missing === 0) await saveDB();
+        return result;
+    })
+    .catch(err => {
+        showStorageSaveWarning(err);
+        return { restored: 0, missing: 0, error: err };
+    });
 
 function clearBrowserImageCacheAndOptimize() {
     clearBrowserCacheAndFreeMemory();
@@ -1215,33 +1376,28 @@ function clearBrowserImageCacheAndOptimize() {
 
 async function clearBrowserCacheAndFreeMemory() {
     const beforeKB = getLocalStorageUsedKB();
-    db.Notifications = (db.Notifications || []).filter(n => n.Type !== '__SYS_CONFIG__' && n.UserID !== '__SYS_CONFIG__').slice(0, 30);
-    if (Array.isArray(db.SavedCertTemplates) && db.SavedCertTemplates.length > 2) {
-        db.SavedCertTemplates = db.SavedCertTemplates.slice(0, 2);
-    }
-    if (Array.isArray(db.SavedCertLogos) && db.SavedCertLogos.length > 3) {
-        db.SavedCertLogos = db.SavedCertLogos.slice(0, 3);
-    }
-    if (db.SavedLearningStates && currentUser) {
-        const myState = db.SavedLearningStates[currentUser.UserID];
-        db.SavedLearningStates = myState ? { [currentUser.UserID]: myState } : {};
-    }
-    try {
-        if ('caches' in window) {
-            const keys = await caches.keys();
-            await Promise.all(keys.map(k => caches.delete(k)));
-        }
-    } catch (e) {}
-    saveDB();
+    const saveResult = await saveDB();
     const afterKB = getLocalStorageUsedKB();
     const freedKB = Math.max(0, beforeKB - afterKB);
+
+    if (!saveResult.ok) {
+        Swal.fire({
+            icon: 'error',
+            title: 'จัดระเบียบพื้นที่จัดเก็บไม่สำเร็จ',
+            text: 'ระบบยังคงเก็บข้อมูลเดิมไว้ ไม่ได้ลบประวัติการเรียนหรือไฟล์แนบ กรุณาตรวจสอบการอนุญาตใช้พื้นที่จัดเก็บของเบราว์เซอร์',
+            confirmButtonColor: '#dc2626'
+        });
+        return;
+    }
+
     Swal.fire({
         icon: 'success',
-        title: 'เคลียร์แคชและเพิ่มหน่วยความจำเรียบร้อย!',
+        title: 'จัดระเบียบพื้นที่เบราว์เซอร์เรียบร้อย',
         html: `<div class="text-xs space-y-1">
-            <div>คืนพื้นที่หน่วยความจำได้: <strong class="text-emerald-600">${freedKB} KB</strong></div>
-            <div>พื้นที่ใช้งานปัจจุบัน: <strong>${afterKB} KB</strong> (จากโควตา ~5,120 KB)</div>
-            <div class="text-[11px] opacity-75 pt-1">ข้อมูลผู้ใช้ คอร์สเรียน คะแนนสอบ และเกียรติบัตรยังคงอยู่ครบถ้วน</div>
+            <div>คืนพื้นที่ localStorage ได้: <strong class="text-emerald-600">${freedKB} KB</strong></div>
+            <div>พื้นที่ฐานข้อมูลหลักที่ใช้อยู่: <strong>${afterKB} KB</strong></div>
+            <div>ไฟล์รูปภาพ วิดีโอ และ PDF ขนาดใหญ่ถูกแยกเก็บใน IndexedDB</div>
+            <div class="text-[11px] opacity-75 pt-1">ไม่ลบผู้ใช้ คอร์ส บทเรียน คะแนนสอบ เกียรติบัตร หรือประวัติการเรียน</div>
         </div>`,
         confirmButtonColor: '#059669'
     }).then(() => {
@@ -1490,7 +1646,8 @@ function getBestPostScoresPerUserCourse() {
 }
 
 // ==================== INITIALIZATION & GLOBAL THEME ====================
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    await localMediaRestorePromise;
     try {
         if (localStorage.getItem('edulearn_dark_mode') === '1') {
             document.documentElement.classList.add('dark');
@@ -7002,8 +7159,8 @@ function renderAdminThemeSettingsView(container) {
                 <p class="text-xs text-slate-500">Admin สามารถแก้ไขสี ข้อความ แท็บเมนู สีปุ่ม พื้นหลัง รูปภาพ โลโก้ และไอคอนต่างๆ ในเว็บแอปทุกหน้า พร้อมซิงก์ทุกเครื่องทันที</p>
             </div>
             <div class="flex flex-wrap gap-2">
-                <button onclick="clearBrowserImageCacheAndOptimize()" class="px-3.5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold shadow" title="ล้างแคชรูปภาพซ้ำซ้อนเพื่อแก้ปัญหาพื้นที่เบราว์เซอร์เต็ม">
-                    <i class="fa-solid fa-broom mr-1"></i> ล้างแคชเบราว์เซอร์ (${usedKB} KB / 5,120 KB)
+                <button onclick="clearBrowserImageCacheAndOptimize()" class="px-3.5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold shadow" title="แยกไฟล์รูปภาพ วิดีโอ และ PDF ไปเก็บใน IndexedDB โดยไม่ลบข้อมูลการเรียน">
+                    <i class="fa-solid fa-broom mr-1"></i> จัดระเบียบพื้นที่ (${usedKB} KB ใน localStorage)
                 </button>
                 <button onclick="resetGlobalThemeDefaults()" class="px-4 py-2.5 rounded-xl bg-slate-200 dark:bg-slate-700 text-xs font-semibold">
                     <i class="fa-solid fa-rotate-left mr-1"></i> คืนค่าธีมเริ่มต้น
@@ -7846,11 +8003,12 @@ function startRealtimeSyncEngine() {
         silentRealtimePullFromCloud();
     });
 
-    window.addEventListener('storage', (e) => {
+    window.addEventListener('storage', async (e) => {
         if (e.key === 'edulearn_hospital_db_v4' && e.newValue) {
             try {
                 const latest = JSON.parse(e.newValue);
-                db = latest;
+                const restoredLatest = await restoreLocalMediaReferences(latest);
+                db = restoredLatest.database || latest;
                 applyCourseCoverRegistryToCourses();
                 applyDeletedRegistryFilter();
                 applyGlobalSiteTheme();
@@ -7868,6 +8026,7 @@ function startRealtimeSyncEngine() {
 }
 
 async function silentRealtimePullFromCloud() {
+    await localMediaRestorePromise;
     const url = getGasUrl();
     if (!url || !url.startsWith('http') || isSyncingNow) return;
     isSyncingNow = true;
