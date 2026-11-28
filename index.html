@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+
 <html lang="th" class="light">
 <head>
     <meta charset="UTF-8">
@@ -1865,7 +1865,60 @@ function normalizeCanvaEmbedUrl(url) {
     const gSlidesMatch = u.match(/docs\.google\.com\/(presentation|document|spreadsheets)\/d\/([^/?#]+)/i);
     if (gSlidesMatch) return `https://docs.google.com/${gSlidesMatch[1]}/d/${gSlidesMatch[2]}/preview`;
 
+    const oneDriveMatch = u.match(/1drv\.ms\/|onedrive\.live\.com/i);
+    if (oneDriveMatch) {
+        return u.includes('embed') ? u : u.replace(/\/redir\?/i, '/embed?');
+    }
+
     return u;
+}
+
+function isSlidePresentationUrl(url) {
+    const u = String(url || '').trim();
+    if (!u) return false;
+    return /(canva\.com|docs\.google\.com\/presentation|slides\.google\.com|\.(ppt|pptx|pdf)(\?.*)?$|1drv\.ms|onedrive\.live\.com)/i.test(u);
+}
+
+function openFullscreenMediaViewer(type, srcUrl, titleText = '') {
+    const cleanSrc = String(srcUrl || '').trim();
+    if (!cleanSrc) return;
+    let bodyHtml = '';
+    if (type === 'image') {
+        bodyHtml = `<div class="flex items-center justify-center w-full h-[78vh] bg-slate-950 rounded-2xl overflow-auto p-2">
+            <img src="${sanitizeHTML(cleanSrc)}" class="max-w-full max-h-full object-contain rounded-xl shadow-2xl" alt="${sanitizeHTML(titleText)}">
+        </div>`;
+    } else if (type === 'video') {
+        const normV = normalizeEmbedVideoUrl(cleanSrc);
+        const directV = /\.(mp4|webm|ogg)(\?.*)?$/i.test(normV) || normV.startsWith('data:video');
+        bodyHtml = `<div class="w-full h-[78vh] bg-black rounded-2xl overflow-hidden flex items-center justify-center">
+            ${directV
+                ? `<video src="${sanitizeHTML(normV)}" controls autoplay class="w-full h-full object-contain"></video>`
+                : `<iframe src="${sanitizeHTML(normV)}" class="w-full h-full border-0" allowfullscreen allow="autoplay; fullscreen"></iframe>`
+            }
+        </div>`;
+    } else {
+        const embedSrc = normalizeCanvaEmbedUrl(cleanSrc);
+        bodyHtml = `<div class="w-full h-[78vh] bg-slate-950 rounded-2xl overflow-hidden border border-slate-700">
+            <iframe src="${sanitizeHTML(embedSrc)}" class="w-full h-full border-0" referrerpolicy="no-referrer-when-downgrade" allowfullscreen="allowfullscreen" allow="fullscreen"></iframe>
+        </div>`;
+    }
+
+    Swal.fire({
+        title: `<span class="text-sm font-bold">${sanitizeHTML(titleText || (type === 'image' ? 'ดูรูปภาพเต็มจอ' : type === 'video' ? 'ดูวิดีโอเต็มจอ' : 'ดูสไลด์ / Canva เต็มจอ'))}</span>`,
+        width: '92vw',
+        html: `<div class="space-y-2.5 text-left">
+            ${bodyHtml}
+            <div class="flex flex-wrap justify-between items-center gap-2 text-xs pt-1">
+                <span class="text-slate-500">กดปุ่ม ESC หรือคลิกปิดหน้าต่างเพื่อกลับสู่บทเรียน</span>
+                <a href="${sanitizeHTML(cleanSrc)}" target="_blank" rel="noopener noreferrer" class="px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold shadow transition">
+                    <i class="fa-solid fa-up-right-from-square mr-1"></i> เปิดในแท็บใหม่
+                </a>
+            </div>
+        </div>`,
+        showConfirmButton: false,
+        showCloseButton: true,
+        customClass: { popup: 'rounded-3xl' }
+    });
 }
 
 function renderMediaEmbedHTML(videoUrl, imageUrl, extraText, extraMediaList = []) {
@@ -1873,15 +1926,29 @@ function renderMediaEmbedHTML(videoUrl, imageUrl, extraText, extraMediaList = []
     const isDirectVid = /\.(mp4|webm|ogg)(\?.*)?$/i.test(cleanVid) || cleanVid.startsWith('data:video');
     let html = '';
     if (cleanVid) {
-        html += `<div class="aspect-video rounded-2xl overflow-hidden bg-slate-900 shadow relative my-2">
-            ${isDirectVid
-                ? `<video src="${sanitizeHTML(cleanVid)}" controls class="w-full h-full"></video>`
-                : `<iframe src="${sanitizeHTML(cleanVid)}" class="w-full h-full" allowfullscreen></iframe>`
-            }
+        html += `<div class="my-2 space-y-1.5">
+            <div class="flex justify-end">
+                <button type="button" onclick="openFullscreenMediaViewer('video', '${encodeURIComponent(cleanVid).replace(/'/g, '%27')}', 'วิดีโอประกอบ')" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-900 text-white text-[11px] font-bold shadow transition">
+                    <i class="fa-solid fa-expand mr-1"></i> ขยายดูเต็มจอ
+                </button>
+            </div>
+            <div class="aspect-video rounded-2xl overflow-hidden bg-slate-900 shadow relative">
+                ${isDirectVid
+                    ? `<video src="${sanitizeHTML(cleanVid)}" controls class="w-full h-full"></video>`
+                    : `<iframe src="${sanitizeHTML(cleanVid)}" class="w-full h-full" allowfullscreen></iframe>`
+                }
+            </div>
         </div>`;
     }
     if (imageUrl) {
-        html += `<img src="${sanitizeHTML(imageUrl)}" class="rounded-2xl max-h-72 object-contain border border-slate-100 dark:border-slate-700 my-2" alt="">`;
+        html += `<div class="my-2 space-y-1.5">
+            <div class="flex justify-end">
+                <button type="button" onclick="openFullscreenMediaViewer('image', '${encodeURIComponent(imageUrl).replace(/'/g, '%27')}', 'รูปภาพประกอบ')" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-900 text-white text-[11px] font-bold shadow transition">
+                    <i class="fa-solid fa-expand mr-1"></i> ขยายดูเต็มจอ
+                </button>
+            </div>
+            <img src="${sanitizeHTML(imageUrl)}" onclick="openFullscreenMediaViewer('image', '${encodeURIComponent(imageUrl).replace(/'/g, '%27')}', 'รูปภาพประกอบ')" class="rounded-2xl max-h-72 object-contain border border-slate-100 dark:border-slate-700 cursor-zoom-in" alt="">
+        </div>`;
     }
     if (extraText) {
         html += `<div class="p-3.5 rounded-2xl bg-blue-50/70 dark:bg-slate-700/50 border border-blue-100 dark:border-slate-600 text-xs sm:text-sm text-slate-700 dark:text-slate-200 whitespace-pre-line my-2">${sanitizeHTML(extraText)}</div>`;
@@ -1889,19 +1956,31 @@ function renderMediaEmbedHTML(videoUrl, imageUrl, extraText, extraMediaList = []
     (Array.isArray(extraMediaList) ? extraMediaList : []).forEach(item => {
         if (!item || !item.value) return;
         const val = String(item.value).trim();
+        const encodedVal = encodeURIComponent(val).replace(/'/g, '%27');
+        const safeItemTitle = encodeURIComponent(item.title || '').replace(/'/g, '%27');
         if (item.type === 'image') {
             html += `<div class="my-2 space-y-1">
-                ${item.title ? `<div class="text-xs font-bold text-slate-600 dark:text-slate-300">${sanitizeHTML(item.title)}</div>` : ''}
-                <img src="${sanitizeHTML(val)}" class="rounded-2xl max-h-80 object-contain border border-slate-100 dark:border-slate-700" alt="">
+                <div class="flex justify-between items-center gap-2">
+                    <span class="text-xs font-bold text-slate-600 dark:text-slate-300">${sanitizeHTML(item.title || 'รูปภาพเพิ่มเติม')}</span>
+                    <button type="button" onclick="openFullscreenMediaViewer('image', '${encodedVal}', decodeURIComponent('${safeItemTitle}') || 'รูปภาพเพิ่มเติม')" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-900 text-white text-[11px] font-bold shadow transition">
+                        <i class="fa-solid fa-expand mr-1"></i> ขยายดูเต็มจอ
+                    </button>
+                </div>
+                <img src="${sanitizeHTML(val)}" onclick="openFullscreenMediaViewer('image', '${encodedVal}', decodeURIComponent('${safeItemTitle}') || 'รูปภาพเพิ่มเติม')" class="rounded-2xl max-h-80 object-contain border border-slate-100 dark:border-slate-700 cursor-zoom-in" alt="">
             </div>`;
         } else if (item.type === 'link') {
-            const isCanva = /canva\.com/i.test(val);
+            const isSlideOrCanva = isSlidePresentationUrl(val);
             const isVideo = /(youtube\.com|youtu\.be|\.(mp4|webm|ogg)(\?.*)?$|^data:video)/i.test(val);
-            if (isCanva) {
+            if (isSlideOrCanva) {
                 html += `<div class="my-2 p-3 rounded-2xl bg-cyan-50/50 dark:bg-slate-900/60 border border-cyan-200 dark:border-slate-700 space-y-1.5">
-                    <div class="flex justify-between items-center gap-2 text-xs">
-                        <span class="font-bold text-cyan-800 dark:text-cyan-300">${sanitizeHTML(item.title || 'สื่อนำเสนอออนไลน์')}</span>
-                        <a href="${sanitizeHTML(val)}" target="_blank" rel="noopener noreferrer" class="px-2.5 py-1 rounded-lg bg-cyan-600 text-white font-bold">เปิดหน้าต่างใหม่</a>
+                    <div class="flex flex-wrap justify-between items-center gap-2 text-xs">
+                        <span class="font-bold text-cyan-800 dark:text-cyan-300"><i class="fa-solid fa-presentation-screen mr-1"></i> ${sanitizeHTML(item.title || 'สไลด์ / สื่อนำเสนอออนไลน์')}</span>
+                        <div class="flex items-center gap-1.5">
+                            <button type="button" onclick="openFullscreenMediaViewer('slide', '${encodedVal}', decodeURIComponent('${safeItemTitle}') || 'สไลด์ / สื่อนำเสนอออนไลน์')" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-900 text-white font-bold shadow transition">
+                                <i class="fa-solid fa-expand mr-1"></i> ขยายเต็มจอ
+                            </button>
+                            <a href="${sanitizeHTML(val)}" target="_blank" rel="noopener noreferrer" class="px-2.5 py-1 rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white font-bold">เปิดดูสไลด์</a>
+                        </div>
                     </div>
                     <div class="aspect-video rounded-xl overflow-hidden border"><iframe src="${sanitizeHTML(normalizeCanvaEmbedUrl(val))}" class="w-full h-full border-0" allowfullscreen></iframe></div>
                 </div>`;
@@ -1909,23 +1988,33 @@ function renderMediaEmbedHTML(videoUrl, imageUrl, extraText, extraMediaList = []
                 const normV = normalizeEmbedVideoUrl(val);
                 const directV = /\.(mp4|webm|ogg)(\?.*)?$/i.test(normV) || normV.startsWith('data:video');
                 html += `<div class="my-2 space-y-1">
-                    ${item.title ? `<div class="text-xs font-bold text-slate-600 dark:text-slate-300">${sanitizeHTML(item.title)}</div>` : ''}
+                    <div class="flex justify-between items-center gap-2">
+                        <span class="text-xs font-bold text-slate-600 dark:text-slate-300">${sanitizeHTML(item.title || 'วิดีโอเพิ่มเติม')}</span>
+                        <button type="button" onclick="openFullscreenMediaViewer('video', '${encodedVal}', decodeURIComponent('${safeItemTitle}') || 'วิดีโอเพิ่มเติม')" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-900 text-white text-[11px] font-bold shadow transition">
+                            <i class="fa-solid fa-expand mr-1"></i> ขยายดูเต็มจอ
+                        </button>
+                    </div>
                     <div class="aspect-video rounded-2xl overflow-hidden bg-slate-900 shadow relative">
                         ${directV ? `<video src="${sanitizeHTML(normV)}" controls class="w-full h-full"></video>` : `<iframe src="${sanitizeHTML(normV)}" class="w-full h-full" allowfullscreen></iframe>`}
                     </div>
                 </div>`;
             } else {
-                html += `<div class="my-2">
+                html += `<div class="my-2 flex flex-wrap items-center gap-2">
                     <a href="${sanitizeHTML(val)}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-50 text-blue-700 dark:bg-slate-700 dark:text-blue-300 text-xs font-bold hover:bg-blue-100 transition">
                         <i class="fa-solid fa-arrow-up-right-from-square"></i> ${sanitizeHTML(item.title || val)}
                     </a>
+                    <button type="button" onclick="openFullscreenMediaViewer('slide', '${encodedVal}', decodeURIComponent('${safeItemTitle}') || 'เปิดดูลิงก์ / สไลด์')" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold transition">
+                        <i class="fa-solid fa-expand mr-1"></i> ขยายดูเต็มจอ
+                    </button>
                 </div>`;
             }
         } else if (item.type === 'file') {
-            html += `<div class="my-2">
+            const isPdfOrSlideFile = /\.(pdf|ppt|pptx)(\?.*)?$/i.test(val);
+            html += `<div class="my-2 flex flex-wrap items-center gap-2">
                 <a href="${sanitizeHTML(val)}" target="_blank" download class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-rose-50 text-rose-700 dark:bg-slate-700 dark:text-rose-300 text-xs font-bold hover:bg-rose-100 transition">
                     <i class="fa-solid fa-file-arrow-down"></i> ${sanitizeHTML(item.title || 'เปิด / ดาวน์โหลดไฟล์แนบ')}
                 </a>
+                ${isPdfOrSlideFile ? `<button type="button" onclick="openFullscreenMediaViewer('slide', '${encodedVal}', decodeURIComponent('${safeItemTitle}') || 'เปิดดูสไลด์ / เอกสาร')" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold transition"><i class="fa-solid fa-expand mr-1"></i> เปิดดูสไลด์เต็มจอ</button>` : ''}
             </div>`;
         } else if (item.type === 'text') {
             html += `<div class="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 text-xs sm:text-sm text-slate-700 dark:text-slate-200 whitespace-pre-line my-2">
@@ -4329,9 +4418,14 @@ function openCoursePlayer(courseId, lessonId) {
                 <div class="space-y-2 p-3 rounded-2xl bg-cyan-50/50 dark:bg-slate-900/60 border border-cyan-200 dark:border-slate-700">
                     <div class="flex flex-wrap justify-between items-center gap-2 text-xs">
                         <span class="font-bold text-cyan-800 dark:text-cyan-300"><i class="fa-solid fa-object-group mr-1"></i> สื่อนำเสนอออนไลน์ (Canva / Slide)</span>
-                        <a href="${sanitizeHTML(currentLesson.CanvaURL)}" target="_blank" rel="noopener noreferrer" class="px-3 py-1.5 rounded-xl bg-cyan-600 hover:bg-cyan-700 text-white font-bold shadow-sm transition">
-                            <i class="fa-solid fa-up-right-from-square mr-1"></i> เปิดดูสไลด์ในหน้าต่างใหม่
-                        </a>
+                        <div class="flex flex-wrap items-center gap-1.5">
+                            <button type="button" onclick="openFullscreenMediaViewer('slide', decodeURIComponent('${encodeURIComponent(currentLesson.CanvaURL)}'), decodeURIComponent('${encodeURIComponent(currentLesson.Title || 'สไลด์ / Canva')}'))" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-bold shadow-sm transition">
+                                <i class="fa-solid fa-expand mr-1"></i> ขยายเต็มจอ
+                            </button>
+                            <a href="${sanitizeHTML(currentLesson.CanvaURL)}" target="_blank" rel="noopener noreferrer" class="px-3 py-1.5 rounded-xl bg-cyan-600 hover:bg-cyan-700 text-white font-bold shadow-sm transition">
+                                <i class="fa-solid fa-up-right-from-square mr-1"></i> เปิดดูสไลด์ในหน้าต่างใหม่
+                            </a>
+                        </div>
                     </div>
                     <div class="aspect-video rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 relative">
                         <iframe src="${sanitizeHTML(normalizeCanvaEmbedUrl(currentLesson.CanvaURL))}" class="w-full h-full border-0" referrerpolicy="no-referrer-when-downgrade" allowfullscreen="allowfullscreen" allow="fullscreen"></iframe>
@@ -4341,6 +4435,11 @@ function openCoursePlayer(courseId, lessonId) {
 
                 ${currentLesson.VideoURL ? `
                 <div class="space-y-2">
+                    <div class="flex justify-end">
+                        <button type="button" onclick="openFullscreenMediaViewer('video', decodeURIComponent('${encodeURIComponent(currentLesson.VideoURL)}'), decodeURIComponent('${encodeURIComponent(currentLesson.Title || 'วิดีโอบทเรียน')}'))" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold shadow-sm transition">
+                            <i class="fa-solid fa-expand mr-1"></i> ขยายวิดีโอเต็มจอ
+                        </button>
+                    </div>
                     <div class="aspect-video rounded-2xl overflow-hidden bg-slate-900 shadow relative">
                         ${isDirectVideoFile
                             ? `<video id="strictHtml5Video" src="${normalizeEmbedVideoUrl(currentLesson.VideoURL)}" controls class="w-full h-full"></video>`
@@ -4351,7 +4450,15 @@ function openCoursePlayer(courseId, lessonId) {
 
                 <div class="prose dark:prose-invert max-w-none text-sm leading-relaxed space-y-3">
                     <p class="whitespace-pre-line">${sanitizeHTML(currentLesson.Description)}</p>
-                    ${currentLesson.ImageURL ? `<img src="${sanitizeHTML(currentLesson.ImageURL)}" class="rounded-2xl max-h-80 object-contain w-full border border-slate-100 dark:border-slate-700" alt="">` : ''}
+                    ${currentLesson.ImageURL ? `
+                    <div class="space-y-1.5 not-prose">
+                        <div class="flex justify-end">
+                            <button type="button" onclick="openFullscreenMediaViewer('image', decodeURIComponent('${encodeURIComponent(currentLesson.ImageURL)}'), decodeURIComponent('${encodeURIComponent(currentLesson.Title || 'รูปภาพบทเรียน')}'))" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold shadow-sm transition">
+                                <i class="fa-solid fa-expand mr-1"></i> ขยายรูปภาพเต็มจอ
+                            </button>
+                        </div>
+                        <img src="${sanitizeHTML(currentLesson.ImageURL)}" onclick="openFullscreenMediaViewer('image', decodeURIComponent('${encodeURIComponent(currentLesson.ImageURL)}'), decodeURIComponent('${encodeURIComponent(currentLesson.Title || 'รูปภาพบทเรียน')}'))" class="rounded-2xl max-h-80 object-contain w-full border border-slate-100 dark:border-slate-700 cursor-zoom-in" alt="">
+                    </div>` : ''}
                     ${currentLesson.ExtraText ? `<div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 text-sm whitespace-pre-line">${sanitizeHTML(currentLesson.ExtraText)}</div>` : ''}
                     ${renderMediaEmbedHTML('', '', '', currentLesson.ExtraMedia)}
                 </div>
