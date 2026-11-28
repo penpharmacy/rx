@@ -56,7 +56,7 @@
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
         .dark ::-webkit-scrollbar-thumb { background: #475569; }
 
-        /* ปรับปรุงโหมดมืด (Dark Mode) ให้เห็นชัดเจนและมีคอนทราสต์สูงขึ้นทั้งตัวเลข ข้อความ เนื้อหา และรูปภาพ */
+        /* โหมดมืด (Dark Mode) คอนทราสต์สูงชัดเจนทั้งข้อความ เนื้อหา ตาราง และรูปภาพ */
         html.dark body#appBodyRoot {
             background-color: #090d16 !important;
             background-image: none !important;
@@ -237,7 +237,6 @@
 <!-- ==================== 1. หน้าเข้าสู่ระบบ / ลงทะเบียน ==================== -->
 <div id="authScreen" class="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-emerald-300 via-lime-200 to-yellow-200 transition-all bg-cover bg-center">
     <div id="authCard" class="max-w-md w-full bg-white dark:bg-slate-800 rounded-3xl shadow-2xl p-6 sm:p-8 animate__animated animate__fadeInUp">
-        <!-- Logo & Title -->
         <div class="text-center mb-6">
             <div id="authLogoBox" class="w-16 h-16 rounded-2xl bg-emerald-50 dark:bg-slate-700 text-emerald-700 flex items-center justify-center mx-auto mb-3 shadow-inner overflow-hidden">
                 <i id="authLogoIcon" class="fa-solid fa-capsules text-3xl"></i>
@@ -339,7 +338,6 @@
 
 <!-- ==================== 2. หน้าหลักของระบบ (Main Platform Layout) ==================== -->
 <div id="appLayout" class="hidden min-h-screen flex flex-col">
-    <!-- Top Navbar -->
     <header id="topNavbar" class="sticky top-0 z-30 bg-white/95 dark:bg-slate-800/95 backdrop-blur border-b border-slate-200 dark:border-slate-700 px-4 lg:px-8 h-16 flex items-center justify-between">
         <div class="flex items-center gap-3">
             <button onclick="toggleMobileSidebar()" class="lg:hidden p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700">
@@ -356,13 +354,11 @@
         </div>
 
         <div class="flex items-center gap-2 sm:gap-3">
-            <!-- Google Sheets Sync Status Pill -->
             <button onclick="syncAllDataWithGoogleSheet(true)" id="gsSyncStatusBtn" class="flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1.5 rounded-xl bg-emerald-50 dark:bg-slate-700 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-slate-600 hover:bg-emerald-100 transition" title="คลิกเพื่อซิงก์ข้อมูลกับ Google Sheets ทันที">
                 <i class="fa-solid fa-cloud-arrow-up"></i>
-                <span id="gsSyncStatusText" class="hidden sm:inline">Google Sheets Ready</span>
+                <span id="gsSyncStatusText" class="hidden sm:inline">pharmacyelearn Ready</span>
             </button>
 
-            <!-- Profession Status Pill -->
             <div id="professionStatusBox" class="hidden sm:flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl bg-emerald-50 dark:bg-slate-700 text-emerald-800 dark:text-emerald-200 border border-emerald-200 dark:border-slate-600">
                 <i class="fa-solid fa-user-doctor"></i>
                 <span id="currentUserProfessionBadge">ไม่ได้ระบุวิชาชีพ</span>
@@ -371,17 +367,14 @@
                 </button>
             </div>
 
-            <!-- Dark Mode Toggle -->
             <button onclick="toggleDarkMode()" class="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-slate-600 dark:text-amber-400 hover:scale-105 transition" title="สลับโหมดมืด/สว่าง">
                 <i id="darkModeIcon" class="fa-solid fa-moon"></i>
             </button>
 
-            <!-- ปุ่มเคลียร์แคชเพื่อเพิ่มหน่วยความจำ -->
             <button onclick="clearBrowserCacheAndFreeMemory()" id="btnClearCacheTop" class="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-amber-600 dark:text-amber-300 hover:scale-105 transition" title="เคลียร์แคชเพื่อเพิ่มหน่วยความจำ">
                 <i class="fa-solid fa-broom"></i>
             </button>
 
-            <!-- Notification Dropdown -->
             <div class="relative">
                 <button onclick="toggleNotifPanel()" class="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-700 flex items-center justify-center relative hover:scale-105 transition">
                     <i class="fa-solid fa-bell text-slate-600 dark:text-slate-200"></i>
@@ -399,7 +392,6 @@
                 </div>
             </div>
 
-            <!-- User Profile Chip -->
             <div class="flex items-center gap-2 pl-2 border-l border-slate-200 dark:border-slate-700">
                 <img id="navUserAvatar" src="https://ui-avatars.com/api/?name=User&background=15803d&color=fff" class="w-9 h-9 rounded-full object-cover ring-2 ring-emerald-500/30" alt="avatar">
                 <div class="hidden md:block text-left">
@@ -416,7 +408,6 @@
         </div>
     </header>
 
-    <!-- Main Body Split -->
     <div class="flex-1 flex overflow-hidden">
         <aside id="sidebarPanel" class="fixed lg:static inset-y-0 left-0 z-20 w-64 bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 p-4 flex flex-col justify-between transform -translate-x-full lg:translate-x-0 transition-transform duration-300 overflow-y-auto">
             <div class="space-y-1 mt-12 lg:mt-0" id="sidebarMenuContainer"></div>
@@ -425,7 +416,7 @@
                     <span id="sidebarFooterTitle" class="font-bold"><i class="fa-solid fa-envelope-circle-check text-amber-300 mr-1"></i> Email & Sheets</span>
                     <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
                 </div>
-                <p id="sidebarFooterDesc" class="text-emerald-100 text-[11px]">เชื่อมต่อ Google Sheets และส่งเกียรติบัตร PDF เข้าอีเมลผู้เรียนอัตโนมัติ</p>
+                <p id="sidebarFooterDesc" class="text-emerald-100 text-[11px]">เชื่อมต่อ Google Sheets (pharmacyelearn) และส่งเกียรติบัตร PDF เข้าอีเมลอัตโนมัติ</p>
             </div>
         </aside>
 
@@ -823,20 +814,29 @@
 
 <script>
 /**
-- ============================================================================
-- E-LEARNING PHARMACY - FULL ENTERPRISE SPA CONTROLLER + GOOGLE SHEETS SYNC
-- ============================================================================
+ * ============================================================================
+ * E-LEARNING PHARMACY - FULL ENTERPRISE SPA CONTROLLER + GOOGLE SHEETS SYNC
+ * เชื่อมต่อกับ Google Sheet: pharmacyelearn (1TRlWy0tv0VJA8MKzDfVsUtiISXkAZa1PlPS5Ffy9_Jo)
+ * ============================================================================
  */
+const TARGET_SPREADSHEET_ID = "1TRlWy0tv0VJA8MKzDfVsUtiISXkAZa1PlPS5Ffy9_Jo";
+const TARGET_SPREADSHEET_NAME = "pharmacyelearn";
+const DEFAULT_GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbx7gmB-BKhktBmznnya56vj7H77h6GUwiUIFN1nVydzbwZN-Q7RRSoSk9ZKKPIKol7CvA/exec";
 const OLD_GAS_WEB_APP_URLS = [
     "https://script.google.com/macros/s/AKfycbwtlphWKDBo2XsUrJLLb3JRJnulRGvHg2iVA4yAqi0LhF2EBuGChhGUEgEdF-GOcrJoog/exec",
-    "https://script.google.com/macros/s/AKfycbzdAxkuQ6t-To6H41roXSQrEkMyvdvocBe-NL7uTM2F1XIdB0cXIoI-bIit-aCE69du8g/exec"
+    "https://script.google.com/macros/s/AKfycbzdAxkuQ6t-To6H41roXSQrEkMyvdvocBe-NL7uTM2F1XIdB0cXIoI-bIit-aCE69du8g/exec",
+    "https://script.google.com/macros/s/AKfycbyQIj2_KyYMZ10OzvY3TiSTlg3tIwBA7zQHeiifPu0K3dmH63lBTeowAV4Ff-1taADv3g/exec"
 ];
-const DEFAULT_GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyQIj2_KyYMZ10OzvY3TiSTlg3tIwBA7zQHeiifPu0K3dmH63lBTeowAV4Ff-1taADv3g/exec";
 
 function getGasUrl() {
-    const savedUrl = db && db.SiteThemeSettings && db.SiteThemeSettings.gasWebAppUrl;
-    if (!savedUrl || OLD_GAS_WEB_APP_URLS.includes(savedUrl)) return DEFAULT_GAS_WEB_APP_URL;
-    return savedUrl;
+    let url = (db && db.SiteThemeSettings && db.SiteThemeSettings.gasWebAppUrl) || DEFAULT_GAS_WEB_APP_URL;
+    if (OLD_GAS_WEB_APP_URLS.includes(url)) {
+        url = DEFAULT_GAS_WEB_APP_URL;
+        if (db && db.SiteThemeSettings) {
+            db.SiteThemeSettings.gasWebAppUrl = DEFAULT_GAS_WEB_APP_URL;
+        }
+    }
+    return url;
 }
 
 const initialDatabase = {
@@ -904,7 +904,7 @@ const initialDatabase = {
         sidebarFromColor: "#15803d",
         sidebarToColor: "#65a30d",
         sidebarFooterTitle: "Email & Sheets",
-        sidebarFooterDesc: "เชื่อมต่อ Google Sheets และส่งเกียรติบัตร PDF เข้าอีเมลผู้เรียนอัตโนมัติ",
+        sidebarFooterDesc: "เชื่อมต่อ Google Sheets (pharmacyelearn) และส่งเกียรติบัตร PDF เข้าอีเมลอัตโนมัติ",
         menuLabels: {
             dashboard: "แดชบอร์ด & สถิติ",
             classroom: "ห้องเรียนออนไลน์ (Learn)",
@@ -950,7 +950,7 @@ const initialDatabase = {
         permissionsTitle: "กำหนดสิทธิ์การแก้ไข/เพิ่มลดข้อมูลในระบบ",
         permissionsSubtitle: "Admin สามารถกำหนดสิทธิ์พื้นฐานตามกลุ่มตำแหน่ง (Role) หรือกำหนดสิทธิ์พิเศษเจาะจงรายบุคคลได้",
         adminDbTitle: "🗄️ ฐานข้อมูลเบื้องหลัง (Admin DB Viewer)",
-        adminDbSubtitle: "แสดง แก้ไข และลบข้อมูลทุกตารางในระบบแบบเรียลไทม์ (เชื่อมต่อกับ Google Sheets)",
+        adminDbSubtitle: "แสดง แก้ไข และลบข้อมูลทุกตารางในระบบแบบเรียลไทม์ (เชื่อมต่อกับ Google Sheets: pharmacyelearn)",
         gasWebAppUrl: DEFAULT_GAS_WEB_APP_URL
     },
     ClassroomLayoutConfig: {
@@ -1096,7 +1096,7 @@ function getDefaultPhunphinLogoDataUri(primaryColor = '#14532d') {
             <path id="logoTopArc" d="M 18,70 A 52,52 0 1,1 122,70" />
             <path id="logoBotArc" d="M 14,70 A 56,56 0 0,0 126,70" />
         </defs>
-        <circle cx="70" cy="70" r="68.5" fill="#ffffff" stroke="${primaryColor}" stroke-width="2.5"/>
+        <circle cx="70" cy="70" r="66" fill="#ffffff" stroke="${primaryColor}" stroke-width="2.5"/>
         <circle cx="70" cy="70" r="45" fill="${primaryColor}"/>
         <text font-family="Sarabun, sans-serif" font-size="13.5" font-weight="700" fill="${primaryColor}" letter-spacing="0.4">
             <textPath href="#logoTopArc" startOffset="50%" text-anchor="middle">โรงพยาบาลพุนพิน</textPath>
@@ -1179,7 +1179,6 @@ function applyCourseCoverRegistryToCourses() {
     });
 }
 
-// จัดระเบียบคอลัมน์ Users ให้ตรงตามหัวคอลัมน์มาตรฐานของ Google Sheets เสมอ
 function normalizeUserRecords(rawUsers) {
     if (!Array.isArray(rawUsers)) return [];
     const validRoles = ['Admin', 'Examiner', 'Teacher', 'Student'];
@@ -1266,7 +1265,7 @@ async function pushRecordToGoogleSheet(actionName, payloadObj) {
             body: JSON.stringify({ action: actionName, payload: payloadObj })
         });
         const data = await res.json();
-        updateSyncStatusUI('Google Sheets ซิงก์แล้ว', 'emerald');
+        updateSyncStatusUI(`ซิงก์: ${TARGET_SPREADSHEET_NAME}`, 'emerald');
         return data;
     } catch (err) {
         updateSyncStatusUI('ออฟไลน์ (บันทึกในเครื่อง)', 'slate');
@@ -1286,6 +1285,22 @@ async function syncAllDataWithGoogleSheet(showToast = false) {
         });
         const json = await res.json();
         if (json.status === 'success' && json.data) {
+            if (json.spreadsheetId && json.spreadsheetId !== TARGET_SPREADSHEET_ID) {
+                updateSyncStatusUI('⚠ เชื่อมต่อผิดชีต!', 'amber');
+                if (showToast) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'ลิงก์ Apps Script เชื่อมต่ออยู่กับไฟล์อื่น',
+                        html: `<div class="text-xs text-left space-y-2">
+                            <div>ปัจจุบันลิงก์เชื่อมต่อกับ: <b>${sanitizeHTML(json.spreadsheetName || json.spreadsheetId)}</b></div>
+                            <div>ไฟล์เป้าหมายที่ถูกต้องคือ: <b>${TARGET_SPREADSHEET_NAME}</b> (<code>${TARGET_SPREADSHEET_ID}</code>)</div>
+                            <div class="p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900">กรุณาเปิดไฟล์ <b>pharmacyelearn</b> ไปที่ <b>ส่วนขยาย &gt; Apps Script</b> แล้ววางโค้ด <code>Code.gs</code> จากนั้นกด <b>Deploy &gt; New deployment</b> และนำ URL ใหม่มาวางในหน้าตั้งค่าครับ</div>
+                        </div>`,
+                        confirmButtonColor: '#d97706'
+                    });
+                }
+                return;
+            }
             const remote = json.data;
             if (Array.isArray(remote.Users) && remote.Users.length > 0) db.Users = normalizeUserRecords(remote.Users);
             ensureDefaultAdminExists();
@@ -1331,13 +1346,14 @@ async function syncAllDataWithGoogleSheet(showToast = false) {
                 renderNotifications();
                 switchView(currentView);
             }
-            updateSyncStatusUI('Google Sheets ซิงก์แล้ว', 'emerald');
+            const sheetDisplay = json.spreadsheetName || TARGET_SPREADSHEET_NAME;
+            updateSyncStatusUI(`ซิงก์: ${sheetDisplay}`, 'emerald');
             if (showToast) {
-                showNonBlockingToast('ดึงข้อมูลล่าสุดจาก Google Sheets สำเร็จ', 'success');
+                showNonBlockingToast(`ดึงข้อมูลล่าสุดจากชีต "${sheetDisplay}" สำเร็จ`, 'success');
             }
         }
     } catch (err) {
-        updateSyncStatusUI('Google Sheets Ready', 'emerald');
+        updateSyncStatusUI(`${TARGET_SPREADSHEET_NAME} Ready`, 'emerald');
     }
 }
 
@@ -2034,7 +2050,7 @@ function applyGlobalSiteTheme() {
     setText('txtRegisterLinkLabel', t.txtRegisterLinkLabel || 'ลงทะเบียนสมาชิกใหม่');
     setText('navBrandTitle', t.navBrandTitle);
     setText('navBrandSub', t.navBrandSub);
-    setText('sidebarFooterDesc', t.sidebarFooterDesc || 'เชื่อมต่อ Google Sheets และส่งเกียรติบัตร PDF เข้าอีเมลผู้เรียนอัตโนมัติ');
+    setText('sidebarFooterDesc', t.sidebarFooterDesc || 'เชื่อมต่อ Google Sheets (pharmacyelearn) และส่งเกียรติบัตร PDF เข้าอีเมลอัตโนมัติ');
 
     const sbFooterTitle = document.getElementById('sidebarFooterTitle');
     if (sbFooterTitle) {
@@ -2366,14 +2382,17 @@ function openForgotPasswordModal() {
         confirmButtonColor: '#2563eb',
         preConfirm: async () => {
             const mode = document.getElementById('fpActiveMode').value;
-            await silentRealtimePullFromCloud();
             if (mode === 'email') {
-                const email = document.getElementById('fpEmailOnly').value.trim();
-                if (!email) {
-                    Swal.showValidationMessage('กรุณากรอกอีเมลที่ลงทะเบียนไว้');
+                const email = document.getElementById('fpEmailOnly').value.trim().toLowerCase();
+                if (!email || !email.includes('@')) {
+                    Swal.showValidationMessage('กรุณากรอกอีเมลที่ลงทะเบียนไว้ให้ถูกต้อง');
                     return false;
                 }
-                const user = db.Users.find(u => String(u.Email || '').trim().toLowerCase() === email.toLowerCase());
+                let user = db.Users.find(u => String(u.Email || '').trim().toLowerCase() === email);
+                if (!user) {
+                    await silentRealtimePullFromCloud();
+                    user = db.Users.find(u => String(u.Email || '').trim().toLowerCase() === email);
+                }
                 if (!user) {
                     Swal.showValidationMessage('ไม่พบอีเมลนี้ในระบบ');
                     return false;
@@ -2387,10 +2406,17 @@ function openForgotPasswordModal() {
                     Swal.showValidationMessage('กรุณากรอกข้อมูลให้ครบถ้วน');
                     return false;
                 }
-                const user = db.Users.find(u =>
-                    String(u.UserID || '').trim().toLowerCase() === id.toLowerCase() ||
-                    String(u.Email || '').trim().toLowerCase() === id.toLowerCase()
+                let user = db.Users.find(u =>
+                    String(u.UserID || '').toLowerCase() === id.toLowerCase() ||
+                    String(u.Email || '').toLowerCase() === id.toLowerCase()
                 );
+                if (!user) {
+                    await silentRealtimePullFromCloud();
+                    user = db.Users.find(u =>
+                        String(u.UserID || '').toLowerCase() === id.toLowerCase() ||
+                        String(u.Email || '').toLowerCase() === id.toLowerCase()
+                    );
+                }
                 if (!user) {
                     Swal.showValidationMessage('ไม่พบบัญชีผู้ใช้นี้ในระบบ');
                     return false;
@@ -2411,55 +2437,76 @@ function openForgotPasswordModal() {
             pendingResetVerification = { email: user.Email, code: resetCode };
 
             Swal.fire({
-                title: 'กำลังส่งรหัสยืนยันและลิงก์ตั้งรหัสผ่านใหม่...',
-                text: `กำลังส่งไปยัง ${user.Email}`,
+                title: 'กำลังส่งรหัส OTP 6 หลักไปยังอีเมล...',
+                text: `กำลังส่งข้อมูลไปยัง ${user.Email}`,
                 allowOutsideClick: false,
                 didOpen: () => Swal.showLoading()
             });
 
-            const gasRes = await _origPushRecordToGoogleSheet('sendResetPasswordEmail', {
-                email: user.Email,
-                fullName: user.FullName,
-                userRecord: user,
-                resetCode,
-                appUrl: window.location.href.split('?')[0]
-            });
+            const gasUrl = getGasUrl();
+            let emailSentOk = false;
+            let errorDetail = '';
 
-            if (!gasRes || gasRes.status !== 'success') {
-                const errDetail = (gasRes && gasRes.message)
-                    ? gasRes.message
-                    : 'ไม่สามารถเชื่อมต่อ Google Apps Script เพื่อส่งอีเมลได้ (กรุณาตรวจสอบการ Deploy Web App และสิทธิ์ส่งอีเมลใน Apps Script)';
+            if (gasUrl && gasUrl.startsWith('http')) {
+                try {
+                    const sendRes = await fetch(gasUrl, {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            action: 'sendResetPasswordEmail',
+                            payload: {
+                                email: user.Email,
+                                fullName: user.FullName || user.UserID,
+                                userRecord: user,
+                                resetCode,
+                                appUrl: window.location.href.split('?')[0]
+                            }
+                        })
+                    });
+                    const sendJson = await sendRes.json();
+                    if (sendJson && sendJson.status === 'success') {
+                        emailSentOk = true;
+                    } else {
+                        errorDetail = sendJson?.message || 'Apps Script ไม่สามารถส่งอีเมลได้';
+                    }
+                } catch (err) {
+                    errorDetail = 'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ส่งอีเมลได้: ' + err.message;
+                }
+            } else {
+                errorDetail = 'ยังไม่ได้ตั้งค่า Google Apps Script Web App URL';
+            }
+
+            if (!emailSentOk) {
                 Swal.fire({
                     icon: 'error',
-                    title: 'ส่งอีเมลตั้งรหัสผ่านใหม่ไม่สำเร็จ',
+                    title: 'ส่งอีเมลตั้งรหัสผ่านไม่สำเร็จ',
                     html: `
-                        <div class="text-left text-xs space-y-2">
-                            <p class="text-rose-600 font-semibold">${sanitizeHTML(errDetail)}</p>
-                            <div class="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-900">
-                                💡 <b>คำแนะนำ:</b> หากยังไม่สามารถรับอีเมลได้ ท่านสามารถเลือกแท็บ <b>"ตอบคำถามความปลอดภัย"</b> เพื่อดูรหัสผ่านได้ทันที หรือแจ้งผู้ดูแลระบบให้กด Run ฟังก์ชันใน Apps Script เพื่ออนุญาตสิทธิ์ส่งอีเมล
+                        <div class="text-left text-xs text-slate-600 space-y-2">
+                            <div class="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800">
+                                <b>สาเหตุ:</b> ${sanitizeHTML(errorDetail)}
                             </div>
+                            <p class="text-slate-500">💡 คุณสามารถกดแท็บ <b>"ตอบคำถามความปลอดภัย"</b> เพื่อดูรหัสผ่านได้ทันที หรือแจ้งผู้ดูแลระบบ (Admin) ตรวจสอบสิทธิ์การส่งอีเมลใน Google Apps Script ครับ</p>
                         </div>
                     `,
-                    confirmButtonText: 'ตกลง',
-                    confirmButtonColor: '#2563eb'
+                    confirmButtonText: 'รับทราบ',
+                    confirmButtonColor: '#e11d48'
                 });
                 return;
             }
 
-            pushNotification(user.UserID, `📧 ส่งคำขอตั้งรหัสผ่านใหม่ไปยังอีเมล ${user.Email} เรียบร้อยแล้ว`, 'Security');
+            pushNotification(user.UserID, `📧 ส่งรหัสยืนยัน OTP ตั้งรหัสผ่านใหม่ไปยังอีเมล ${user.Email} เรียบร้อยแล้ว`, 'Security');
             saveDB();
 
             Swal.fire({
                 icon: 'success',
-                title: 'ส่งการตั้งรหัสผ่านใหม่ไปยังอีเมลแล้ว!',
+                title: 'ส่งรหัส OTP 6 หลักไปยังอีเมลแล้ว!',
                 html: `
                     <div class="text-xs text-slate-600 space-y-2">
-                        <p>ระบบได้ส่งรหัสยืนยัน (OTP) 6 หลัก และลิงก์สำหรับตั้งรหัสผ่านใหม่ไปยังอีเมล <strong>${sanitizeHTML(user.Email)}</strong> เรียบร้อยแล้ว (โปรดตรวจสอบในกล่องจดหมายหรือจดหมายขยะ/Spam)</p>
-                        <p class="text-blue-700 font-semibold">คุณสามารถเปิดลิงก์ในอีเมล หรือกดปุ่มด้านล่างเพื่อกรอกรหัสยืนยันและตั้งรหัสผ่านใหม่ได้ทันที</p>
+                        <p>ระบบได้ส่งรหัสยืนยัน (OTP) 6 หลัก และลิงก์สำหรับตั้งรหัสผ่านใหม่ไปยังอีเมล <strong>${sanitizeHTML(user.Email)}</strong> เรียบร้อยแล้ว (โปรดตรวจสอบในกล่องจดหมายหรือ Spam/จดหมายขยะ)</p>
+                        <p class="text-blue-700 font-semibold">กดปุ่มด้านล่างเพื่อนำรหัส OTP 6 หลักจากอีเมลมากรอกตั้งรหัสผ่านใหม่ได้ทันที</p>
                     </div>
                 `,
                 showCancelButton: true,
-                confirmButtonText: 'ตั้งรหัสผ่านใหม่ทันที',
+                confirmButtonText: 'กรอกรหัส OTP ตั้งรหัสผ่านใหม่',
                 cancelButtonText: 'กลับหน้า Login',
                 confirmButtonColor: '#2563eb'
             }).then(nextRes => {
@@ -3066,6 +3113,8 @@ function renderDashboardView(container) {
                 <div class="flex flex-wrap gap-2">
                     <button onclick="promptReorderDashboardSections()" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-semibold"><i class="fa-solid fa-sort mr-1"></i> จัดลำดับส่วนแสดงผลหลัก</button>
                     <button onclick="promptEditDashboardContent()" class="px-3 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold"><i class="fa-solid fa-pen-to-square mr-1"></i> แก้ไขหัวข้อ & สีแบนเนอร์</button>
+                    ${dashboardBannerColorUndoStack.length > 0 ? `<button onclick="undoDashboardBannerColorEdit(false)" class="px-3 py-2 rounded-xl bg-slate-600 hover:bg-slate-700 text-white font-semibold"><i class="fa-solid fa-rotate-left mr-1"></i> ย้อนสีแบนเนอร์ที่แก้ไข</button>` : ''}
+                    <button onclick="resetDashboardBannerColorDefault(false)" class="px-3 py-2 rounded-xl bg-lime-600 hover:bg-lime-700 text-white font-semibold"><i class="fa-solid fa-wand-magic-sparkles mr-1"></i> คืนค่าสีแบนเนอร์ตั้งต้น</button>
                     <button onclick="promptManageKpiCards()" class="px-3 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold"><i class="fa-solid fa-square-plus mr-1"></i> แก้ไข / เพิ่ม / จัดลำดับ การ์ดตัวเลข</button>
                     <button onclick="promptManageDashboardCharts()" class="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold"><i class="fa-solid fa-chart-pie mr-1"></i> แก้ไข / เพิ่ม / จัดลำดับ แผนภูมิ</button>
                 </div>
@@ -5232,7 +5281,7 @@ function getThaiLaiThaiBackdropSVG(design = {}, transparentBg = false) {
 function getPhunphinGoldRibbonBackdropSVG(design = {}, transparentBg = false) {
     const patGold = design.patternGoldColor || design.secondaryColor || '#d4a017';
     const patDark = design.patternDarkColor || '#171717';
-    const patAccent = design.patternAccentColor || '#b91c1c';
+    const patAccent = design.patternAccentColor || '#15803d';
     const bg = design.bgColor || '#f8fafc';
 
     const goldLight = shadeHexColor(patGold, 38);
@@ -6665,7 +6714,7 @@ function undoCertDesignEdit() {
     setVal('cdSecondaryColor', certDraft.secondaryColor);
     setVal('cdPatternDarkColor', certDraft.patternDarkColor || '#171717');
     setVal('cdPatternGoldColor', certDraft.patternGoldColor || certDraft.secondaryColor || '#d4a017');
-    setVal('cdPatternAccentColor', certDraft.patternAccentColor || '#b91c1c');
+    setVal('cdPatternAccentColor', certDraft.patternAccentColor || '#15803d');
     setVal('cdBgColor', certDraft.bgColor);
     setVal('cdBgImage', certDraft.bgImage || '');
     setVal('cdBgOpacity', certDraft.bgOpacity ?? 100);
@@ -6699,7 +6748,7 @@ function renderCertDesignerView(container) {
     certDraft = JSON.parse(JSON.stringify(db.CourseCertDesigns[currentDesignerCourseId]));
     if (!certDraft.patternDarkColor) certDraft.patternDarkColor = '#171717';
     if (!certDraft.patternGoldColor) certDraft.patternGoldColor = certDraft.secondaryColor || '#d4a017';
-    if (!certDraft.patternAccentColor) certDraft.patternAccentColor = '#b91c1c';
+    if (!certDraft.patternAccentColor) certDraft.patternAccentColor = '#15803d';
     if (certDraft.bgOpacity === undefined) certDraft.bgOpacity = 100;
     if (certDraft.bgTintColor === undefined) certDraft.bgTintColor = '#ffffff';
     if (certDraft.bgTintOpacity === undefined) certDraft.bgTintOpacity = 0;
@@ -6707,15 +6756,6 @@ function renderCertDesignerView(container) {
     if (certDraft.bgBrightness === undefined) certDraft.bgBrightness = 100;
     if (certDraft.bgSaturate === undefined) certDraft.bgSaturate = 100;
     if (!certDraft.bgLayerOrder) certDraft.bgLayerOrder = 'back';
-    if (certDraft.frameStyle === 'phunphin_gold') {
-        const logoEl = certDraft.elements.find(x => x.isHospitalLogo || x.id === 'el_logo');
-        if (logoEl && Math.abs((logoEl.x || 0) - 74) <= 6 && Math.abs((logoEl.y || 0) - 167) <= 6) {
-            logoEl.x = 75;
-            logoEl.y = 168;
-            logoEl.width = 120;
-            logoEl.height = 120;
-        }
-    }
     if (!selectedElementId && certDraft.elements.length) selectedElementId = certDraft.elements[0].id;
 
     container.innerHTML = `
@@ -6793,7 +6833,7 @@ function renderCertDesignerView(container) {
                         <div class="grid grid-cols-3 gap-2">
                             <div><label class="block mb-1 text-[10px]">สีแถบโค้ง/ลายหลัก</label><input type="color" id="cdPatternDarkColor" value="${certDraft.patternDarkColor || '#171717'}" onchange="updateCertGlobalStyle()" class="w-full h-7 rounded cursor-pointer"></div>
                             <div><label class="block mb-1 text-[10px]">สีริบบิ้น/ลายกนก</label><input type="color" id="cdPatternGoldColor" value="${certDraft.patternGoldColor || '#d4a017'}" onchange="updateCertGlobalStyle()" class="w-full h-7 rounded cursor-pointer"></div>
-                            <div><label class="block mb-1 text-[10px]">สีวงแหวนเหรียญตรา</label><input type="color" id="cdPatternAccentColor" value="${certDraft.patternAccentColor || '#b91c1c'}" onchange="updateCertGlobalStyle()" class="w-full h-7 rounded cursor-pointer"></div>
+                            <div><label class="block mb-1 text-[10px]">สีวงแหวนเหรียญตรา</label><input type="color" id="cdPatternAccentColor" value="${certDraft.patternAccentColor || '#15803d'}" onchange="updateCertGlobalStyle()" class="w-full h-7 rounded cursor-pointer"></div>
                         </div>
                     </div>
 
@@ -7127,7 +7167,7 @@ function updateCertGlobalStyle(recordUndo = true) {
     certDraft.secondaryColor = document.getElementById('cdSecondaryColor').value;
     certDraft.patternDarkColor = document.getElementById('cdPatternDarkColor')?.value || '#171717';
     certDraft.patternGoldColor = document.getElementById('cdPatternGoldColor')?.value || certDraft.secondaryColor;
-    certDraft.patternAccentColor = document.getElementById('cdPatternAccentColor')?.value || '#b91c1c';
+    certDraft.patternAccentColor = document.getElementById('cdPatternAccentColor')?.value || '#15803d';
     certDraft.bgColor = document.getElementById('cdBgColor').value;
     certDraft.bgImage = document.getElementById('cdBgImage').value.trim();
 
@@ -8240,10 +8280,13 @@ function renderAdminThemeSettingsView(container) {
             <!-- 3. เชื่อมต่อ Google Sheets -->
             <div class="md:col-span-2 custom-card bg-white dark:bg-slate-800 p-6 shadow-sm border border-emerald-200 dark:border-slate-700 space-y-3">
                 <div class="flex flex-wrap justify-between items-center gap-2">
-                    <h3 class="font-bold text-sm text-emerald-700 dark:text-emerald-400"><i class="fa-solid fa-table mr-1.5 text-lg"></i> 3. เชื่อมต่อฐานข้อมูล Google Sheets (Google Apps Script Web App URL)</h3>
+                    <h3 class="font-bold text-sm text-emerald-700 dark:text-emerald-400"><i class="fa-solid fa-table mr-1.5 text-lg"></i> 3. เชื่อมต่อฐานข้อมูล Google Sheets: <span class="underline">pharmacyelearn</span></h3>
                     <button type="button" onclick="syncAllDataWithGoogleSheet(true)" class="px-3 py-1.5 rounded-xl bg-emerald-600 text-white font-bold">
                         <i class="fa-solid fa-arrows-rotate mr-1"></i> ทดสอบซิงก์ข้อมูลตอนนี้
                     </button>
+                </div>
+                <div class="p-2.5 rounded-xl bg-emerald-50/70 dark:bg-slate-900/50 border border-emerald-200 text-[11px] text-emerald-900 dark:text-emerald-300">
+                    🎯 <b>ไฟล์เป้าหมาย:</b> <code>pharmacyelearn</code> (ID: <code>1TRlWy0tv0VJA8MKzDfVsUtiISXkAZa1PlPS5Ffy9_Jo</code>)
                 </div>
                 <div>
                     <label class="font-semibold block mb-1">Google Apps Script Web App URL *</label>
@@ -8396,7 +8439,7 @@ function renderAdminDBView(container) {
         <div class="flex flex-wrap justify-between items-center gap-3">
             <div>
                 <h2 class="text-2xl font-bold text-blue-900 dark:text-white">🗄️ ฐานข้อมูลเบื้องหลัง (Admin DB Viewer)</h2>
-                <p class="text-xs text-slate-500">แสดง แก้ไข และลบข้อมูลทุกตารางในระบบแบบเรียลไทม์ (เชื่อมต่อกับ Google Sheets)</p>
+                <p class="text-xs text-slate-500">แสดง แก้ไข และลบข้อมูลทุกตารางในระบบแบบเรียลไทม์ (เชื่อมต่อกับ Google Sheets: pharmacyelearn)</p>
             </div>
             <div class="flex flex-wrap gap-2">
                 <button onclick="clearAdminDbTableAll('${adminDbTable}')" class="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow">
@@ -8855,8 +8898,9 @@ function syncCourseCoverToCloud(courseId, coverUrl) {
 
 function buildGlobalConfigChunks() {
     const ts = Date.now();
+    const safeTheme = { ...db.SiteThemeSettings, gasWebAppUrl: getGasUrl(), _ts: ts };
     const chunks = [
-        { id: 'SYS_CFG_THEME', key: 'SiteThemeSettings', data: { ...db.SiteThemeSettings, _ts: ts } },
+        { id: 'SYS_CFG_THEME', key: 'SiteThemeSettings', data: safeTheme },
         { id: 'SYS_CFG_DASHBOARD', key: 'DashboardConfig', data: { ...db.DashboardConfig, _ts: ts } },
         { id: 'SYS_CFG_CLASSROOM', key: 'ClassroomLayoutConfig', data: { ...db.ClassroomLayoutConfig, _ts: ts } },
         { id: 'SYS_CFG_PROFSTATS', key: 'ProfessionStatsConfig', data: { ...db.ProfessionStatsConfig, _ts: ts } },
@@ -8933,7 +8977,7 @@ async function syncGlobalSettingsToCloud() {
     saveDB();
     tasks.push(pushRecordToGoogleSheet('saveCertSettings', {
         ...db.CourseCertDesigns,
-        __SITE_THEME_SETTINGS__: db.SiteThemeSettings
+        __SITE_THEME_SETTINGS__: { ...db.SiteThemeSettings, gasWebAppUrl: getGasUrl() }
     }));
 
     await Promise.allSettled(tasks);
@@ -8948,7 +8992,9 @@ function applyRemoteGlobalSettings(remote) {
     const applyKeyData = (key, val) => {
         if (!val) return;
         if (key === 'SiteThemeSettings' && typeof val === 'object') {
-            db.SiteThemeSettings = { ...db.SiteThemeSettings, ...val };
+            const incomingUrl = val.gasWebAppUrl;
+            const safeUrl = (!incomingUrl || OLD_GAS_WEB_APP_URLS.includes(incomingUrl)) ? getGasUrl() : incomingUrl;
+            db.SiteThemeSettings = { ...db.SiteThemeSettings, ...val, gasWebAppUrl: safeUrl };
             applied = true;
         } else if (key === 'DashboardConfig' && typeof val === 'object') {
             db.DashboardConfig = { ...db.DashboardConfig, ...val };
@@ -9156,6 +9202,10 @@ async function silentRealtimePullFromCloud() {
         });
         const json = await res.json();
         if (json.status === 'success' && json.data) {
+            if (json.spreadsheetId && json.spreadsheetId !== TARGET_SPREADSHEET_ID) {
+                updateSyncStatusUI('⚠ เชื่อมต่อผิดชีต!', 'amber');
+                return;
+            }
             const remote = json.data;
             if (Array.isArray(remote.Users) && remote.Users.length > 0) db.Users = normalizeUserRecords(remote.Users);
             ensureDefaultAdminExists();
@@ -9210,7 +9260,7 @@ async function silentRealtimePullFromCloud() {
                 cfg: buildGlobalConfigSnapshot()
             });
 
-            updateSyncStatusUI('ซิงก์เรียลไทม์แล้ว', 'emerald');
+            updateSyncStatusUI(`ซิงก์: ${json.spreadsheetName || TARGET_SPREADSHEET_NAME}`, 'emerald');
 
             if (prevSignature !== nextSignature) {
                 refreshOpenCertificateModalIfAny();
