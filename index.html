@@ -816,13 +816,15 @@
 /**
  * ============================================================================
  * E-LEARNING PHARMACY - FULL ENTERPRISE SPA CONTROLLER + GOOGLE SHEETS SYNC
- * เชื่อมต่อกับ Google Sheet: pharmacyelearn (1TRlWy0tv0VJA8MKzDfVsUtiISXkAZa1PlPS5Ffy9_Jo)
+ * เชื่อมต่อกับ Google Sheet: pharmacyelearn (1VNOesayYl-mVbEgPurtE2luadyiQDPJAPjIQl3PEDUo)
  * ============================================================================
  */
-const TARGET_SPREADSHEET_ID = "1TRlWy0tv0VJA8MKzDfVsUtiISXkAZa1PlPS5Ffy9_Jo";
+const TARGET_SPREADSHEET_ID = "1VNOesayYl-mVbEgPurtE2luadyiQDPJAPjIQl3PEDUo";
 const TARGET_SPREADSHEET_NAME = "pharmacyelearn";
-const DEFAULT_GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbx7gmB-BKhktBmznnya56vj7H77h6GUwiUIFN1nVydzbwZN-Q7RRSoSk9ZKKPIKol7CvA/exec";
+const DEFAULT_GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycby-dRnKV2_JbEryuZOPVEkRHBwFfkqz2m5wwOjf35_ga0-iGJYPiUxKQFv4CfpJvOZspA/exec";
 const OLD_GAS_WEB_APP_URLS = [
+    "https://script.google.com/macros/s/AKfycbx2pMnpOdEiAbV5aRWLJQY4LmYVezEt4ShoPgg4sE0wF4UVFAjRjm9tv4aDIQx5UK-Y/exec",
+    "https://script.google.com/macros/s/AKfycbx7gmB-BKhktBmznnya56vj7H77h6GUwiUIFN1nVydzbwZN-Q7RRSoSk9ZKKPIKol7CvA/exec",
     "https://script.google.com/macros/s/AKfycbwtlphWKDBo2XsUrJLLb3JRJnulRGvHg2iVA4yAqi0LhF2EBuGChhGUEgEdF-GOcrJoog/exec",
     "https://script.google.com/macros/s/AKfycbzdAxkuQ6t-To6H41roXSQrEkMyvdvocBe-NL7uTM2F1XIdB0cXIoI-bIit-aCE69du8g/exec",
     "https://script.google.com/macros/s/AKfycbyQIj2_KyYMZ10OzvY3TiSTlg3tIwBA7zQHeiifPu0K3dmH63lBTeowAV4Ff-1taADv3g/exec"
@@ -1228,7 +1230,7 @@ function normalizeUserRecords(rawUsers) {
                 SecQuestion: 'โรงพยาบาลแรกที่คุณเริ่มปฏิบัติงานคือที่ใด?',
                 SecAnswer: 'admin',
                 ProfileImage: String(rec.ProfileImage || '').startsWith('http') ? rec.ProfileImage : 'https://ui-avatars.com/api/?name=Admin&background=15803d&color=fff',
-                Status: validStatuses.includes(String(rec.Status || '').trim()) ? rec.Status : 'Active',
+                Status: validStatuses.includes(String(rec.Status).trim()) ? rec.Status : 'Active',
                 LastLogin: rec.LastLogin || '-'
             };
         }
@@ -2530,15 +2532,33 @@ function openForgotPasswordModal() {
                         </div>
                     </div>
                 `,
-                confirmButtonText: 'นำรหัสผ่านไปหน้า Login ทันที',
+                confirmButtonText: '<i class="fa-solid fa-right-to-bracket mr-1"></i> นำรหัสผ่านไปหน้า Login ทันที',
                 confirmButtonColor: '#059669'
-            }).then(() => {
-                document.getElementById('loginIdentity').value = user.UserID;
-                document.getElementById('loginPass').value = user.Password;
-                switchAuthView('login');
+            }).then((confirmRes) => {
+                if (confirmRes.isConfirmed) {
+                    const idInput = document.getElementById('loginIdentity');
+                    const passInput = document.getElementById('loginPass');
+                    if (idInput) idInput.value = user.UserID || user.Email;
+                    if (passInput) passInput.value = user.Password;
+                    switchAuthView('login');
+                    showNonBlockingToast('กรอกชื่อผู้ใช้และรหัสผ่านให้แล้ว กดปุ่มเข้าสู่ระบบได้เลย', 'success');
+                }
             });
         }
     });
+}
+
+function toggleSwalPassField(inputId, iconId) {
+    const inp = document.getElementById(inputId);
+    const icon = document.getElementById(iconId);
+    if (!inp || !icon) return;
+    if (inp.type === 'password') {
+        inp.type = 'text';
+        icon.className = 'fa-regular fa-eye-slash';
+    } else {
+        inp.type = 'password';
+        icon.className = 'fa-regular fa-eye';
+    }
 }
 
 function openSetNewPasswordModal(email, prefillCode = '') {
@@ -2556,11 +2576,21 @@ function openSetNewPasswordModal(email, prefillCode = '') {
                 </div>
                 <div>
                     <label class="font-bold block mb-1">รหัสผ่านใหม่ *</label>
-                    <input id="npNewPass" type="password" placeholder="ตั้งรหัสผ่านใหม่" class="w-full px-3 py-2 rounded-xl border">
+                    <div class="flex rounded-xl border overflow-hidden focus-within:ring-2 focus-within:ring-blue-500">
+                        <input id="npNewPass" type="password" placeholder="ตั้งรหัสผ่านใหม่" class="w-full px-3 py-2 bg-transparent outline-none">
+                        <button type="button" onclick="toggleSwalPassField('npNewPass', 'npNewPassEye')" class="px-3 border-l text-slate-500 hover:text-blue-600 transition" title="แสดง/ซ่อนรหัสผ่าน">
+                            <i id="npNewPassEye" class="fa-regular fa-eye"></i>
+                        </button>
+                    </div>
                 </div>
                 <div>
                     <label class="font-bold block mb-1">ยืนยันรหัสผ่านใหม่อีกครั้ง *</label>
-                    <input id="npConfirmPass" type="password" placeholder="กรอกรหัสผ่านใหม่อีกครั้ง" class="w-full px-3 py-2 rounded-xl border">
+                    <div class="flex rounded-xl border overflow-hidden focus-within:ring-2 focus-within:ring-blue-500">
+                        <input id="npConfirmPass" type="password" placeholder="กรอกรหัสผ่านใหม่อีกครั้ง" class="w-full px-3 py-2 bg-transparent outline-none">
+                        <button type="button" onclick="toggleSwalPassField('npConfirmPass', 'npConfirmPassEye')" class="px-3 border-l text-slate-500 hover:text-blue-600 transition" title="แสดง/ซ่อนรหัสผ่าน">
+                            <i id="npConfirmPassEye" class="fa-regular fa-eye"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
         `,
@@ -2596,9 +2626,11 @@ function openSetNewPasswordModal(email, prefillCode = '') {
             saveDB();
             pushRecordToGoogleSheet('saveUser', user);
             pendingResetVerification = { email: '', code: '' };
-            if (window.history && window.history.replaceState) {
-                window.history.replaceState({}, document.title, window.location.pathname);
-            }
+            try {
+                if (window.location.protocol !== 'blob:' && window.history && window.history.replaceState) {
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                }
+            } catch (err) {}
             Swal.fire({
                 icon: 'success',
                 title: 'เปลี่ยนรหัสผ่านใหม่เรียบร้อย!',
@@ -4202,19 +4234,27 @@ function renderFilteredLessonsSubList() {
         const prevDone = myIdx <= 0 || db.Progress.some(p => p.StudentID === currentUser.UserID && p.LessonID === cLessons[myIdx - 1].LessonID && p.Status === 'Completed');
         const isLocked = !isDone && !prevDone;
 
+        const boxToneCls = isDone ? 'bg-emerald-100 text-emerald-600' : (isLocked ? 'bg-slate-100 text-slate-400' : 'bg-blue-50 text-blue-600');
+        const iconToneCls = isDone ? 'fa-check' : (isLocked ? 'fa-lock' : 'fa-book-open');
+        const btnToneCls = isDone ? 'bg-emerald-50 text-emerald-700' : (isLocked ? 'bg-slate-200 text-slate-500' : 'text-white');
+        const btnBgStyle = (!isDone && !isLocked) ? `background-color:${clCfg.accentColor}` : '';
+        const btnLabelHtml = isDone
+            ? '<i class="fa-solid fa-rotate-right mr-1"></i> ทบทวน / เรียนจบแล้ว'
+            : (isLocked ? '<i class="fa-solid fa-lock mr-1"></i> รอเรียนบทก่อนหน้า' : '<i class="fa-solid fa-play mr-1"></i> เริ่มเรียน');
+
         return `
             <div class="py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div class="flex items-start gap-3">
-                    <div class="w-9 h-9 rounded-xl ${isDone ? 'bg-emerald-100 text-emerald-600' : (isLocked ? 'bg-slate-100 text-slate-400' : 'bg-blue-50 text-blue-600')} flex items-center justify-center shrink-0">
-                        <i class="fa-solid ${isDone ? 'fa-check' : (isLocked ? 'fa-lock' : 'fa-book-open')}"></i>
+                    <div class="w-9 h-9 rounded-xl ${boxToneCls} flex items-center justify-center shrink-0">
+                        <i class="fa-solid ${iconToneCls}"></i>
                     </div>
                     <div>
                         <div class="font-bold text-sm ${isLocked ? 'text-slate-400' : ''}">${sanitizeHTML(l.Title)} ${l.StrictVideo ? '<span class="ml-1 px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[10px]"><i class="fa-solid fa-lock"></i> ห้ามกดข้ามวิดีโอ</span>' : ''}</div>
                         <div class="text-xs text-slate-400">หมวดหมู่: ${sanitizeHTML(l.Category)} | ผู้สอน: ${sanitizeHTML(l.Teacher)}</div>
                     </div>
                 </div>
-                <button onclick="enterCourseFlow('${l.CourseID}', '${l.LessonID}')" class="px-4 py-2 rounded-xl ${isDone ? 'bg-emerald-50 text-emerald-700' : (isLocked ? 'bg-slate-200 text-slate-500' : 'text-white')} text-xs font-semibold self-start sm:self-center" style="${!isDone && !isLocked ? `background-color:${clCfg.accentColor}` : ''}">
-                    ${isDone ? '<i class="fa-solid fa-rotate-right mr-1"></i> ทบทวน / เรียนจบแล้ว' : (isLocked ? '<i class="fa-solid fa-lock mr-1"></i> รอเรียนบทก่อนหน้า' : '<i class="fa-solid fa-play mr-1"></i> เริ่มเรียน')}
+                <button onclick="enterCourseFlow('${l.CourseID}', '${l.LessonID}')" class="px-4 py-2 rounded-xl ${btnToneCls} text-xs font-semibold self-start sm:self-center" style="${btnBgStyle}">
+                    ${btnLabelHtml}
                 </button>
             </div>
         `;
@@ -4349,10 +4389,12 @@ function openCoursePlayer(courseId, lessonId) {
                             const prevOk = idx === 0 || db.Progress.some(p => p.StudentID === currentUser.UserID && p.LessonID === courseLessons[idx - 1].LessonID && p.Status === 'Completed');
                             const locked = !done && !prevOk;
                             const active = item.LessonID === currentLesson.LessonID;
+                            const itemBgCls = active ? 'bg-blue-600 text-white font-bold' : (locked ? 'bg-slate-100 text-slate-400 opacity-75' : 'bg-slate-50 dark:bg-slate-700/50 hover:bg-blue-50');
+                            const itemIconCls = done ? 'fa-circle-check text-emerald-400' : (locked ? 'fa-lock' : 'fa-circle-play opacity-60');
                             return `
-                                <button onclick="enterCourseFlow('${course.CourseID}', '${item.LessonID}')" class="w-full p-3 rounded-2xl text-left text-xs flex items-center justify-between transition ${active ? 'bg-blue-600 text-white font-bold' : (locked ? 'bg-slate-100 text-slate-400 opacity-75' : 'bg-slate-50 dark:bg-slate-700/50 hover:bg-blue-50')}">
+                                <button onclick="enterCourseFlow('${course.CourseID}', '${item.LessonID}')" class="w-full p-3 rounded-2xl text-left text-xs flex items-center justify-between transition ${itemBgCls}">
                                     <span class="truncate pr-2">${idx + 1}. ${sanitizeHTML(item.Title)}</span>
-                                    <i class="fa-solid ${done ? 'fa-circle-check text-emerald-400' : (locked ? 'fa-lock' : 'fa-circle-play opacity-60')}"></i>
+                                    <i class="fa-solid ${itemIconCls}"></i>
                                 </button>
                             `;
                         }).join('')}
@@ -8286,7 +8328,7 @@ function renderAdminThemeSettingsView(container) {
                     </button>
                 </div>
                 <div class="p-2.5 rounded-xl bg-emerald-50/70 dark:bg-slate-900/50 border border-emerald-200 text-[11px] text-emerald-900 dark:text-emerald-300">
-                    🎯 <b>ไฟล์เป้าหมาย:</b> <code>pharmacyelearn</code> (ID: <code>1TRlWy0tv0VJA8MKzDfVsUtiISXkAZa1PlPS5Ffy9_Jo</code>)
+                    🎯 <b>ไฟล์เป้าหมาย:</b> <code>pharmacyelearn</code> (ID: <code>1VNOesayYl-mVbEgPurtE2luadyiQDPJAPjIQl3PEDUo</code>)
                 </div>
                 <div>
                     <label class="font-semibold block mb-1">Google Apps Script Web App URL *</label>
